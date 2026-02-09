@@ -6,6 +6,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
+import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
+import KanbanPage from "./pages/KanbanPage";
+import InboxPage from "./pages/InboxPage";
+import TaskListPage from "./pages/TaskListPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +39,12 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+            <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+            <Route path="/kanban" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
+            <Route path="/inbox" element={<ProtectedRoute><InboxPage /></ProtectedRoute>} />
+            <Route path="/waiting" element={<ProtectedRoute><TaskListPage filterStatus="Waiting" /></ProtectedRoute>} />
+            <Route path="/done" element={<ProtectedRoute><TaskListPage filterStatus="Done" /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

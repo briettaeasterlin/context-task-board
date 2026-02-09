@@ -14,6 +14,133 @@ export type Database = {
   }
   public: {
     Tables: {
+      clarify_questions: {
+        Row: {
+          answer: string | null
+          created_at: string
+          id: string
+          project_id: string
+          question: string
+          reason: string | null
+          status: Database["public"]["Enums"]["clarify_status"]
+          suggested_options: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string
+          id?: string
+          project_id: string
+          question: string
+          reason?: string | null
+          status?: Database["public"]["Enums"]["clarify_status"]
+          suggested_options?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string
+          question?: string
+          reason?: string | null
+          status?: Database["public"]["Enums"]["clarify_status"]
+          suggested_options?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clarify_questions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      milestones: {
+        Row: {
+          completion_rule: Database["public"]["Enums"]["completion_rule"]
+          created_at: string
+          description: string | null
+          id: string
+          is_complete: boolean
+          name: string
+          order_index: number
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completion_rule?: Database["public"]["Enums"]["completion_rule"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_complete?: boolean
+          name: string
+          order_index?: number
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completion_rule?: Database["public"]["Enums"]["completion_rule"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_complete?: boolean
+          name?: string
+          order_index?: number
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          area: Database["public"]["Enums"]["task_area"]
+          created_at: string
+          id: string
+          name: string
+          scope_notes: string | null
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area?: Database["public"]["Enums"]["task_area"]
+          created_at?: string
+          id?: string
+          name: string
+          scope_notes?: string | null
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: Database["public"]["Enums"]["task_area"]
+          created_at?: string
+          id?: string
+          name?: string
+          scope_notes?: string | null
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           area: Database["public"]["Enums"]["task_area"]
@@ -21,8 +148,10 @@ export type Database = {
           context: string | null
           created_at: string
           id: string
+          milestone_id: string | null
           notes: string | null
           project: string | null
+          project_id: string | null
           source: string | null
           status: Database["public"]["Enums"]["task_status"]
           tags: string[] | null
@@ -36,8 +165,10 @@ export type Database = {
           context?: string | null
           created_at?: string
           id?: string
+          milestone_id?: string | null
           notes?: string | null
           project?: string | null
+          project_id?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
@@ -51,8 +182,10 @@ export type Database = {
           context?: string | null
           created_at?: string
           id?: string
+          milestone_id?: string | null
           notes?: string | null
           project?: string | null
+          project_id?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
@@ -60,7 +193,63 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      updates: {
+        Row: {
+          content: string
+          created_at: string
+          extracted_summary: string | null
+          extracted_tasks: Json | null
+          id: string
+          project_id: string | null
+          source: Database["public"]["Enums"]["update_source"] | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          extracted_summary?: string | null
+          extracted_tasks?: Json | null
+          id?: string
+          project_id?: string | null
+          source?: Database["public"]["Enums"]["update_source"] | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          extracted_summary?: string | null
+          extracted_tasks?: Json | null
+          id?: string
+          project_id?: string | null
+          source?: Database["public"]["Enums"]["update_source"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "updates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -70,8 +259,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      clarify_status: "open" | "answered" | "dismissed"
+      completion_rule: "manual" | "tasks_based"
       task_area: "Client" | "Business" | "Home" | "Family" | "Personal"
       task_status: "Backlog" | "Next" | "Waiting" | "Done"
+      update_source: "chatgpt" | "meeting" | "email" | "call" | "doc"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -199,8 +391,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      clarify_status: ["open", "answered", "dismissed"],
+      completion_rule: ["manual", "tasks_based"],
       task_area: ["Client", "Business", "Home", "Family", "Personal"],
       task_status: ["Backlog", "Next", "Waiting", "Done"],
+      update_source: ["chatgpt", "meeting", "email", "call", "doc"],
     },
   },
 } as const

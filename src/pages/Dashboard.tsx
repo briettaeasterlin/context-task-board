@@ -1,34 +1,31 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
+import { useMilestones } from '@/hooks/useProjects';
 import { useSeedData } from '@/hooks/useSeedData';
-import type { Task, TaskArea, TaskStatus, TaskUpdate, ViewTab, TaskInsert } from '@/types/task';
+import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
+import type { Task, TaskArea, TaskStatus, TaskUpdate, TaskInsert, Project } from '@/types/task';
+import { AREAS } from '@/types/task';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { TaskTable } from '@/components/task/TaskTable';
-import { KanbanBoard } from '@/components/task/KanbanBoard';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { BulkAddModal } from '@/components/task/BulkAddModal';
 import { BulkActions } from '@/components/task/BulkActions';
 import { FilterBar } from '@/components/task/FilterBar';
+import { ProjectCard } from '@/components/project/ProjectCard';
+import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { LogOut, Plus } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
-const TABS: { value: ViewTab; label: string }[] = [
-  { value: 'next', label: 'Next' },
-  { value: 'kanban', label: 'Kanban' },
-  { value: 'waiting', label: 'Waiting' },
-  { value: 'done', label: 'Done' },
-  { value: 'all', label: 'All Tasks' },
-];
-
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
-  const { tasks, isLoading, createTask, createManyTasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
   useSeedData();
+  const { tasks, isLoading, createTask, createManyTasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
+  const { projects } = useProjects();
+  const { milestones } = useMilestones();
+  const { clarifyQuestions } = useClarifyQuestions();
 
-  const [activeTab, setActiveTab] = useState<ViewTab>('next');
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<TaskArea | 'all'>('all');
   const [projectFilter, setProjectFilter] = useState('');
@@ -36,42 +33,34 @@ export default function Dashboard() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
 
-  const projects = useMemo(() => {
-    const set = new Set<string>();
-    tasks.forEach(t => { if (t.project) set.add(t.project); });
-    return Array.from(set).sort();
-  }, [tasks]);
-
-  const filtered = useMemo(() => {
-    let result = tasks;
-
-    // Tab filter
-    if (activeTab === 'next') result = result.filter(t => t.status === 'Next');
-    else if (activeTab === 'waiting') result = result.filter(t => t.status === 'Waiting');
-    else if (activeTab === 'done') result = result.filter(t => t.status === 'Done');
-    // kanban and all show everything
-
-    // Area filter
+  const nextTasks = useMemo(() => {
+    let result = tasks.filter(t => t.status === 'Next');
     if (areaFilter !== 'all') result = result.filter(t => t.area === areaFilter);
-
-    // Project filter
-    if (projectFilter) result = result.filter(t => t.project === projectFilter);
-
-    // Search
+    if (projectFilter) result = result.filter(t => t.project_id === projectFilter);
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(t =>
-        t.title.toLowerCase().includes(q) ||
-        (t.context?.toLowerCase().includes(q)) ||
-        (t.project?.toLowerCase().includes(q))
-      );
+      result = result.filter(t => t.title.toLowerCase().includes(q) || t.context?.toLowerCase().includes(q));
     }
-
     return result;
-  }, [tasks, activeTab, areaFilter, projectFilter, search]);
+  }, [tasks, areaFilter, projectFilter, search]);
 
-  const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus) => {
-    createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project: null, blocked_by: null, source: null }, {
+  const waitingTasks = tasks.filter(t => t.status === 'Waiting');
+  const waitingByProject = useMemo(() => {
+    const grouped: Record<string, Task[]> = {};
+    for (const t of waitingTasks) {
+      const pName = t.project_id ? projects.find(p => p.id === t.project_id)?.name ?? 'No project' : 'No project';
+      (grouped[pName] ??= []).push(t);
+    }
+    return grouped;
+  }, [waitingTasks, projects]);
+
+  const activeProjects = projects.filter(p => {
+    const pTasks = tasks.filter(t => t.project_id === p.id);
+    return pTasks.some(t => t.status === 'Next' || t.status === 'Waiting');
+  });
+
+  const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
+    createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null }, {
       onSuccess: () => toast.success('Task added'),
       onError: (e) => toast.error(e.message),
     });
@@ -84,137 +73,77 @@ export default function Dashboard() {
     });
   }, [createManyTasks]);
 
-  const handleUpdate = useCallback((id: string, updates: TaskUpdate) => {
-    updateTask.mutate({ id, ...updates });
-  }, [updateTask]);
-
+  const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleBulkUpdate = useCallback((updates: TaskUpdate) => {
     const ids = Array.from(selectedIds);
-    bulkUpdateTasks.mutate({ ids, updates }, {
-      onSuccess: () => { toast.success(`${ids.length} tasks updated`); setSelectedIds(new Set()); },
-    });
+    bulkUpdateTasks.mutate({ ids, updates }, { onSuccess: () => { toast.success(`${ids.length} tasks updated`); setSelectedIds(new Set()); } });
   }, [selectedIds, bulkUpdateTasks]);
-
-  const handleDelete = useCallback((id: string) => {
-    deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') });
-  }, [deleteTask]);
-
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const selectAll = useCallback(() => {
-    setSelectedIds(prev =>
-      prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id))
-    );
-  }, [filtered]);
-
-  const defaultStatus: TaskStatus = activeTab === 'waiting' ? 'Waiting' : activeTab === 'done' ? 'Done' : 'Next';
+  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
+  const toggleSelect = useCallback((id: string) => { setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); }, []);
+  const selectAll = useCallback(() => { setSelectedIds(prev => prev.size === nextTasks.length ? new Set() : new Set(nextTasks.map(t => t.id))); }, [nextTasks]);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="font-mono text-lg font-bold tracking-tight">Task OS</h1>
-            <p className="text-xs text-muted-foreground">
-              {user?.email}
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-xs">
-            <LogOut className="h-3.5 w-3.5 mr-1" /> Sign out
-          </Button>
-        </div>
-      </header>
+    <AppShell>
+      <div className="space-y-4">
+        <QuickAdd defaultStatus="Next" projects={projects} onAdd={handleQuickAdd} />
 
-      <main className="container max-w-6xl mx-auto px-4 py-4 space-y-4">
-        {/* Tabs */}
-        <nav className="flex items-center gap-1 border-b">
-          {TABS.map(tab => (
-            <button
-              key={tab.value}
-              onClick={() => { setActiveTab(tab.value); setSelectedIds(new Set()); }}
-              className={cn(
-                'px-3 py-2 text-xs font-medium font-mono border-b-2 transition-colors -mb-[1px]',
-                activeTab === tab.value
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <FilterBar
-            search={search}
-            onSearchChange={setSearch}
-            areaFilter={areaFilter}
-            onAreaChange={setAreaFilter}
-            projectFilter={projectFilter}
-            onProjectChange={setProjectFilter}
-            projects={projects}
-          />
-          <div className="flex items-center gap-2">
-            <BulkActions
-              selectedCount={selectedIds.size}
-              selectedTasks={filtered.filter(t => selectedIds.has(t.id))}
-              onBulkUpdate={handleBulkUpdate}
-              onClearSelection={() => setSelectedIds(new Set())}
-              allTasks={tasks}
-            />
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setBulkAddOpen(true)}>
-              <Plus className="h-3 w-3 mr-1" /> Bulk Add
-            </Button>
-          </div>
-        </div>
-
-        {/* Quick Add */}
-        <QuickAdd defaultStatus={defaultStatus} onAdd={handleQuickAdd} />
-
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading tasks...</div>
-        ) : activeTab === 'kanban' ? (
-          <KanbanBoard
-            tasks={filtered}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onTaskClick={setDetailTask}
-            onStatusChange={(id, status) => handleUpdate(id, { status })}
-          />
-        ) : (
-          <TaskTable
-            tasks={filtered}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onSelectAll={selectAll}
-            onTaskClick={setDetailTask}
-            onInlineUpdate={handleUpdate}
-          />
+        {activeProjects.length > 0 && (
+          <section>
+            <h2 className="font-mono text-xs font-semibold text-muted-foreground mb-2">Active Projects</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {activeProjects.map(p => (
+                <ProjectCard key={p.id} project={p} tasks={tasks.filter(t => t.project_id === p.id)}
+                  clarifyCount={clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open').length}
+                  onClick={() => window.location.href = `/projects/${p.id}`} />
+              ))}
+            </div>
+          </section>
         )}
-      </main>
 
-      {/* Modals */}
-      <TaskDetailDrawer
-        task={detailTask}
-        open={!!detailTask}
-        onClose={() => setDetailTask(null)}
-        onUpdate={handleUpdate}
-        onDelete={handleDelete}
-      />
-      <BulkAddModal
-        open={bulkAddOpen}
-        onClose={() => setBulkAddOpen(false)}
-        onConfirm={handleBulkAdd}
-      />
-    </div>
+        <section>
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <h2 className="font-mono text-xs font-semibold text-muted-foreground">Next — All Areas</h2>
+            <div className="flex items-center gap-2">
+              <BulkActions selectedCount={selectedIds.size} selectedTasks={nextTasks.filter(t => selectedIds.has(t.id))}
+                onBulkUpdate={handleBulkUpdate} onClearSelection={() => setSelectedIds(new Set())} allTasks={tasks} projects={projects} />
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setBulkAddOpen(true)}>
+                <Plus className="h-3 w-3 mr-1" /> Bulk Add
+              </Button>
+            </div>
+          </div>
+          <FilterBar search={search} onSearchChange={setSearch} areaFilter={areaFilter} onAreaChange={setAreaFilter}
+            projectFilter={projectFilter} onProjectChange={setProjectFilter} projects={projects} />
+          <div className="mt-2">
+            {isLoading ? <p className="text-sm text-muted-foreground text-center py-8">Loading...</p> :
+              <TaskTable tasks={nextTasks} projects={projects} selectedIds={selectedIds} onToggleSelect={toggleSelect}
+                onSelectAll={selectAll} onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} />}
+          </div>
+        </section>
+
+        {waitingTasks.length > 0 && (
+          <section>
+            <h2 className="font-mono text-xs font-semibold text-muted-foreground mb-2">What's blocking me?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {Object.entries(waitingByProject).map(([projectName, pTasks]) => (
+                <Card key={projectName} className="p-3">
+                  <h3 className="font-mono text-xs font-medium mb-2">{projectName}</h3>
+                  <div className="space-y-1">
+                    {pTasks.map(t => (
+                      <div key={t.id} className="text-xs text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => setDetailTask(t)}>
+                        {t.title} {t.blocked_by && <span className="text-status-waiting">⏳ {t.blocked_by}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
+        onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
+      <BulkAddModal open={bulkAddOpen} onClose={() => setBulkAddOpen(false)} onConfirm={handleBulkAdd} projects={projects} />
+    </AppShell>
   );
 }

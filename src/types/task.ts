@@ -4,6 +4,12 @@ export type TaskArea = typeof AREAS[number];
 export const STATUSES = ['Backlog', 'Next', 'Waiting', 'Done'] as const;
 export type TaskStatus = typeof STATUSES[number];
 
+export const UPDATE_SOURCES = ['chatgpt', 'meeting', 'email', 'call', 'doc'] as const;
+export type UpdateSource = typeof UPDATE_SOURCES[number];
+
+export const CLARIFY_STATUSES = ['open', 'answered', 'dismissed'] as const;
+export type ClarifyStatus = typeof CLARIFY_STATUSES[number];
+
 export interface Task {
   id: string;
   user_id: string;
@@ -13,17 +19,64 @@ export interface Task {
   context: string | null;
   notes: string | null;
   tags: string[];
-  project: string | null;
+  project_id: string | null;
+  milestone_id: string | null;
   blocked_by: string | null;
   source: string | null;
   created_at: string;
   updated_at: string;
 }
 
+export interface Project {
+  id: string;
+  user_id: string;
+  name: string;
+  area: TaskArea;
+  summary: string | null;
+  scope_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Milestone {
+  id: string;
+  user_id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  order_index: number;
+  completion_rule: 'manual' | 'tasks_based';
+  is_complete: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Update {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  source: UpdateSource | null;
+  content: string;
+  extracted_summary: string | null;
+  extracted_tasks: any | null;
+  created_at: string;
+}
+
+export interface ClarifyQuestion {
+  id: string;
+  user_id: string;
+  project_id: string;
+  question: string;
+  reason: string | null;
+  suggested_options: string[] | null;
+  status: ClarifyStatus;
+  answer: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at'>;
 export type TaskUpdate = Partial<Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
-
-export type ViewTab = 'next' | 'kanban' | 'waiting' | 'done' | 'all';
 
 export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', defaultStatus: TaskStatus = 'Backlog'): Omit<TaskInsert, 'user_id'> {
   let remaining = line.trim();
@@ -32,7 +85,6 @@ export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', 
   let project: string | null = null;
   let context: string | null = null;
 
-  // Extract context after " — " or " - "
   const dashIdx = remaining.indexOf(' — ');
   const hyphenIdx = dashIdx === -1 ? remaining.indexOf(' - ') : -1;
   const contextIdx = dashIdx !== -1 ? dashIdx : hyphenIdx;
@@ -41,7 +93,6 @@ export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', 
     remaining = remaining.slice(0, contextIdx).trim();
   }
 
-  // Extract tokens [Key=Value]
   const tokenRegex = /\[(\w+)=([^\]]+)\]/g;
   let match;
   while ((match = tokenRegex.exec(remaining)) !== null) {
@@ -60,7 +111,8 @@ export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', 
     context,
     notes: null,
     tags: [],
-    project,
+    project_id: null,
+    milestone_id: null,
     blocked_by: null,
     source: null,
   };

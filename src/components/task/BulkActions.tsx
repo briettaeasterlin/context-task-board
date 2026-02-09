@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { AREAS, STATUSES, type TaskArea, type TaskStatus, type Task, type TaskUpdate } from '@/types/task';
-import { ArrowRight, Download, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AREAS, STATUSES, type TaskArea, type TaskStatus, type Task, type TaskUpdate, type Project } from '@/types/task';
+import { Download, X } from 'lucide-react';
 
 interface Props {
   selectedCount: number;
@@ -13,16 +11,21 @@ interface Props {
   onBulkUpdate: (updates: TaskUpdate) => void;
   onClearSelection: () => void;
   allTasks: Task[];
+  projects?: Project[];
 }
 
-export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClearSelection, allTasks }: Props) {
+export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClearSelection, allTasks, projects = [] }: Props) {
   const [exportOpen, setExportOpen] = useState(false);
+  const projectMap = new Map(projects.map(p => [p.id, p.name]));
+
+  const getProjectName = (t: Task) => t.project_id ? projectMap.get(t.project_id) ?? '' : '';
 
   const exportAsText = (tasks: Task[]) => {
     const text = tasks.map(t => {
       let line = t.title;
       line += ` [Area=${t.area}] [Status=${t.status}]`;
-      if (t.project) line += ` [Project=${t.project}]`;
+      const pName = getProjectName(t);
+      if (pName) line += ` [Project=${pName}]`;
       if (t.context) line += ` — ${t.context}`;
       return line;
     }).join('\n');
@@ -32,7 +35,7 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
   const exportAsCsv = (tasks: Task[]) => {
     const headers = 'title,area,status,project,context';
     const rows = tasks.map(t =>
-      [t.title, t.area, t.status, t.project ?? '', t.context ?? '']
+      [t.title, t.area, t.status, getProjectName(t), t.context ?? '']
         .map(v => `"${v.replace(/"/g, '""')}"`)
         .join(',')
     );
@@ -52,7 +55,8 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
       text += `${area}\n${'-'.repeat(20)}\n`;
       for (const t of tasks) {
         text += `  [${t.status}] ${t.title}`;
-        if (t.project) text += ` (${t.project})`;
+        const pName = getProjectName(t);
+        if (pName) text += ` (${pName})`;
         if (t.blocked_by) text += ` ⏳ ${t.blocked_by}`;
         text += '\n';
       }
@@ -77,22 +81,13 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
         <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setExportOpen(true)}>
           <Download className="h-3 w-3 mr-1" /> Export
         </Button>
-
         <Dialog open={exportOpen} onOpenChange={setExportOpen}>
           <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="font-mono text-sm">Export Tasks</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle className="font-mono text-sm">Export Tasks</DialogTitle></DialogHeader>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start text-xs" onClick={() => { exportAsText(allTasks); setExportOpen(false); }}>
-                All tasks as plain text
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-xs" onClick={() => { exportAsCsv(allTasks); setExportOpen(false); }}>
-                All tasks as CSV
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-xs" onClick={() => { exportSnapshot(); setExportOpen(false); }}>
-                Weekly Snapshot (Next + Waiting)
-              </Button>
+              <Button variant="outline" className="w-full justify-start text-xs" onClick={() => { exportAsText(allTasks); setExportOpen(false); }}>All tasks as plain text</Button>
+              <Button variant="outline" className="w-full justify-start text-xs" onClick={() => { exportAsCsv(allTasks); setExportOpen(false); }}>All tasks as CSV</Button>
+              <Button variant="outline" className="w-full justify-start text-xs" onClick={() => { exportSnapshot(); setExportOpen(false); }}>Weekly Snapshot (Next + Waiting)</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -104,13 +99,22 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
     <div className="flex items-center gap-2 rounded-md border bg-accent/50 px-3 py-1.5">
       <span className="text-xs font-mono font-medium">{selectedCount} selected</span>
       <Select onValueChange={v => onBulkUpdate({ status: v as TaskStatus })}>
-        <SelectTrigger className="w-[100px] h-7 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+        <SelectTrigger className="w-[90px] h-7 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
         <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
       </Select>
       <Select onValueChange={v => onBulkUpdate({ area: v as TaskArea })}>
-        <SelectTrigger className="w-[100px] h-7 text-xs"><SelectValue placeholder="Area" /></SelectTrigger>
+        <SelectTrigger className="w-[90px] h-7 text-xs"><SelectValue placeholder="Area" /></SelectTrigger>
         <SelectContent>{AREAS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
       </Select>
+      {projects.length > 0 && (
+        <Select onValueChange={v => onBulkUpdate({ project_id: v === 'none' ? null : v })}>
+          <SelectTrigger className="w-[110px] h-7 text-xs"><SelectValue placeholder="Project" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No project</SelectItem>
+            {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      )}
       <Button variant="ghost" size="sm" className="h-7 px-2" onClick={onClearSelection}>
         <X className="h-3 w-3" />
       </Button>
