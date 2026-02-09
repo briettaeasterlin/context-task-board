@@ -31,6 +31,8 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
+    const defaults = body.defaults ?? {};
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -42,44 +44,47 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You extract structured tasks and identify clarifying questions from project updates.
-Context: This is a task/project tracking app for a single user named Brietta.
+            content: `You extract structured data from text input in a task/project tracking app for a single user named Brietta.
 Areas available: Client, Business, Home, Family, Personal.
 Statuses available: Backlog, Next, Waiting, Done.
+${defaults.area ? `Default area hint from UI: ${defaults.area}` : ''}
+${defaults.status ? `Default status hint from UI: ${defaults.status}` : ''}
 
-Extraction rules:
-- Keep task titles short and actionable (under 10 words ideally). Never include typos or artifacts.
-- Be CONSERVATIVE with status assignment:
-  - Default to "Backlog" if uncertain
-  - Only assign "Waiting" if there is a CLEAR external dependency (someone else must act first)
-  - Assign "Next" only for items Brietta can and should act on immediately
-  - Assign "Done" ONLY if the update explicitly says the work is finished/completed. Do NOT mark informational items as Done.
-- When assigning "Waiting", always fill blockedBy with the specific person or thing blocking progress
-- Put detailed context in the context field — keep titles clean
-- Do NOT create tasks for grocery lists, trivial errands, or items that are clearly just notes
-- Prefer FEWER, higher-signal tasks over many small ones
-- Prefer creating ClarifyQuestions over guessing when scope is ambiguous
-- Ask clarifying questions when:
-  - Scope is unclear or could mean multiple things
-  - Dependencies are ambiguous
-  - Acceptance criteria are missing
-  - A big change happened and downstream implications are unclear
-- Do NOT ask clarifying questions about trivial items or scheduling details`
+Classify each piece of information into exactly ONE of these buckets:
+
+1) NEW TASKS — clear actions required. Keep titles short (<10 words), actionable, clean.
+   - Default to "Backlog" if uncertain. "Next" only for immediately actionable items.
+   - "Waiting" ONLY with a clear external dependency — always fill blockedBy.
+   - "Done" ONLY if explicitly stated as completed. NEVER mark informational items as Done.
+   - Skip grocery lists, trivial errands, FYI-only items.
+   - Prefer FEWER, higher-signal tasks.
+
+2) TASK UPDATES — text implying progress or changes to EXISTING tasks.
+   - E.g. "Stripe is connected" → mark related task Done.
+   - E.g. "Waiting on Pilot for taxes" → move related task to Waiting + blockedBy=Pilot.
+   - Provide a matchHint (keyword from likely existing task title) so the app can fuzzy-match.
+
+3) CONTEXT NOTES — informational content to attach to a project or task. NOT a task itself.
+   - Include a targetHint describing what project/task it relates to.
+
+4) CLARIFY QUESTIONS — ambiguity about scope, ownership, dependencies, or definition of done.
+   - Prefer fewer, higher-signal questions. Include suggestedOptions when helpful.
+   - Do NOT ask about trivial scheduling or formatting details.`
           },
           {
             role: 'user',
-            content: `${projectName ? `Project: ${projectName}\n` : ''}${source ? `Source: ${source}\n` : ''}\nUpdate:\n${rawText}`
+            content: `${projectName ? `Project: ${projectName}\n` : ''}${source ? `Source: ${source}\n` : ''}\nInput:\n${rawText}`
           }
         ],
         tools: [{
           type: 'function',
           function: {
             name: 'extract_from_update',
-            description: 'Extract a summary, actionable tasks, and clarifying questions from a project update',
+            description: 'Extract structured tasks, updates, context notes, and clarifying questions from input text',
             parameters: {
               type: 'object',
               properties: {
-                summary: { type: 'string', description: '2-3 sentence summary of the update' },
+                summary: { type: 'string', description: '2-3 sentence summary of the input' },
                 extractedTasks: {
                   type: 'array',
                   items: {
@@ -92,6 +97,34 @@ Extraction rules:
                       blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting tasks)' }
                     },
                     required: ['title', 'status'],
+                    additionalProperties: false
+                  }
+                },
+                taskUpdates: {
+                  type: 'array',
+                  description: 'Updates to existing tasks (status changes, blockers)',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      description: { type: 'string', description: 'What changed' },
+                      matchHint: { type: 'string', description: 'Keyword to fuzzy-match an existing task title' },
+                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'], description: 'New status if applicable' },
+                      blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting)' }
+                    },
+                    required: ['description'],
+                    additionalProperties: false
+                  }
+                },
+                contextNotes: {
+                  type: 'array',
+                  description: 'Informational content to attach to project/task notes',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      content: { type: 'string', description: 'The informational content' },
+                      targetHint: { type: 'string', description: 'Which project or task this relates to' }
+                    },
+                    required: ['content'],
                     additionalProperties: false
                   }
                 },
@@ -113,7 +146,7 @@ Extraction rules:
                   }
                 }
               },
-              required: ['summary', 'extractedTasks', 'extractedClarifyQuestions'],
+              required: ['summary', 'extractedTasks', 'taskUpdates', 'contextNotes', 'extractedClarifyQuestions'],
               additionalProperties: false
             }
           }
@@ -147,16 +180,26 @@ Extraction rules:
     // Normalize the response shape
     const normalized = {
       summary: result.summary ?? null,
-      extractedTasks: (result.extractedTasks ?? result.tasks ?? []).map((t: any) => ({
+      extractedTasks: (result.extractedTasks ?? []).map((t: any) => ({
         title: t.title,
-        area: t.area || 'Personal',
-        status: t.status || 'Backlog',
+        area: t.area || defaults.area || 'Personal',
+        status: t.status || defaults.status || 'Backlog',
         context: t.context || null,
         blockedBy: t.blockedBy || null,
         projectId: projectId || null,
         milestoneId: null,
       })),
-      extractedClarifyQuestions: (result.extractedClarifyQuestions ?? result.questions ?? []).map((q: any) => ({
+      taskUpdates: (result.taskUpdates ?? []).map((u: any) => ({
+        description: u.description,
+        matchHint: u.matchHint || null,
+        newStatus: u.newStatus || null,
+        blockedBy: u.blockedBy || null,
+      })),
+      contextNotes: (result.contextNotes ?? []).map((c: any) => ({
+        content: c.content,
+        targetHint: c.targetHint || null,
+      })),
+      extractedClarifyQuestions: (result.extractedClarifyQuestions ?? []).map((q: any) => ({
         question: q.question,
         reason: q.reason || null,
         suggestedOptions: q.suggestedOptions || null,
