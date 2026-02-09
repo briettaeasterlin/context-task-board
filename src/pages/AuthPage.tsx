@@ -6,8 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function AuthPage() {
-  const { signIn, signUp } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +16,7 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error } = isSignUp ? await signUp(email, password) : await signIn(email, password);
+    const { error } = await signIn(email, password);
     if (error) setError(error.message);
     setLoading(false);
   };
@@ -27,7 +26,7 @@ export default function AuthPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-mono text-2xl tracking-tight">Task OS</CardTitle>
-          <CardDescription>{isSignUp ? 'Create your account' : 'Welcome back, Brietta'}</CardDescription>
+          <CardDescription>Welcome back, Brietta</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,15 +55,9 @@ export default function AuthPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '...' : isSignUp ? 'Sign Up' : 'Sign In'}
+              {loading ? '...' : 'Sign In'}
             </Button>
           </form>
-          <button
-            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
-            className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
         </CardContent>
       </Card>
     </div>
