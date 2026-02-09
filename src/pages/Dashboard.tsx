@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useMilestones } from '@/hooks/useProjects';
@@ -20,6 +21,7 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   useSeedData();
   const { tasks, isLoading, createTask, createManyTasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
   const { projects } = useProjects();
@@ -87,7 +89,8 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="space-y-4">
-        <QuickAdd defaultStatus="Next" projects={projects} onAdd={handleQuickAdd} />
+        <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones} onAdd={handleQuickAdd}
+          onTasksCreated={() => queryClient.invalidateQueries()} />
 
         {activeProjects.length > 0 && (
           <section>
