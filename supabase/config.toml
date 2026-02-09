@@ -1,1 +1,4 @@
 project_id = "izzjcdoysbcunsvgwmew"
+
+[functions.ai-extract]
+verify_jwt = false
