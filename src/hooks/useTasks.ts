@@ -1,21 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import type { Task, TaskInsert, TaskUpdate, TaskArea, TaskStatus } from '@/types/task';
+import type { Task, TaskInsert, TaskUpdate } from '@/types/task';
 
-export function useTasks() {
+export function useTasks(projectId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const tasksQuery = useQuery({
-    queryKey: ['tasks', user?.id],
+    queryKey: ['tasks', user?.id, projectId],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      let query = supabase.from('tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      if (projectId) query = query.eq('project_id', projectId);
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as unknown as Task[];
     },
@@ -25,11 +23,7 @@ export function useTasks() {
   const createTask = useMutation({
     mutationFn: async (task: Omit<TaskInsert, 'user_id'>) => {
       if (!user) throw new Error('Not authenticated');
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({ ...task, user_id: user.id } as any)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('tasks').insert({ ...task, user_id: user.id } as any).select().single();
       if (error) throw error;
       return data as unknown as Task;
     },
@@ -40,10 +34,7 @@ export function useTasks() {
     mutationFn: async (tasks: Omit<TaskInsert, 'user_id'>[]) => {
       if (!user) throw new Error('Not authenticated');
       const rows = tasks.map(t => ({ ...t, user_id: user.id }));
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert(rows as any[])
-        .select();
+      const { data, error } = await supabase.from('tasks').insert(rows as any[]).select();
       if (error) throw error;
       return data as unknown as Task[];
     },
@@ -52,12 +43,7 @@ export function useTasks() {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...updates }: TaskUpdate & { id: string }) => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update(updates as any)
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('tasks').update(updates as any).eq('id', id).select().single();
       if (error) throw error;
       return data as unknown as Task;
     },
@@ -66,10 +52,7 @@ export function useTasks() {
 
   const bulkUpdateTasks = useMutation({
     mutationFn: async ({ ids, updates }: { ids: string[]; updates: TaskUpdate }) => {
-      const { error } = await supabase
-        .from('tasks')
-        .update(updates as any)
-        .in('id', ids);
+      const { error } = await supabase.from('tasks').update(updates as any).in('id', ids);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
@@ -86,7 +69,6 @@ export function useTasks() {
   return {
     tasks: tasksQuery.data ?? [],
     isLoading: tasksQuery.isLoading,
-    error: tasksQuery.error,
     createTask,
     createManyTasks,
     updateTask,

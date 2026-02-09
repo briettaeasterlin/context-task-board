@@ -1,19 +1,20 @@
-import type { Task, TaskStatus, TaskUpdate } from '@/types/task';
+import type { Task, TaskStatus, Project } from '@/types/task';
 import { STATUSES } from '@/types/task';
 import { AreaBadge } from './AreaBadge';
-import { StatusBadge } from './StatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 interface Props {
   tasks: Task[];
+  projects?: Project[];
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onTaskClick: (task: Task) => void;
   onStatusChange: (id: string, status: TaskStatus) => void;
 }
 
-export function KanbanBoard({ tasks, selectedIds, onToggleSelect, onTaskClick, onStatusChange }: Props) {
+export function KanbanBoard({ tasks, projects = [], selectedIds, onToggleSelect, onTaskClick, onStatusChange }: Props) {
+  const projectMap = new Map(projects.map(p => [p.id, p.name]));
   const columns = STATUSES.map(status => ({
     status,
     tasks: tasks.filter(t => t.status === status),
@@ -56,14 +57,10 @@ export function KanbanBoard({ tasks, selectedIds, onToggleSelect, onTaskClick, o
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-mono text-xs leading-snug truncate">{task.title}</p>
-                    {task.context && (
-                      <p className="text-[10px] text-muted-foreground mt-1 truncate">{task.context}</p>
-                    )}
+                    {task.context && <p className="text-[10px] text-muted-foreground mt-1 truncate">{task.context}</p>}
                     <div className="flex items-center gap-1.5 mt-2">
                       <AreaBadge area={task.area} className="text-[10px] px-1 py-0" />
-                      {task.project && (
-                        <span className="text-[10px] text-muted-foreground">{task.project}</span>
-                      )}
+                      {task.project_id && <span className="text-[10px] text-muted-foreground">{projectMap.get(task.project_id)}</span>}
                     </div>
                     {task.status === 'Waiting' && task.blocked_by && (
                       <p className="text-[10px] text-status-waiting mt-1">⏳ {task.blocked_by}</p>
@@ -72,9 +69,7 @@ export function KanbanBoard({ tasks, selectedIds, onToggleSelect, onTaskClick, o
                 </div>
               </div>
             ))}
-            {col.tasks.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">Empty</p>
-            )}
+            {col.tasks.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Empty</p>}
           </div>
         </div>
       ))}

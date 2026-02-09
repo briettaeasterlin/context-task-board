@@ -5,9 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AREAS, STATUSES, type Task, type TaskArea, type TaskStatus, type TaskUpdate } from '@/types/task';
-import { AreaBadge } from './AreaBadge';
-import { StatusBadge } from './StatusBadge';
+import { AREAS, STATUSES, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone } from '@/types/task';
 import { Trash2 } from 'lucide-react';
 
 interface Props {
@@ -16,10 +14,16 @@ interface Props {
   onClose: () => void;
   onUpdate: (id: string, updates: TaskUpdate) => void;
   onDelete: (id: string) => void;
+  projects?: Project[];
+  milestones?: Milestone[];
 }
 
-export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete }: Props) {
-  const [form, setForm] = useState({ title: '', context: '', notes: '', project: '', blocked_by: '', area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus });
+export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, projects = [], milestones = [] }: Props) {
+  const [form, setForm] = useState({
+    title: '', context: '', notes: '', blocked_by: '',
+    area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus,
+    project_id: '', milestone_id: '',
+  });
 
   useEffect(() => {
     if (task) {
@@ -27,25 +31,29 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete }: Pr
         title: task.title,
         context: task.context ?? '',
         notes: task.notes ?? '',
-        project: task.project ?? '',
         blocked_by: task.blocked_by ?? '',
         area: task.area,
         status: task.status,
+        project_id: task.project_id ?? '',
+        milestone_id: task.milestone_id ?? '',
       });
     }
   }, [task]);
 
   if (!task) return null;
 
+  const projectMilestones = milestones.filter(m => m.project_id === form.project_id);
+
   const save = () => {
     onUpdate(task.id, {
       title: form.title,
       context: form.context || null,
       notes: form.notes || null,
-      project: form.project || null,
       blocked_by: form.blocked_by || null,
       area: form.area,
       status: form.status,
+      project_id: form.project_id || null,
+      milestone_id: form.milestone_id || null,
     });
     onClose();
   };
@@ -79,20 +87,38 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete }: Pr
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Project</Label>
-            <Input value={form.project} onChange={e => setForm(f => ({ ...f, project: e.target.value }))} placeholder="e.g. Troveres" className="text-sm" />
+            <Select value={form.project_id || 'none'} onValueChange={v => setForm(f => ({ ...f, project_id: v === 'none' ? '' : v, milestone_id: '' }))}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="No project" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No project</SelectItem>
+                {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
+          {projectMilestones.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Milestone</Label>
+              <Select value={form.milestone_id || 'none'} onValueChange={v => setForm(f => ({ ...f, milestone_id: v === 'none' ? '' : v }))}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="No milestone" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No milestone</SelectItem>
+                  {projectMilestones.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Context</Label>
             <Textarea value={form.context} onChange={e => setForm(f => ({ ...f, context: e.target.value }))} rows={3} className="text-sm" placeholder="Clarifying details..." />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Notes</Label>
-            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" placeholder="Additional notes..." />
+            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
           </div>
           {form.status === 'Waiting' && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Blocked by</Label>
-              <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} placeholder="Who/what is blocking?" className="text-sm" />
+              <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} className="text-sm" />
             </div>
           )}
           <div className="flex gap-2 pt-2">
