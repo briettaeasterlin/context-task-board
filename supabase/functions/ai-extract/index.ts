@@ -9,7 +9,25 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const { content, projectId, projectName } = await req.json();
+    const body = await req.json();
+    // Support both old (content) and new (rawText) payload shapes
+    const rawText = body.rawText ?? body.content;
+    const projectId = body.projectId ?? null;
+    const projectName = body.projectName ?? null;
+    const source = body.source ?? null;
+
+    if (!rawText || typeof rawText !== 'string' || rawText.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'rawText is required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (rawText.length > 50000) {
+      return new Response(JSON.stringify({ error: 'Input too long (max 50,000 characters)' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
@@ -28,18 +46,26 @@ serve(async (req) => {
 Context: This is a task/project tracking app for a single user named Brietta.
 Areas available: Client, Business, Home, Family, Personal.
 Statuses available: Backlog, Next, Waiting, Done.
-Rules:
+
+Extraction rules:
 - Keep task titles short and actionable (under 10 words ideally)
-- When something is waiting on someone else, set status to "Waiting" and fill blockedBy with who/what
-- When something is actionable now, set status to "Next"
-- When something is future work, set status to "Backlog"
-- When something is completed, set status to "Done"
+- Be CONSERVATIVE with status assignment:
+  - Default to "Backlog" if uncertain
+  - Only assign "Waiting" if there is a clear external dependency or blocker mentioned
+  - Assign "Next" only for immediately actionable items
+  - Assign "Done" only if explicitly stated as completed
+- When something is waiting on someone else, fill blockedBy with who/what
 - Put detailed context in the context field
-- Ask clarifying questions when scope is unclear, dependencies are ambiguous, or acceptance criteria are missing`
+- Prefer creating ClarifyQuestions over guessing when scope is ambiguous
+- Ask clarifying questions when:
+  - Scope is unclear or could mean multiple things
+  - Dependencies are ambiguous
+  - Acceptance criteria are missing
+  - A big change happened and downstream implications are unclear`
           },
           {
             role: 'user',
-            content: `${projectName ? `Project: ${projectName}\n\n` : ''}Update:\n${content}`
+            content: `${projectName ? `Project: ${projectName}\n` : ''}${source ? `Source: ${source}\n` : ''}\nUpdate:\n${rawText}`
           }
         ],
         tools: [{
@@ -51,35 +77,40 @@ Rules:
               type: 'object',
               properties: {
                 summary: { type: 'string', description: '2-3 sentence summary of the update' },
-                tasks: {
+                extractedTasks: {
                   type: 'array',
                   items: {
                     type: 'object',
                     properties: {
-                      title: { type: 'string', description: 'Short, actionable task title' },
+                      title: { type: 'string', description: 'Short, actionable task title (under 10 words)' },
                       area: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
                       status: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
-                      context: { type: 'string', description: 'Additional context' },
-                      blockedBy: { type: 'string', description: 'Who/what is blocking (for Waiting tasks)' }
+                      context: { type: 'string', description: 'Additional context or details' },
+                      blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting tasks)' }
                     },
                     required: ['title', 'status'],
                     additionalProperties: false
                   }
                 },
-                questions: {
+                extractedClarifyQuestions: {
                   type: 'array',
                   items: {
                     type: 'object',
                     properties: {
                       question: { type: 'string', description: 'Clarifying question about scope or dependencies' },
-                      reason: { type: 'string', description: 'Why this question matters' }
+                      reason: { type: 'string', description: 'Why this question matters for project clarity' },
+                      suggestedOptions: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Suggested answer options if applicable'
+                      }
                     },
                     required: ['question'],
                     additionalProperties: false
                   }
                 }
               },
-              required: ['summary', 'tasks', 'questions'],
+              required: ['summary', 'extractedTasks', 'extractedClarifyQuestions'],
               additionalProperties: false
             }
           }
@@ -109,7 +140,27 @@ Rules:
     if (!toolCall) throw new Error('No structured response from AI');
 
     const result = JSON.parse(toolCall.function.arguments);
-    return new Response(JSON.stringify(result), {
+
+    // Normalize the response shape
+    const normalized = {
+      summary: result.summary ?? null,
+      extractedTasks: (result.extractedTasks ?? result.tasks ?? []).map((t: any) => ({
+        title: t.title,
+        area: t.area || 'Personal',
+        status: t.status || 'Backlog',
+        context: t.context || null,
+        blockedBy: t.blockedBy || null,
+        projectId: projectId || null,
+        milestoneId: null,
+      })),
+      extractedClarifyQuestions: (result.extractedClarifyQuestions ?? result.questions ?? []).map((q: any) => ({
+        question: q.question,
+        reason: q.reason || null,
+        suggestedOptions: q.suggestedOptions || null,
+      })),
+    };
+
+    return new Response(JSON.stringify(normalized), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (e) {
