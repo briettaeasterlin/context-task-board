@@ -48,20 +48,23 @@ Areas available: Client, Business, Home, Family, Personal.
 Statuses available: Backlog, Next, Waiting, Done.
 
 Extraction rules:
-- Keep task titles short and actionable (under 10 words ideally)
+- Keep task titles short and actionable (under 10 words ideally). Never include typos or artifacts.
 - Be CONSERVATIVE with status assignment:
   - Default to "Backlog" if uncertain
-  - Only assign "Waiting" if there is a clear external dependency or blocker mentioned
-  - Assign "Next" only for immediately actionable items
-  - Assign "Done" only if explicitly stated as completed
-- When something is waiting on someone else, fill blockedBy with who/what
-- Put detailed context in the context field
+  - Only assign "Waiting" if there is a CLEAR external dependency (someone else must act first)
+  - Assign "Next" only for items Brietta can and should act on immediately
+  - Assign "Done" ONLY if the update explicitly says the work is finished/completed. Do NOT mark informational items as Done.
+- When assigning "Waiting", always fill blockedBy with the specific person or thing blocking progress
+- Put detailed context in the context field — keep titles clean
+- Do NOT create tasks for grocery lists, trivial errands, or items that are clearly just notes
+- Prefer FEWER, higher-signal tasks over many small ones
 - Prefer creating ClarifyQuestions over guessing when scope is ambiguous
 - Ask clarifying questions when:
   - Scope is unclear or could mean multiple things
   - Dependencies are ambiguous
   - Acceptance criteria are missing
-  - A big change happened and downstream implications are unclear`
+  - A big change happened and downstream implications are unclear
+- Do NOT ask clarifying questions about trivial items or scheduling details`
           },
           {
             role: 'user',
