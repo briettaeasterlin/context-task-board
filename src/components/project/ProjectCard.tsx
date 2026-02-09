@@ -1,30 +1,44 @@
-import type { Project, Task } from '@/types/task';
+import type { Project, Task, ClarifyQuestion, Milestone } from '@/types/task';
 import { AreaBadge } from '@/components/task/AreaBadge';
 import { Card } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Activity } from 'lucide-react';
 
 interface Props {
   project: Project;
   tasks: Task[];
   clarifyCount: number;
+  milestones?: Milestone[];
   onClick: () => void;
 }
 
-export function ProjectCard({ project, tasks, clarifyCount, onClick }: Props) {
+export function ProjectCard({ project, tasks, clarifyCount, milestones = [], onClick }: Props) {
   const total = tasks.length;
   const done = tasks.filter(t => t.status === 'Done').length;
   const next = tasks.filter(t => t.status === 'Next').length;
   const waiting = tasks.filter(t => t.status === 'Waiting').length;
   const backlog = tasks.filter(t => t.status === 'Backlog').length;
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-  const isAtRisk = total > 0 && next === 0 && waiting > 0;
+
+  // Derived: project is "in progress" if it has Next tasks, open clarify questions, or incomplete milestones
+  const incompleteMilestones = milestones.filter(m => m.project_id === project.id && !m.is_complete).length;
+  const isInProgress = next > 0 || clarifyCount > 0 || incompleteMilestones > 0;
+
+  // At risk: has waiting tasks but nothing in Next, OR lots of open clarify questions
+  const isAtRisk = total > 0 && next === 0 && (waiting > 0 || clarifyCount >= 2);
 
   return (
     <Card className="p-4 cursor-pointer hover:shadow-sm transition-shadow" onClick={onClick}>
       <div className="flex items-start justify-between mb-2">
         <div>
           <h3 className="font-mono text-sm font-semibold">{project.name}</h3>
-          <AreaBadge area={project.area} className="mt-1" />
+          <div className="flex items-center gap-1.5 mt-1">
+            <AreaBadge area={project.area} />
+            {isInProgress && !isAtRisk && (
+              <span className="flex items-center gap-0.5 text-[10px] text-primary font-medium">
+                <Activity className="h-3 w-3" /> Active
+              </span>
+            )}
+          </div>
         </div>
         {isAtRisk && (
           <span className="flex items-center gap-1 text-[10px] text-status-waiting font-medium">

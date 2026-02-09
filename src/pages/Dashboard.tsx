@@ -56,7 +56,9 @@ export default function Dashboard() {
 
   const activeProjects = projects.filter(p => {
     const pTasks = tasks.filter(t => t.project_id === p.id);
-    return pTasks.some(t => t.status === 'Next' || t.status === 'Waiting');
+    const pMilestones = milestones.filter(m => m.project_id === p.id);
+    const pClarify = clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open');
+    return pTasks.some(t => t.status === 'Next' || t.status === 'Waiting') || pClarify.length > 0 || pMilestones.some(m => !m.is_complete);
   });
 
   const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
@@ -93,6 +95,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {activeProjects.map(p => (
                 <ProjectCard key={p.id} project={p} tasks={tasks.filter(t => t.project_id === p.id)}
+                  milestones={milestones}
                   clarifyCount={clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open').length}
                   onClick={() => window.location.href = `/projects/${p.id}`} />
               ))}

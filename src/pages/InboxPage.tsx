@@ -1,4 +1,4 @@
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { AppShell } from '@/components/layout/AppShell';
 import { UpdateForm } from '@/components/inbox/UpdateForm';
@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 
 export default function InboxPage() {
   const { projects } = useProjects();
+  const { milestones } = useMilestones();
   const { clarifyQuestions, updateClarifyQuestion } = useClarifyQuestions();
   const queryClient = useQueryClient();
 
@@ -27,7 +28,7 @@ export default function InboxPage() {
       <div className="space-y-6">
         <section>
           <h2 className="font-mono text-sm font-semibold mb-3">Paste an Update</h2>
-          <UpdateForm projects={projects} onCreated={() => queryClient.invalidateQueries()} />
+          <UpdateForm projects={projects} milestones={milestones} onCreated={() => queryClient.invalidateQueries()} />
         </section>
 
         <section>
