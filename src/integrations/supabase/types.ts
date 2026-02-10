@@ -186,6 +186,7 @@ export type Database = {
           notes: string | null
           project: string | null
           project_id: string | null
+          sort_order: number | null
           source: string | null
           status: Database["public"]["Enums"]["task_status"]
           tags: string[] | null
@@ -205,6 +206,7 @@ export type Database = {
           notes?: string | null
           project?: string | null
           project_id?: string | null
+          sort_order?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
@@ -224,6 +226,7 @@ export type Database = {
           notes?: string | null
           project?: string | null
           project_id?: string | null
+          sort_order?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
