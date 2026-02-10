@@ -32,6 +32,8 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
     const defaults = body.defaults ?? {};
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -45,6 +47,9 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are Task OS, a conversation-first task reasoning system for a single user.
+
+TODAY: ${todayISO} (${todayDay}). Use this to resolve relative dates like "Friday", "next week", "Feb 15".
+CRITICAL DATE RULE: When resolving relative or partial dates (e.g. "Friday", "Feb 20"), ALWAYS pick the NEXT upcoming occurrence. Never assign a date in the past. If "Friday" is mentioned and today is Wednesday Feb 11 2026, the due date is Feb 13 2026, NOT a past Friday.
 
 CORE PRINCIPLES:
 - Clarity over completeness. Fewer, higher-signal tasks are always better than many small ones.
