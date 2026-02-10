@@ -47,7 +47,7 @@ export default function ProjectDetailPage() {
   const handleUpdate = useCallback((taskId: string, updates: TaskUpdate) => { updateTask.mutate({ id: taskId, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((taskId: string) => { deleteTask.mutate(taskId); }, [deleteTask]);
   const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
-    createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: id!, milestone_id: null, blocked_by: null, source: null }, {
+    createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: id!, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
       onSuccess: () => toast.success('Task added'),
     });
   }, [createTask, id]);
@@ -78,6 +78,8 @@ export default function ProjectDetailPage() {
           milestone_id: null,
           blocked_by: null,
           source: 'clarify',
+          due_date: null,
+          target_window: null,
         }, { onSuccess: () => toast.success('Task created from answer') });
       }
       if (followOn.createMilestone && id) {

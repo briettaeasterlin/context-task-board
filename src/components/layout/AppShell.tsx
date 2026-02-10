@@ -1,11 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Sun, Layers, Columns3, Clock, CheckCircle2, Inbox } from 'lucide-react';
+import { LogOut, Sun, Layers, Columns3, Clock, CheckCircle2, Inbox, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Today', icon: Sun },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/projects', label: 'Projects', icon: Layers },
   { path: '/kanban', label: 'Kanban', icon: Columns3 },
   { path: '/waiting', label: 'Waiting', icon: Clock },

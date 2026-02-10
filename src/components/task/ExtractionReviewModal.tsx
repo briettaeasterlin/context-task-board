@@ -17,6 +17,8 @@ export interface ExtractedTask {
   status: TaskStatus;
   context: string | null;
   blockedBy: string | null;
+  dueDate: string | null;
+  targetWindow: string | null;
   projectId: string | null;
   milestoneId: string | null;
   selected: boolean;
@@ -190,6 +192,8 @@ export function ExtractionReviewModal({
                         <AreaBadge area={t.area} className="text-[10px]" />
                         <StatusBadge status={t.status} className="text-[10px]" />
                         {t.projectId && <span className="text-[10px] text-primary font-mono">{projects.find(p => p.id === t.projectId)?.name}</span>}
+                        {t.dueDate && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-mono">📅 {t.dueDate}</span>}
+                        {t.targetWindow && <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-mono">🎯 {t.targetWindow}</span>}
                       </>
                     )}
                   </div>
