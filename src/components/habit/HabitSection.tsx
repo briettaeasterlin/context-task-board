@@ -11,14 +11,10 @@ import { toast } from 'sonner';
 const CADENCES = ['Daily', 'Weekly', 'Often', 'Seasonal'] as const;
 
 const AFFIRMATIONS = [
-  'Noted with care.',
-  'Quietly done.',
-  'A gentle step.',
-  'Present today.',
-  'Simply enough.',
-  'Softly acknowledged.',
-  'One small thing.',
-  'Here and now.',
+  'Nice.',
+  'That counts.',
+  'Gentle win.',
+  'Thanks for taking care.',
 ];
 
 function CelebrationOverlay({ phrase, onDone }: { phrase: string; onDone: () => void }) {
@@ -52,7 +48,7 @@ function HabitItem({ habit }: { habit: HabitIntention }) {
       {celebrating && (
         <CelebrationOverlay phrase={phrase} onDone={() => setCelebrating(false)} />
       )}
-      <Card className="p-2 flex items-center gap-3 group transition-colors hover:bg-muted/30">
+      <Card className="p-2.5 flex items-center gap-3 group transition-colors hover:bg-muted/30">
         <button
           onClick={handleDone}
           className="h-5 w-5 rounded-full border border-border flex items-center justify-center shrink-0 transition-all hover:border-primary/50 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring"
@@ -60,7 +56,12 @@ function HabitItem({ habit }: { habit: HabitIntention }) {
         >
           {celebrating && <Check className="h-3 w-3 text-primary animate-fade-in" />}
         </button>
-        <span className="font-mono text-xs flex-1">{habit.name}</span>
+        <div className="flex-1 min-w-0">
+          <span className="font-mono text-xs">{habit.name}</span>
+          {habit.description && (
+            <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">{habit.description}</p>
+          )}
+        </div>
         <span className="text-[10px] text-muted-foreground font-mono">{cadenceLabel}</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -103,7 +104,7 @@ export function HabitSection() {
     <section>
       <div className="flex items-center justify-between mb-2">
         <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-          <Leaf className="h-3.5 w-3.5" /> Intentions
+          <Leaf className="h-3.5 w-3.5" /> Gentle Intentions
         </h2>
         <Button variant="ghost" size="sm" className="h-6 px-1.5 text-muted-foreground" onClick={() => setAdding(!adding)}>
           {adding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}

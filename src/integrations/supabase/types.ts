@@ -66,6 +66,7 @@ export type Database = {
           active: boolean
           cadence: Database["public"]["Enums"]["habit_cadence"]
           created_at: string
+          description: string | null
           id: string
           name: string
           updated_at: string
@@ -75,6 +76,7 @@ export type Database = {
           active?: boolean
           cadence?: Database["public"]["Enums"]["habit_cadence"]
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -84,6 +86,7 @@ export type Database = {
           active?: boolean
           cadence?: Database["public"]["Enums"]["habit_cadence"]
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           updated_at?: string
