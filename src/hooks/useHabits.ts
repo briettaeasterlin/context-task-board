@@ -6,6 +6,7 @@ export interface HabitIntention {
   id: string;
   user_id: string;
   name: string;
+  description: string | null;
   cadence: 'Daily' | 'Weekly' | 'Often' | 'Seasonal';
   active: boolean;
   created_at: string;

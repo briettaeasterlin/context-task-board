@@ -1,0 +1,1 @@
+ALTER TABLE public.habit_intentions ADD COLUMN description TEXT DEFAULT NULL;
