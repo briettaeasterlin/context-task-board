@@ -11,6 +11,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarClock, Crosshair, AlertTriangle } from 'lucide-react';
+import { HabitSection } from '@/components/habit/HabitSection';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
 
@@ -171,6 +172,9 @@ export default function TodayPage() {
             </div>
           </section>
         )}
+
+        {/* Habit Intentions */}
+        <HabitSection />
       </div>
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
