@@ -9,7 +9,7 @@ import { AreaBadge } from '@/components/task/AreaBadge';
 import { StatusBadge } from '@/components/task/StatusBadge';
 import { AREAS, STATUSES } from '@/types/task';
 import type { Project, Milestone, TaskArea, TaskStatus } from '@/types/task';
-import { Loader2, Check, X, Pencil, RefreshCw, FileText, HelpCircle, ArrowUpCircle } from 'lucide-react';
+import { Loader2, Check, X, Pencil, RefreshCw, FileText, HelpCircle, ArrowUpCircle, FolderOpen } from 'lucide-react';
 
 export interface ExtractedTask {
   title: string;
@@ -43,12 +43,29 @@ export interface ExtractedQuestion {
   selected: boolean;
 }
 
+export interface ExtractedDirective {
+  type: 'create_project' | 'group_tasks' | 'reclassify' | 'create_milestones' | 'reorder_next';
+  label: string;
+  projectName: string | null;
+  projectArea: TaskArea | null;
+  projectSummary: string | null;
+  taskMatchHints: string[];
+  projectMatchHint: string | null;
+  newArea: TaskArea | null;
+  newStatus: TaskStatus | null;
+  milestones: { name: string; description?: string }[];
+  keepNextHints: string[];
+  demoteToBacklog: boolean;
+  selected: boolean;
+}
+
 export interface ExtractionResult {
   summary: string | null;
   extractedTasks: ExtractedTask[];
   taskUpdates: ExtractedUpdate[];
   contextNotes: ExtractedContext[];
   extractedClarifyQuestions: ExtractedQuestion[];
+  directives: ExtractedDirective[];
 }
 
 interface Props {
@@ -102,11 +119,19 @@ export function ExtractionReviewModal({
     });
   };
 
+  const toggleDirective = (idx: number) => {
+    onResultChange({
+      ...result,
+      directives: result.directives.map((d, i) => i === idx ? { ...d, selected: !d.selected } : d),
+    });
+  };
+
   const totalSelected =
     result.extractedTasks.filter(t => t.selected).length +
     result.taskUpdates.filter(u => u.selected).length +
     result.contextNotes.filter(c => c.selected).length +
-    result.extractedClarifyQuestions.filter(q => q.selected).length;
+    result.extractedClarifyQuestions.filter(q => q.selected).length +
+    result.directives.filter(d => d.selected).length;
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -229,6 +254,38 @@ export function ExtractionReviewModal({
                       <span className="text-primary mr-1">?</span> {q.question}
                     </p>
                     {q.reason && <p className="text-[10px] text-muted-foreground mt-0.5">{q.reason}</p>}
+                  </div>
+                </div>
+              ))}
+            </Section>
+          )}
+
+          {/* Organizational Directives */}
+          {result.directives.length > 0 && (
+            <Section icon={<FolderOpen className="h-3 w-3" />} label="Organizational Directives" count={result.directives.filter(d => d.selected).length} total={result.directives.length}>
+              {result.directives.map((d, i) => (
+                <div key={i} className="flex items-start gap-2 p-2 border rounded-md">
+                  <Checkbox checked={d.selected} onCheckedChange={() => toggleDirective(i)} className="mt-0.5" />
+                  <div className="flex-1">
+                    <p className={`text-xs font-mono ${!d.selected ? 'line-through text-muted-foreground' : ''}`}>
+                      {d.label}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground">{d.type.replace(/_/g, ' ')}</span>
+                      {d.projectName && <span className="text-[10px] text-primary font-mono">{d.projectName}</span>}
+                      {d.projectArea && <AreaBadge area={d.projectArea} className="text-[10px]" />}
+                      {d.newStatus && <StatusBadge status={d.newStatus} className="text-[10px]" />}
+                      {d.taskMatchHints.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Matches: {d.taskMatchHints.join(', ')}
+                        </span>
+                      )}
+                      {d.milestones.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {d.milestones.length} milestone{d.milestones.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
