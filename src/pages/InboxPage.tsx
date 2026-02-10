@@ -53,6 +53,8 @@ export default function InboxPage() {
           milestone_id: null,
           blocked_by: null,
           source: 'clarify',
+          due_date: null,
+          target_window: null,
         }, { onSuccess: () => toast.success('Task created from answer') });
       }
       if (followOn.createMilestone && user && question.project_id) {

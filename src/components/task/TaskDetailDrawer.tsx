@@ -23,6 +23,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     title: '', context: '', notes: '', blocked_by: '',
     area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus,
     project_id: '', milestone_id: '',
+    due_date: '', target_window: '',
   });
 
   useEffect(() => {
@@ -36,6 +37,8 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         status: task.status,
         project_id: task.project_id ?? '',
         milestone_id: task.milestone_id ?? '',
+        due_date: task.due_date ?? '',
+        target_window: task.target_window ?? '',
       });
     }
   }, [task]);
@@ -54,6 +57,8 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       status: form.status,
       project_id: form.project_id || null,
       milestone_id: form.milestone_id || null,
+      due_date: form.due_date || null,
+      target_window: form.target_window || null,
     });
     onClose();
   };
@@ -121,6 +126,16 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
               <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} className="text-sm" />
             </div>
           )}
+          <div className="flex gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Due Date</Label>
+              <Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} className="text-sm" />
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Target Window</Label>
+              <Input value={form.target_window} onChange={e => setForm(f => ({ ...f, target_window: e.target.value }))} className="text-sm" placeholder="e.g. this week, next month" />
+            </div>
+          </div>
           <div className="flex gap-2 pt-2">
             <Button onClick={save} className="flex-1">Save</Button>
             <Button variant="outline" onClick={() => { onUpdate(task.id, { status: 'Next' }); onClose(); }} className="text-xs">→ Next</Button>

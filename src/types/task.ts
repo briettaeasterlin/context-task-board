@@ -23,6 +23,8 @@ export interface Task {
   milestone_id: string | null;
   blocked_by: string | null;
   source: string | null;
+  due_date: string | null;
+  target_window: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -115,5 +117,7 @@ export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', 
     milestone_id: null,
     blocked_by: null,
     source: null,
+    due_date: null,
+    target_window: null,
   };
 }

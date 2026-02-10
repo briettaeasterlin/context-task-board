@@ -64,7 +64,7 @@ export default function Dashboard() {
   });
 
   const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
-    createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null }, {
+    createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
       onSuccess: () => toast.success('Task added'),
       onError: (e) => toast.error(e.message),
     });

@@ -67,6 +67,10 @@ Classify each piece of information into exactly ONE of these buckets:
      Only 1-2 tasks per project should ever be Next. Do NOT make everything Next in a batch.
    - "Waiting" ONLY with a clear external dependency — always fill blockedBy with who/what is blocking.
    - "Done" ONLY if the user explicitly says this is already completed. NEVER mark informational items as Done.
+   DATE RULES (CRITICAL — HARD vs ASPIRATIONAL):
+   - dueDate: Assign ONLY for hard deadlines — explicit dates, real-world events (baby shower Saturday, taxes April 15), recurring commitments. Use ISO format YYYY-MM-DD. Prefer the latest reasonable date. Never assign due dates to exploratory or backlog-only work. Deadlines create pressure.
+   - targetWindow: Assign for aspirational timing — "I'd like to…", "aim to…", "try to this week", "this week" without external consequence. Use natural language like "this week", "next week", "end of month". Targets provide guidance, never urgency. They must NEVER become overdue or trigger alerts.
+   - If unclear whether a date is hard or aspirational, default to targetWindow.
    FILTERING RULES:
    - Do NOT create tasks for informational statements, principles, metrics, or philosophy.
    - Skip trivial or maintenance items (groceries, minor reminders, FYIs) unless explicitly requested.
@@ -132,7 +136,9 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                       area: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
                       status: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
                       context: { type: 'string', description: 'Additional context or details' },
-                      blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting tasks)' }
+                      blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting tasks)' },
+                      dueDate: { type: 'string', description: 'Hard deadline in YYYY-MM-DD format. Only for real commitments/events.' },
+                      targetWindow: { type: 'string', description: 'Aspirational timing like "this week", "next week". Never creates urgency.' }
                     },
                     required: ['title', 'status'],
                     additionalProperties: false
@@ -247,6 +253,8 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
         status: t.status || defaults.status || 'Backlog',
         context: t.context || null,
         blockedBy: t.blockedBy || null,
+        dueDate: t.dueDate || null,
+        targetWindow: t.targetWindow || null,
         projectId: projectId || null,
         milestoneId: null,
       })),
