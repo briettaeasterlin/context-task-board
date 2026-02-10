@@ -66,6 +66,19 @@ export function useTasks(projectId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
+  const reorderTasks = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      // Update each task's sort_order
+      const promises = updates.map(({ id, sort_order }) =>
+        supabase.from('tasks').update({ sort_order } as any).eq('id', id)
+      );
+      const results = await Promise.all(promises);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
   return {
     tasks: tasksQuery.data ?? [],
     isLoading: tasksQuery.isLoading,
@@ -74,5 +87,6 @@ export function useTasks(projectId?: string) {
     updateTask,
     bulkUpdateTasks,
     deleteTask,
+    reorderTasks,
   };
 }
