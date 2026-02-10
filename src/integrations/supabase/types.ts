@@ -61,6 +61,36 @@ export type Database = {
           },
         ]
       }
+      habit_intentions: {
+        Row: {
+          active: boolean
+          cadence: Database["public"]["Enums"]["habit_cadence"]
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          cadence?: Database["public"]["Enums"]["habit_cadence"]
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          cadence?: Database["public"]["Enums"]["habit_cadence"]
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       milestones: {
         Row: {
           completion_rule: Database["public"]["Enums"]["completion_rule"]
@@ -267,6 +297,7 @@ export type Database = {
     Enums: {
       clarify_status: "open" | "answered" | "dismissed"
       completion_rule: "manual" | "tasks_based"
+      habit_cadence: "Daily" | "Weekly" | "Often" | "Seasonal"
       task_area: "Client" | "Business" | "Home" | "Family" | "Personal"
       task_status: "Backlog" | "Next" | "Waiting" | "Done"
       update_source: "chatgpt" | "meeting" | "email" | "call" | "doc"
@@ -399,6 +430,7 @@ export const Constants = {
     Enums: {
       clarify_status: ["open", "answered", "dismissed"],
       completion_rule: ["manual", "tasks_based"],
+      habit_cadence: ["Daily", "Weekly", "Often", "Seasonal"],
       task_area: ["Client", "Business", "Home", "Family", "Personal"],
       task_status: ["Backlog", "Next", "Waiting", "Done"],
       update_source: ["chatgpt", "meeting", "email", "call", "doc"],
