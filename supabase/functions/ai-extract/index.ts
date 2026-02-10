@@ -49,6 +49,8 @@ Areas available: Client, Business, Home, Family, Personal.
 Statuses available: Backlog, Next, Waiting, Done.
 ${defaults.area ? `Default area hint from UI: ${defaults.area}` : ''}
 ${defaults.status ? `Default status hint from UI: ${defaults.status}` : ''}
+${body.existingProjects ? `Existing projects: ${JSON.stringify(body.existingProjects)}` : ''}
+${body.existingTaskTitles ? `Existing task titles (for matching): ${JSON.stringify(body.existingTaskTitles)}` : ''}
 
 Classify each piece of information into exactly ONE of these buckets:
 
@@ -69,7 +71,21 @@ Classify each piece of information into exactly ONE of these buckets:
 
 4) CLARIFY QUESTIONS — ambiguity about scope, ownership, dependencies, or definition of done.
    - Prefer fewer, higher-signal questions. Include suggestedOptions when helpful.
-   - Do NOT ask about trivial scheduling or formatting details.`
+   - Do NOT ask about trivial scheduling or formatting details.
+
+5) ORGANIZATIONAL DIRECTIVES — NOT tasks. These are meta-instructions about how to organize work.
+   Trigger phrases: "this is a project", "group these under", "create a project for", "these belong together",
+   "reorganize", "reclassify", "move", "only X should be Next", "the rest should be Backlog",
+   "this work is sequential", "set up phases/milestones".
+   
+   Directive types:
+   - "create_project": Create a new project. Provide name, area, summary.
+   - "group_tasks": Attach existing tasks to a project. Provide taskMatchHints (keywords to match existing tasks) and projectMatchHint (name of existing or new project).
+   - "reclassify": Change area or status of existing tasks. Provide taskMatchHints, optional newArea, optional newStatus.
+   - "create_milestones": Set up milestones/phases for a project. Provide projectMatchHint and milestones array.
+   - "reorder_next": Limit which tasks are Next. Provide keepNextHints (tasks to keep as Next), demoteToBacklog = true for the rest.
+   
+   CRITICAL: Directives are NEVER tasks. Do not create tasks for organizational intent.`
           },
           {
             role: 'user',
@@ -144,9 +160,32 @@ Classify each piece of information into exactly ONE of these buckets:
                     required: ['question'],
                     additionalProperties: false
                   }
+                },
+                directives: {
+                  type: 'array',
+                  description: 'Organizational directives — meta-instructions about how to structure work. NOT tasks.',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string', enum: ['create_project', 'group_tasks', 'reclassify', 'create_milestones', 'reorder_next'], description: 'Type of organizational directive' },
+                      label: { type: 'string', description: 'Human-readable summary of this directive (e.g. "Create project: Consulting Setup")' },
+                      projectName: { type: 'string', description: 'Name for new or existing project' },
+                      projectArea: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'], description: 'Area for new project' },
+                      projectSummary: { type: 'string', description: 'Summary for new project' },
+                      taskMatchHints: { type: 'array', items: { type: 'string' }, description: 'Keywords to match existing tasks' },
+                      projectMatchHint: { type: 'string', description: 'Name of the project to group into' },
+                      newArea: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
+                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
+                      milestones: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' } }, required: ['name'], additionalProperties: false } },
+                      keepNextHints: { type: 'array', items: { type: 'string' }, description: 'Task keywords to keep as Next' },
+                      demoteToBacklog: { type: 'boolean', description: 'Whether to demote all other Next tasks to Backlog' }
+                    },
+                    required: ['type', 'label'],
+                    additionalProperties: false
+                  }
                 }
               },
-              required: ['summary', 'extractedTasks', 'taskUpdates', 'contextNotes', 'extractedClarifyQuestions'],
+              required: ['summary', 'extractedTasks', 'taskUpdates', 'contextNotes', 'extractedClarifyQuestions', 'directives'],
               additionalProperties: false
             }
           }
@@ -203,6 +242,20 @@ Classify each piece of information into exactly ONE of these buckets:
         question: q.question,
         reason: q.reason || null,
         suggestedOptions: q.suggestedOptions || null,
+      })),
+      directives: (result.directives ?? []).map((d: any) => ({
+        type: d.type,
+        label: d.label,
+        projectName: d.projectName || null,
+        projectArea: d.projectArea || null,
+        projectSummary: d.projectSummary || null,
+        taskMatchHints: d.taskMatchHints || [],
+        projectMatchHint: d.projectMatchHint || null,
+        newArea: d.newArea || null,
+        newStatus: d.newStatus || null,
+        milestones: d.milestones || [],
+        keepNextHints: d.keepNextHints || [],
+        demoteToBacklog: d.demoteToBacklog ?? false,
       })),
     };
 

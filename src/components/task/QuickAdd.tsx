@@ -15,6 +15,7 @@ interface QuickAddProps {
   defaultStatus?: TaskStatus;
   projects?: Project[];
   milestones?: Milestone[];
+  allTasks?: { id: string; title: string; status: string; area: string; project_id: string | null }[];
   defaultProjectId?: string;
   onAdd: (title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => void;
   onTasksCreated?: () => void;
@@ -22,7 +23,7 @@ interface QuickAddProps {
 
 const MULTILINE_THRESHOLD = 1; // lines > 1 triggers AI mode
 
-export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [], defaultProjectId, onAdd, onTasksCreated }: QuickAddProps) {
+export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [], allTasks = [], defaultProjectId, onAdd, onTasksCreated }: QuickAddProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [area, setArea] = useState<TaskArea>('Personal');
@@ -71,6 +72,8 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
             area: area,
             status: status,
           },
+          existingProjects: projects.map(p => ({ id: p.id, name: p.name, area: p.area })),
+          existingTaskTitles: allTasks.slice(0, 100).map(t => ({ title: t.title, status: t.status, area: t.area })),
         },
       });
       if (error) throw error;
@@ -106,6 +109,21 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
           suggestedOptions: q.suggestedOptions || null,
           selected: true,
         })),
+        directives: (data.directives || []).map((d: any) => ({
+          type: d.type,
+          label: d.label,
+          projectName: d.projectName || null,
+          projectArea: d.projectArea || null,
+          projectSummary: d.projectSummary || null,
+          taskMatchHints: d.taskMatchHints || [],
+          projectMatchHint: d.projectMatchHint || null,
+          newArea: d.newArea || null,
+          newStatus: d.newStatus || null,
+          milestones: d.milestones || [],
+          keepNextHints: d.keepNextHints || [],
+          demoteToBacklog: d.demoteToBacklog ?? false,
+          selected: true,
+        })),
       });
     } catch (e: any) {
       toast.error(e.message || 'Failed to extract');
@@ -121,6 +139,7 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
       const selectedUpdates = result.taskUpdates.filter(u => u.selected);
       const selectedContext = result.contextNotes.filter(c => c.selected);
       const selectedQuestions = result.extractedClarifyQuestions.filter(q => q.selected);
+      const selectedDirectives = result.directives.filter(d => d.selected);
 
       // Log raw input as an Update record
       await supabase.from('updates').insert({
@@ -132,25 +151,133 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
         extracted_tasks: selectedTasks,
       } as any);
 
-      // Create new tasks
+      // Execute organizational directives
+      const createdProjectIds: Record<string, string> = {};
+      for (const d of selectedDirectives) {
+        switch (d.type) {
+          case 'create_project': {
+            if (d.projectName) {
+              const { data: newProj } = await supabase.from('projects').insert({
+                user_id: user.id,
+                name: d.projectName,
+                area: d.projectArea || 'Personal',
+                summary: d.projectSummary || null,
+              } as any).select().single();
+              if (newProj) createdProjectIds[d.projectName.toLowerCase()] = (newProj as any).id;
+            }
+            break;
+          }
+          case 'group_tasks': {
+            // Resolve target project id
+            let targetProjId: string | null = null;
+            if (d.projectMatchHint) {
+              const hint = d.projectMatchHint.toLowerCase();
+              targetProjId = createdProjectIds[hint] || null;
+              if (!targetProjId) {
+                const match = projects.find(p => p.name.toLowerCase().includes(hint));
+                targetProjId = match?.id || null;
+              }
+            }
+            if (targetProjId && d.taskMatchHints.length > 0) {
+              for (const hint of d.taskMatchHints) {
+                const { data: matched } = await supabase.from('tasks').select('id')
+                  .eq('user_id', user.id).ilike('title', `%${hint}%`).limit(3);
+                if (matched) {
+                  for (const m of matched) {
+                    await supabase.from('tasks').update({ project_id: targetProjId } as any).eq('id', m.id);
+                  }
+                }
+              }
+            }
+            break;
+          }
+          case 'reclassify': {
+            if (d.taskMatchHints.length > 0) {
+              for (const hint of d.taskMatchHints) {
+                const { data: matched } = await supabase.from('tasks').select('id')
+                  .eq('user_id', user.id).ilike('title', `%${hint}%`).limit(3);
+                if (matched) {
+                  const updates: any = {};
+                  if (d.newArea) updates.area = d.newArea;
+                  if (d.newStatus) updates.status = d.newStatus;
+                  if (Object.keys(updates).length > 0) {
+                    for (const m of matched) {
+                      await supabase.from('tasks').update(updates).eq('id', m.id);
+                    }
+                  }
+                }
+              }
+            }
+            break;
+          }
+          case 'create_milestones': {
+            let targetProjId: string | null = null;
+            if (d.projectMatchHint) {
+              const hint = d.projectMatchHint.toLowerCase();
+              targetProjId = createdProjectIds[hint] || null;
+              if (!targetProjId) {
+                const match = projects.find(p => p.name.toLowerCase().includes(hint));
+                targetProjId = match?.id || null;
+              }
+            }
+            if (targetProjId && d.milestones.length > 0) {
+              const msRows = d.milestones.map((ms, idx) => ({
+                user_id: user.id,
+                project_id: targetProjId,
+                name: ms.name,
+                description: ms.description || null,
+                order_index: idx,
+              }));
+              await supabase.from('milestones').insert(msRows as any[]);
+            }
+            break;
+          }
+          case 'reorder_next': {
+            if (d.demoteToBacklog) {
+              // Get all Next tasks
+              const { data: nextTasks } = await supabase.from('tasks').select('id, title')
+                .eq('user_id', user.id).eq('status', 'Next');
+              if (nextTasks) {
+                const keepHints = d.keepNextHints.map(h => h.toLowerCase());
+                for (const t of nextTasks) {
+                  const shouldKeep = keepHints.some(h => (t as any).title.toLowerCase().includes(h));
+                  if (!shouldKeep) {
+                    await supabase.from('tasks').update({ status: 'Backlog' } as any).eq('id', t.id);
+                  }
+                }
+              }
+            }
+            break;
+          }
+        }
+      }
+
+      // Create new tasks (link to newly-created projects if applicable)
       if (selectedTasks.length > 0) {
-        const rows = selectedTasks.map(t => ({
-          user_id: user.id,
-          title: t.title,
-          area: t.area,
-          status: t.status,
-          context: t.context,
-          blocked_by: t.blockedBy,
-          project_id: t.projectId,
-          milestone_id: t.milestoneId,
-          notes: null,
-          tags: [],
-          source: 'task_bar',
-        }));
+        const rows = selectedTasks.map(t => {
+          let taskProjectId = t.projectId;
+          // If task has no project but directives created one, try to link
+          if (!taskProjectId && Object.keys(createdProjectIds).length > 0) {
+            taskProjectId = Object.values(createdProjectIds)[0] || null;
+          }
+          return {
+            user_id: user.id,
+            title: t.title,
+            area: t.area,
+            status: t.status,
+            context: t.context,
+            blocked_by: t.blockedBy,
+            project_id: taskProjectId,
+            milestone_id: t.milestoneId,
+            notes: null,
+            tags: [],
+            source: 'task_bar',
+          };
+        });
         await supabase.from('tasks').insert(rows as any[]);
       }
 
-      // Apply task updates (status changes to existing tasks) — best-effort match by hint
+      // Apply task updates (status changes to existing tasks)
       for (const u of selectedUpdates) {
         if (u.matchHint && u.newStatus) {
           const { data: matched } = await supabase
@@ -179,19 +306,24 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
       }
 
       // Create clarify questions
-      if (selectedQuestions.length > 0 && projectId) {
-        const qRows = selectedQuestions.map(q => ({
-          user_id: user.id,
-          project_id: projectId,
-          question: q.question,
-          reason: q.reason,
-          suggested_options: q.suggestedOptions,
-          status: 'open',
-        }));
-        await supabase.from('clarify_questions').insert(qRows as any[]);
+      if (selectedQuestions.length > 0) {
+        // Use projectId or first created project
+        const qProjectId = projectId || Object.values(createdProjectIds)[0] || null;
+        if (qProjectId) {
+          const qRows = selectedQuestions.map(q => ({
+            user_id: user.id,
+            project_id: qProjectId,
+            question: q.question,
+            reason: q.reason,
+            suggested_options: q.suggestedOptions,
+            status: 'open',
+          }));
+          await supabase.from('clarify_questions').insert(qRows as any[]);
+        }
       }
 
       const counts = [
+        selectedDirectives.length && `${selectedDirectives.length} directives`,
         selectedTasks.length && `${selectedTasks.length} tasks`,
         selectedUpdates.length && `${selectedUpdates.length} updates`,
         selectedContext.length && `${selectedContext.length} notes`,
