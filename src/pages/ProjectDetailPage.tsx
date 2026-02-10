@@ -4,6 +4,7 @@ import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useUpdates } from '@/hooks/useUpdates';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
+import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoadmapTimeline } from '@/components/project/RoadmapTimeline';
 import { TaskTable } from '@/components/task/TaskTable';
@@ -15,6 +16,7 @@ import { AreaBadge } from '@/components/task/AreaBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
 import { AREAS } from '@/types/task';
 import { ArrowLeft, FileText } from 'lucide-react';
@@ -25,6 +27,7 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { projects } = useProjects();
   const { milestones } = useMilestones(id);
   const { tasks, createTask, updateTask, deleteTask } = useTasks(id);
@@ -35,6 +38,7 @@ export default function ProjectDetailPage() {
   const project = projects.find(p => p.id === id);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [clarifyFilter, setClarifyFilter] = useState<'open' | 'answered' | 'dismissed'>('open');
 
   const total = tasks.length;
   const done = tasks.filter(t => t.status === 'Done').length;
@@ -48,9 +52,47 @@ export default function ProjectDetailPage() {
     });
   }, [createTask, id]);
 
-  const handleAnswer = useCallback((qId: string, answer: string) => {
+  const handleAnswer = useCallback(async (qId: string, answer: string, followOn?: { updateScope: boolean; createTask: boolean; createMilestone: boolean }) => {
+    const question = clarifyQuestions.find(q => q.id === qId);
     updateClarifyQuestion.mutate({ id: qId, status: 'answered' as any, answer });
-  }, [updateClarifyQuestion]);
+
+    if (followOn && question && user) {
+      if (followOn.updateScope && id) {
+        const { data: proj } = await supabase.from('projects').select('scope_notes').eq('id', id).single();
+        const existing = proj?.scope_notes || '';
+        const line = `Q: ${question.question}\nA: ${answer}`;
+        await supabase.from('projects').update({
+          scope_notes: existing ? `${existing}\n\n${line}` : line,
+        } as any).eq('id', id);
+        toast.success('Scope notes updated');
+      }
+      if (followOn.createTask) {
+        createTask.mutate({
+          title: answer.slice(0, 80),
+          area: 'Personal',
+          status: 'Backlog',
+          context: `From clarify: ${question.question}`,
+          notes: null,
+          tags: [],
+          project_id: id || null,
+          milestone_id: null,
+          blocked_by: null,
+          source: 'clarify',
+        }, { onSuccess: () => toast.success('Task created from answer') });
+      }
+      if (followOn.createMilestone && id) {
+        await supabase.from('milestones').insert({
+          user_id: user.id,
+          project_id: id,
+          name: answer.slice(0, 80),
+          description: `From clarify: ${question.question}`,
+          order_index: 0,
+        } as any);
+        toast.success('Milestone created from answer');
+        queryClient.invalidateQueries({ queryKey: ['milestones'] });
+      }
+    }
+  }, [updateClarifyQuestion, clarifyQuestions, user, id, createTask, queryClient]);
 
   const handleDismiss = useCallback((qId: string) => {
     updateClarifyQuestion.mutate({ id: qId, status: 'dismissed' as any });
@@ -140,11 +182,39 @@ export default function ProjectDetailPage() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="clarify" className="mt-4 space-y-2">
-            {clarifyQuestions.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No questions yet.</p>}
-            {clarifyQuestions.map(q => (
-              <ClarifyCard key={q.id} question={q} projectName={project.name} onAnswer={handleAnswer} onDismiss={handleDismiss} />
-            ))}
+          <TabsContent value="clarify" className="mt-4 space-y-3">
+            <div className="flex gap-1">
+              {(['open', 'answered', 'dismissed'] as const).map(f => (
+                <Button
+                  key={f}
+                  variant={clarifyFilter === f ? 'default' : 'outline'}
+                  size="sm"
+                  className="text-[10px] h-6 capitalize"
+                  onClick={() => setClarifyFilter(f)}
+                >
+                  {f} ({clarifyQuestions.filter(q => q.status === f).length})
+                </Button>
+              ))}
+            </div>
+            {clarifyQuestions.filter(q => q.status === clarifyFilter).length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No {clarifyFilter} questions.
+              </p>
+            )}
+            <div className="space-y-2">
+              {clarifyQuestions
+                .filter(q => q.status === clarifyFilter)
+                .map(q => (
+                  <ClarifyCard
+                    key={q.id}
+                    question={q}
+                    projectName={project.name}
+                    onAnswer={handleAnswer}
+                    onDismiss={handleDismiss}
+                    showAnswered={clarifyFilter !== 'open'}
+                  />
+                ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

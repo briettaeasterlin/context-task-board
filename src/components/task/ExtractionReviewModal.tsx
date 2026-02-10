@@ -247,13 +247,25 @@ export function ExtractionReviewModal({
           {result.extractedClarifyQuestions.length > 0 && (
             <Section icon={<HelpCircle className="h-3 w-3" />} label="Clarifying Questions" count={result.extractedClarifyQuestions.filter(q => q.selected).length} total={result.extractedClarifyQuestions.length}>
               {result.extractedClarifyQuestions.map((q, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 border rounded-md">
-                  <Checkbox checked={q.selected} onCheckedChange={() => toggleQuestion(i)} className="mt-0.5" />
-                  <div>
-                    <p className={`text-xs ${!q.selected ? 'line-through text-muted-foreground' : ''}`}>
-                      <span className="text-primary mr-1">?</span> {q.question}
-                    </p>
-                    {q.reason && <p className="text-[10px] text-muted-foreground mt-0.5">{q.reason}</p>}
+                <div key={i} className="border rounded-md p-2 space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <Checkbox checked={q.selected} onCheckedChange={() => toggleQuestion(i)} className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className={`text-xs ${!q.selected ? 'line-through text-muted-foreground' : ''}`}>
+                        <span className="text-primary mr-1">?</span> {q.question}
+                      </p>
+                      {q.reason && <p className="text-[10px] text-muted-foreground mt-0.5">{q.reason}</p>}
+                      {/* Suggested options as chips */}
+                      {q.selected && q.suggestedOptions && q.suggestedOptions.length > 0 && (
+                        <div className="flex gap-1 mt-1.5 flex-wrap">
+                          {q.suggestedOptions.map((opt, j) => (
+                            <span key={j} className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground">
+                              {String(opt)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
