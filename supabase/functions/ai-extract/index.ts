@@ -87,6 +87,11 @@ Classify each piece of information into exactly ONE of these buckets:
    - When input implies a sequence of dependent tasks, infer the order. Only the earliest unblocked task may be Next.
 
 2) TASK UPDATES — text implying progress, blocking, or completion of EXISTING tasks.
+   ACCOMPLISHMENT LOGS: When the user pastes a list of what they accomplished (e.g. "Today I did X, Y, Z" or bullet points of completed work), treat each accomplishment as a task update:
+   - If an existing task matches → create a taskUpdate with newStatus="Done" and a matchHint.
+   - If NO existing task matches → create a NEW TASK with status="Done" so there's a record of the work.
+   This is critical for billing reports and status tracking.
+   OTHER UPDATES:
    - E.g. "Stripe is connected" → mark related task Done.
    - E.g. "Waiting on Pilot for taxes" → move related task to Waiting + blockedBy=Pilot.
    - Provide a matchHint (keyword from likely existing task title) so the app can fuzzy-match.

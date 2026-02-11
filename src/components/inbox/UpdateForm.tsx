@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Project, TaskArea, TaskStatus, Milestone } from '@/types/task';
+import type { Project, TaskArea, TaskStatus, Milestone, Task } from '@/types/task';
 import { AREAS, STATUSES, UPDATE_SOURCES } from '@/types/task';
 import { AreaBadge } from '@/components/task/AreaBadge';
 import { StatusBadge } from '@/components/task/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, Sparkles, Check, X, Pencil } from 'lucide-react';
+import { Loader2, Sparkles, Check, X, Pencil, ArrowUpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExtractedTask {
@@ -26,6 +26,15 @@ interface ExtractedTask {
   selected: boolean;
 }
 
+interface ExtractedUpdate {
+  description: string;
+  matchHint: string | null;
+  newStatus: TaskStatus | null;
+  blockedBy: string | null;
+  matchedTaskId: string | null;
+  selected: boolean;
+}
+
 interface ExtractedQuestion {
   question: string;
   reason: string | null;
@@ -36,17 +45,19 @@ interface ExtractedQuestion {
 interface ExtractResult {
   summary: string | null;
   extractedTasks: ExtractedTask[];
+  taskUpdates: ExtractedUpdate[];
   extractedClarifyQuestions: ExtractedQuestion[];
 }
 
 interface Props {
   projects: Project[];
   milestones?: Milestone[];
+  existingTasks?: Task[];
   defaultProjectId?: string;
   onCreated?: () => void;
 }
 
-export function UpdateForm({ projects, milestones = [], defaultProjectId, onCreated }: Props) {
+export function UpdateForm({ projects, milestones = [], existingTasks = [], defaultProjectId, onCreated }: Props) {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [projectId, setProjectId] = useState(defaultProjectId ?? '');
@@ -56,14 +67,44 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
   const [result, setResult] = useState<ExtractResult | null>(null);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
+  // Fuzzy match: find existing task whose title best matches a hint
+  const fuzzyMatchTask = (hint: string | null): Task | undefined => {
+    if (!hint) return undefined;
+    const lower = hint.toLowerCase();
+    // Exact substring match first
+    const exact = existingTasks.find(t => t.title.toLowerCase().includes(lower));
+    if (exact) return exact;
+    // Word overlap match
+    const hintWords = lower.split(/\s+/);
+    let bestTask: Task | undefined;
+    let bestScore = 0;
+    for (const task of existingTasks) {
+      const titleWords = task.title.toLowerCase().split(/\s+/);
+      const score = hintWords.filter(w => titleWords.some(tw => tw.includes(w) || w.includes(tw))).length;
+      if (score > bestScore && score >= Math.ceil(hintWords.length * 0.4)) {
+        bestScore = score;
+        bestTask = task;
+      }
+    }
+    return bestTask;
+  };
+
   const handleExtract = async () => {
     if (!content.trim()) return;
     setLoading(true);
     setResult(null);
     try {
       const project = projects.find(p => p.id === projectId);
+      const existingTaskTitles = existingTasks.map(t => t.title);
       const { data, error } = await supabase.functions.invoke('ai-extract', {
-        body: { rawText: content, projectId: projectId || null, projectName: project?.name || null, source: source || null },
+        body: {
+          rawText: content,
+          projectId: projectId || null,
+          projectName: project?.name || null,
+          source: source || null,
+          existingTaskTitles,
+          existingProjects: projects.map(p => ({ id: p.id, name: p.name })),
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -79,6 +120,17 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
           milestoneId: t.milestoneId || null,
           selected: true,
         })),
+        taskUpdates: (data.taskUpdates || []).map((u: any) => {
+          const matched = fuzzyMatchTask(u.matchHint);
+          return {
+            description: u.description,
+            matchHint: u.matchHint || null,
+            newStatus: u.newStatus || null,
+            blockedBy: u.blockedBy || null,
+            matchedTaskId: matched?.id || null,
+            selected: !!matched, // auto-select only if we found a match
+          };
+        }),
         extractedClarifyQuestions: (data.extractedClarifyQuestions || []).map((q: any) => ({
           ...q,
           reason: q.reason || null,
@@ -96,6 +148,10 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
     setResult(prev => prev ? { ...prev, extractedTasks: prev.extractedTasks.map((t, i) => i === idx ? { ...t, selected: !t.selected } : t) } : null);
   };
 
+  const toggleUpdate = (idx: number) => {
+    setResult(prev => prev ? { ...prev, taskUpdates: prev.taskUpdates.map((u, i) => i === idx ? { ...u, selected: !u.selected } : u) } : null);
+  };
+
   const toggleQuestion = (idx: number) => {
     setResult(prev => prev ? { ...prev, extractedClarifyQuestions: prev.extractedClarifyQuestions.map((q, i) => i === idx ? { ...q, selected: !q.selected } : q) } : null);
   };
@@ -107,9 +163,10 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
   const handleConfirm = async () => {
     if (!result || !user) return;
     const selectedTasks = result.extractedTasks.filter(t => t.selected);
+    const selectedUpdates = result.taskUpdates.filter(u => u.selected && u.matchedTaskId);
     const selectedQuestions = result.extractedClarifyQuestions.filter(q => q.selected);
-    if (selectedTasks.length === 0 && selectedQuestions.length === 0) {
-      toast.error('Select at least one task or question');
+    if (selectedTasks.length === 0 && selectedUpdates.length === 0 && selectedQuestions.length === 0) {
+      toast.error('Select at least one item');
       return;
     }
     setSaving(true);
@@ -142,6 +199,17 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
         await supabase.from('tasks').insert(taskRows as any[]);
       }
 
+      // Apply task updates (mark done, change status, etc.)
+      if (selectedUpdates.length > 0) {
+        const updatePromises = selectedUpdates.map(u => {
+          const updates: Record<string, any> = {};
+          if (u.newStatus) updates.status = u.newStatus;
+          if (u.blockedBy) updates.blocked_by = u.blockedBy;
+          return supabase.from('tasks').update(updates as any).eq('id', u.matchedTaskId!);
+        });
+        await Promise.all(updatePromises);
+      }
+
       // Create selected clarify questions
       if (selectedQuestions.length > 0) {
         const resolvedProjectId = projectId || null;
@@ -158,7 +226,11 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
         }
       }
 
-      toast.success(`Created ${selectedTasks.length} tasks${selectedQuestions.length > 0 ? ` and ${selectedQuestions.length} questions` : ''}`);
+      const parts: string[] = [];
+      if (selectedTasks.length > 0) parts.push(`${selectedTasks.length} tasks created`);
+      if (selectedUpdates.length > 0) parts.push(`${selectedUpdates.length} tasks updated`);
+      if (selectedQuestions.length > 0) parts.push(`${selectedQuestions.length} questions`);
+      toast.success(parts.join(', '));
       onCreated?.();
       setContent('');
       setResult(null);
@@ -288,7 +360,39 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
             </div>
           )}
 
-          {/* Extracted Clarify Questions */}
+          {/* Task Updates (mark done, change status) */}
+          {result.taskUpdates.length > 0 && (
+            <div>
+              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                <ArrowUpCircle className="h-3 w-3" /> Task Updates ({result.taskUpdates.filter(u => u.selected).length}/{result.taskUpdates.length} selected)
+              </Label>
+              <div className="mt-1.5 space-y-1.5">
+                {result.taskUpdates.map((u, i) => {
+                  const matchedTask = u.matchedTaskId ? existingTasks.find(t => t.id === u.matchedTaskId) : undefined;
+                  return (
+                    <div key={i} className="flex items-start gap-2 p-2 border rounded-md">
+                      <Checkbox checked={u.selected} onCheckedChange={() => toggleUpdate(i)} className="mt-0.5" disabled={!u.matchedTaskId} />
+                      <div className="flex-1">
+                        <p className={`text-xs ${!u.selected ? 'line-through text-muted-foreground' : ''}`}>
+                          {u.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {matchedTask ? (
+                            <span className="text-[10px] text-primary font-mono">→ {matchedTask.title}</span>
+                          ) : (
+                            <span className="text-[10px] text-destructive">⚠ No matching task found{u.matchHint ? ` for "${u.matchHint}"` : ''}</span>
+                          )}
+                          {u.newStatus && <StatusBadge status={u.newStatus} className="text-[10px]" />}
+                          {u.blockedBy && <span className="text-[10px] text-muted-foreground">⏳ {u.blockedBy}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {result.extractedClarifyQuestions.length > 0 && (
             <div>
               <Label className="text-[10px] text-muted-foreground uppercase tracking-wider">
@@ -317,7 +421,7 @@ export function UpdateForm({ projects, milestones = [], defaultProjectId, onCrea
           <div className="flex items-center gap-2 pt-1 border-t">
             <Button size="sm" className="text-xs" onClick={handleConfirm} disabled={saving}>
               {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Check className="h-3 w-3 mr-1" />}
-              Create selected
+              Confirm selected
             </Button>
             <Button variant="outline" size="sm" className="text-xs" onClick={handleDiscard}>
               <X className="h-3 w-3 mr-1" /> Discard
