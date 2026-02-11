@@ -21,7 +21,7 @@ export default function InboxPage() {
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const { clarifyQuestions, updateClarifyQuestion } = useClarifyQuestions();
-  const { createTask } = useTasks();
+  const { createTask, tasks } = useTasks();
   const queryClient = useQueryClient();
 
   const openQuestions = clarifyQuestions.filter(q => q.status === 'open');
@@ -80,7 +80,7 @@ export default function InboxPage() {
       <div className="space-y-6">
         <section>
           <h2 className="font-mono text-sm font-semibold mb-3">Paste an Update</h2>
-          <UpdateForm projects={projects} milestones={milestones} onCreated={() => queryClient.invalidateQueries()} />
+          <UpdateForm projects={projects} milestones={milestones} existingTasks={tasks} onCreated={() => queryClient.invalidateQueries()} />
         </section>
 
         <section>
