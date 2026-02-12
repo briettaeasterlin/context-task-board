@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import type { Task, Project, Milestone } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,21 +68,21 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
     });
   };
 
-  const useSwipe = (groupKey: string, maxLen: number) => {
-    const touchStart = useRef<number | null>(null);
-    const onTouchStart = useCallback((e: React.TouchEvent) => {
-      touchStart.current = e.touches[0].clientX;
-    }, []);
-    const onTouchEnd = useCallback((e: React.TouchEvent) => {
-      if (touchStart.current === null) return;
-      const diff = e.changedTouches[0].clientX - touchStart.current;
-      touchStart.current = null;
+  const touchStartRef = useRef<number | null>(null);
+
+  const makeSwipeHandlers = (groupKey: string, maxLen: number) => ({
+    onTouchStart: (e: React.TouchEvent) => {
+      touchStartRef.current = e.touches[0].clientX;
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (touchStartRef.current === null) return;
+      const diff = e.changedTouches[0].clientX - touchStartRef.current;
+      touchStartRef.current = null;
       if (Math.abs(diff) > 50) {
         navigate(groupKey, diff < 0 ? 1 : -1, maxLen);
       }
-    }, [groupKey, maxLen]);
-    return { onTouchStart, onTouchEnd };
-  };
+    },
+  });
 
   if (groups.length === 0) {
     return (
@@ -99,7 +99,7 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
         const activeIdx = getActiveIndex(groupKey, group.tasks.length);
         const activeTask = group.tasks[activeIdx];
         const progress = group.totalTasks > 0 ? Math.round((group.doneTasks / group.totalTasks) * 100) : 0;
-        const swipe = useSwipe(groupKey, group.tasks.length);
+        const swipe = makeSwipeHandlers(groupKey, group.tasks.length);
 
         return (
           <Card key={groupKey} className="relative overflow-hidden">
