@@ -3,94 +3,25 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
-import type { Task, TaskArea, TaskStatus, TaskUpdate, TaskInsert } from '@/types/task';
+import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Crosshair, AlertTriangle, GripVertical } from 'lucide-react';
+import { CalendarClock, Crosshair, AlertTriangle } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
+import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import type { Project } from '@/types/task';
-
-function SortableNextCard({ task, projects, formatDueLabel, onSelect }: {
-  task: Task;
-  projects: Project[];
-  formatDueLabel: (d: string) => string;
-  onSelect: (t: Task) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      className="p-2 flex items-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-      onClick={() => onSelect(task)}
-    >
-      <button
-        {...attributes}
-        {...listeners}
-        className="shrink-0 touch-none cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-        onClick={e => e.stopPropagation()}
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
-      <span className="font-mono text-xs flex-1">{task.title}</span>
-      <div className="flex items-center gap-1.5">
-        {task.due_date && (
-          <Badge variant={isPast(new Date(task.due_date)) && !isToday(new Date(task.due_date)) ? 'destructive' : 'outline'} className="text-[10px] font-mono">
-            📅 {formatDueLabel(task.due_date)}
-          </Badge>
-        )}
-        {task.target_window && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-mono">🎯 {task.target_window}</span>
-        )}
-        {task.blocked_by && <span className="text-[10px] text-muted-foreground">⏳ {task.blocked_by}</span>}
-        {task.project_id && (
-          <span className="text-[10px] text-primary font-mono">{projects.find(p => p.id === task.project_id)?.name}</span>
-        )}
-      </div>
-    </Card>
-  );
-}
 
 export default function TodayPage() {
   const queryClient = useQueryClient();
-  const { tasks, isLoading, createTask, updateTask, deleteTask, reorderTasks } = useTasks();
+  const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
   const { milestones } = useMilestones();
 
   const [detailTask, setDetailTask] = useState<Task | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
 
   // Tasks with imminent hard deadlines (today, tomorrow, or overdue) — not Done
   const urgentDeadlines = useMemo(() => {
@@ -136,8 +67,9 @@ export default function TodayPage() {
 
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
-  const toggleSelect = useCallback((id: string) => { setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); }, []);
-  const selectAll = useCallback(() => { setSelectedIds(prev => prev.size === nextTasks.length ? new Set() : new Set(nextTasks.map(t => t.id))); }, [nextTasks]);
+  const handleMarkDone = useCallback((id: string) => {
+    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Marked done') });
+  }, [updateTask]);
 
   const formatDueLabel = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -146,23 +78,6 @@ export default function TodayPage() {
     if (isTomorrow(d)) return 'Due tomorrow';
     return `Due ${format(d, 'EEE, MMM d')}`;
   };
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = nextTasks.findIndex(t => t.id === active.id);
-    const newIndex = nextTasks.findIndex(t => t.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    // Build new order and assign sort_order values
-    const reordered = [...nextTasks];
-    const [moved] = reordered.splice(oldIndex, 1);
-    reordered.splice(newIndex, 0, moved);
-
-    const updates = reordered.map((t, i) => ({ id: t.id, sort_order: (i + 1) * 1000 }));
-    reorderTasks.mutate(updates);
-  }, [nextTasks, reorderTasks]);
 
   return (
     <AppShell>
@@ -194,27 +109,23 @@ export default function TodayPage() {
           </section>
         )}
 
-        {/* Next Tasks — the core Today view, drag-sortable */}
+        {/* Next Tasks — grouped by project as stacked cards */}
         <section>
           <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
             <Crosshair className="h-3.5 w-3.5" /> Next — Focus
           </h2>
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
-          ) : nextTasks.length === 0 ? (
-            <Card className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">No tasks marked Next. Add one above or promote from Backlog.</p>
-            </Card>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={nextTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-1">
-                  {nextTasks.map(t => (
-                    <SortableNextCard key={t.id} task={t} projects={projects} formatDueLabel={formatDueLabel} onSelect={setDetailTask} />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
+            <FocusCardStack
+              nextTasks={nextTasks}
+              allTasks={tasks}
+              projects={projects}
+              milestones={milestones}
+              onMarkDone={handleMarkDone}
+              onSelect={setDetailTask}
+              formatDueLabel={formatDueLabel}
+            />
           )}
         </section>
 
