@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import type { Task, Project, Milestone } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,22 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
     });
   };
 
+  const useSwipe = (groupKey: string, maxLen: number) => {
+    const touchStart = useRef<number | null>(null);
+    const onTouchStart = useCallback((e: React.TouchEvent) => {
+      touchStart.current = e.touches[0].clientX;
+    }, []);
+    const onTouchEnd = useCallback((e: React.TouchEvent) => {
+      if (touchStart.current === null) return;
+      const diff = e.changedTouches[0].clientX - touchStart.current;
+      touchStart.current = null;
+      if (Math.abs(diff) > 50) {
+        navigate(groupKey, diff < 0 ? 1 : -1, maxLen);
+      }
+    }, [groupKey, maxLen]);
+    return { onTouchStart, onTouchEnd };
+  };
+
   if (groups.length === 0) {
     return (
       <Card className="p-6 text-center">
@@ -83,6 +99,7 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
         const activeIdx = getActiveIndex(groupKey, group.tasks.length);
         const activeTask = group.tasks[activeIdx];
         const progress = group.totalTasks > 0 ? Math.round((group.doneTasks / group.totalTasks) * 100) : 0;
+        const swipe = useSwipe(groupKey, group.tasks.length);
 
         return (
           <Card key={groupKey} className="relative overflow-hidden">
@@ -116,7 +133,7 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
             </div>
 
             {/* Active task card */}
-            <div className="p-4">
+            <div className="p-4" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd}>
               <div
                 className="flex items-start gap-3 cursor-pointer group"
                 onClick={() => onSelect(activeTask)}
