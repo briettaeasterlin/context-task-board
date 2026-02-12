@@ -61,14 +61,18 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
   };
 
   const navigate = (groupKey: string, delta: number, maxLen: number) => {
+    const dir = delta > 0 ? 'left' : 'right';
+    setSlideDir(prev => ({ ...prev, [groupKey]: dir }));
     setActiveIndexes(prev => {
       const cur = prev[groupKey] ?? 0;
       const next = Math.max(0, Math.min(maxLen - 1, cur + delta));
       return { ...prev, [groupKey]: next };
     });
+    setTimeout(() => setSlideDir(prev => ({ ...prev, [groupKey]: null })), 300);
   };
 
   const touchStartRef = useRef<number | null>(null);
+  const [slideDir, setSlideDir] = useState<Record<string, 'left' | 'right' | null>>({});
 
   const makeSwipeHandlers = (groupKey: string, maxLen: number) => ({
     onTouchStart: (e: React.TouchEvent) => {
@@ -133,9 +137,15 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
             </div>
 
             {/* Active task card */}
-            <div className="p-4" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd}>
+            <div className="p-4 overflow-hidden" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd}>
               <div
-                className="flex items-start gap-3 cursor-pointer group"
+                key={activeTask.id}
+                className={`flex items-start gap-3 cursor-pointer group transition-all duration-300 ease-out ${
+                  slideDir[groupKey] === 'left' ? 'animate-fade-in' :
+                  slideDir[groupKey] === 'right' ? 'animate-fade-in' :
+                  ''
+                }`}
+                style={slideDir[groupKey] ? { animationDuration: '0.25s' } : undefined}
                 onClick={() => onSelect(activeTask)}
               >
                 {/* Done button */}
