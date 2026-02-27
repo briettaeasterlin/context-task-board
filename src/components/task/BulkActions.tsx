@@ -3,18 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AREAS, STATUSES, type TaskArea, type TaskStatus, type Task, type TaskUpdate, type Project } from '@/types/task';
-import { Download, X, Copy, Check } from 'lucide-react';
+import { Download, X, Copy, Check, Trash2 } from 'lucide-react';
 
 interface Props {
   selectedCount: number;
   selectedTasks: Task[];
   onBulkUpdate: (updates: TaskUpdate) => void;
+  onBulkDelete?: (ids: string[]) => void;
   onClearSelection: () => void;
   allTasks: Task[];
   projects?: Project[];
 }
 
-export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClearSelection, allTasks, projects = [] }: Props) {
+export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onBulkDelete, onClearSelection, allTasks, projects = [] }: Props) {
   const [exportOpen, setExportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const projectMap = new Map(projects.map(p => [p.id, p.name]));
@@ -145,6 +146,12 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
             {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
           </SelectContent>
         </Select>
+      )}
+      {onBulkDelete && (
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => { if (confirm(`Delete ${selectedCount} task(s)?`)) { onBulkDelete(selectedTasks.map(t => t.id)); onClearSelection(); } }}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
       )}
       <Button variant="ghost" size="sm" className="h-7 px-2" onClick={onClearSelection}>
         <X className="h-3 w-3" />

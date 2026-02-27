@@ -113,7 +113,7 @@ export default function Dashboard() {
             <h2 className="font-mono text-xs font-semibold text-muted-foreground">Next — All Areas</h2>
             <div className="flex items-center gap-2">
               <BulkActions selectedCount={selectedIds.size} selectedTasks={nextTasks.filter(t => selectedIds.has(t.id))}
-                onBulkUpdate={handleBulkUpdate} onClearSelection={() => setSelectedIds(new Set())} allTasks={tasks} projects={projects} />
+                onBulkUpdate={handleBulkUpdate} onBulkDelete={ids => ids.forEach(id => deleteTask.mutate(id, { onSuccess: () => setSelectedIds(new Set()) }))} onClearSelection={() => setSelectedIds(new Set())} allTasks={tasks} projects={projects} />
               <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setBulkAddOpen(true)}>
                 <Plus className="h-3 w-3 mr-1" /> Bulk Add
               </Button>

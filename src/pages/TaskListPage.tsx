@@ -45,7 +45,7 @@ export default function TaskListPage({ filterStatus }: Props) {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="font-mono text-sm font-semibold">{filterStatus} Tasks</h2>
           <BulkActions selectedCount={selectedIds.size} selectedTasks={filtered.filter(t => selectedIds.has(t.id))}
-            onBulkUpdate={handleBulkUpdate} onClearSelection={() => setSelectedIds(new Set())} allTasks={tasks} projects={projects} />
+            onBulkUpdate={handleBulkUpdate} onBulkDelete={ids => ids.forEach(id => deleteTask.mutate(id, { onSuccess: () => setSelectedIds(new Set()) }))} onClearSelection={() => setSelectedIds(new Set())} allTasks={tasks} projects={projects} />
         </div>
         <FilterBar search={search} onSearchChange={setSearch} areaFilter={areaFilter} onAreaChange={setAreaFilter}
           projectFilter={projectFilter} onProjectChange={setProjectFilter} projects={projects} />
