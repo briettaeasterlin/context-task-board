@@ -1,18 +1,14 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Sun, Layers, Columns3, Clock, CheckCircle2, Inbox, LayoutDashboard, CalendarDays } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Today', icon: Sun, emoji: '☀️' },
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, emoji: '📋' },
-  { path: '/projects', label: 'Projects', icon: Layers, emoji: '📁' },
-  { path: '/kanban', label: 'Kanban', icon: Columns3, emoji: '🗂️' },
-  { path: '/waiting', label: 'Waiting', icon: Clock, emoji: '⏳' },
-  { path: '/done', label: 'Done', icon: CheckCircle2, emoji: '✅' },
-  { path: '/inbox', label: 'Inbox', icon: Inbox, emoji: '📥' },
-  { path: '/planner', label: 'Planner', icon: CalendarDays, emoji: '📅' },
+  { path: '/plan', label: 'Plan', emoji: '🗓️' },
+  { path: '/', label: 'Focus', emoji: '🎯' },
+  { path: '/review', label: 'Review', emoji: '🔁' },
+  { path: '/archive', label: 'Archive', emoji: '📦' },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
