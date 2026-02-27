@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AREAS, STATUSES, type TaskArea, type TaskStatus, type Task, type TaskUpdate, type Project } from '@/types/task';
-import { Download, X } from 'lucide-react';
+import { Download, X, Copy, Check } from 'lucide-react';
 
 interface Props {
   selectedCount: number;
@@ -16,6 +16,7 @@ interface Props {
 
 export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClearSelection, allTasks, projects = [] }: Props) {
   const [exportOpen, setExportOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const projectMap = new Map(projects.map(p => [p.id, p.name]));
 
   const getProjectName = (t: Task) => t.project_id ? projectMap.get(t.project_id) ?? '' : '';
@@ -65,6 +66,32 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
     downloadFile(text, 'weekly-snapshot.txt', 'text/plain');
   };
 
+  const copyForAI = () => {
+    const activeTasks = allTasks.filter(t => t.status === 'Next' || t.status === 'Waiting' || t.status === 'Backlog');
+    const grouped: Record<string, typeof activeTasks> = {};
+    for (const t of activeTasks) {
+      const pName = getProjectName(t) || 'No Project';
+      (grouped[pName] ??= []).push(t);
+    }
+    let text = `Here are my current tasks across all initiatives. Please help me write a status update for each project/group.\n\n`;
+    for (const [project, tasks] of Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b))) {
+      text += `## ${project}\n`;
+      for (const t of tasks) {
+        text += `- [${t.status}] ${t.title}`;
+        if (t.area) text += ` (${t.area})`;
+        if (t.blocked_by) text += ` — blocked by: ${t.blocked_by}`;
+        if (t.context) text += ` — ${t.context}`;
+        if (t.due_date) text += ` — due: ${t.due_date}`;
+        text += '\n';
+      }
+      text += '\n';
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   const downloadFile = (content: string, filename: string, mime: string) => {
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -78,6 +105,10 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
   if (selectedCount === 0) {
     return (
       <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" className="text-xs h-7" onClick={copyForAI}>
+          {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+          {copied ? 'Copied!' : 'Copy for AI'}
+        </Button>
         <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setExportOpen(true)}>
           <Download className="h-3 w-3 mr-1" /> Export
         </Button>
