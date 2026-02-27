@@ -73,7 +73,7 @@ export function BulkActions({ selectedCount, selectedTasks, onBulkUpdate, onClea
       const pName = getProjectName(t) || 'No Project';
       (grouped[pName] ??= []).push(t);
     }
-    let text = `Here are my current tasks across all initiatives. Please help me write a status update for each project/group.\n\n`;
+    let text = `I need help doing a status review of my tasks. For each project/group below, please:\n1. Summarize the current state of the initiative\n2. For any task where the status is unclear or stale, ASK ME whether it has been completed, is still in progress, is waiting on someone, or should be deprioritized/removed entirely\n3. Suggest updated statuses where you're confident, but flag anything ambiguous as a question\n\nStatuses: Backlog (not started), Next (actively working), Waiting (blocked/waiting on someone), Done (completed)\n\n`;
     for (const [project, tasks] of Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b))) {
       text += `## ${project}\n`;
       for (const t of tasks) {
