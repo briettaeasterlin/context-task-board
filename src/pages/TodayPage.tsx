@@ -10,7 +10,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, ArrowRight, CalendarDays } from 'lucide-react';
+import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, CalendarDays } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
@@ -25,6 +25,13 @@ interface TimelineItem {
   durationMinutes: number;
   projectName?: string;
   task?: Task;
+}
+
+function getGreeting(): { text: string; emoji: string } {
+  const hour = new Date().getHours();
+  if (hour < 12) return { text: 'Good morning', emoji: '☀️' };
+  if (hour < 17) return { text: 'Good afternoon', emoji: '🌤️' };
+  return { text: 'Good evening', emoji: '🌙' };
 }
 
 export default function TodayPage() {
@@ -44,57 +51,43 @@ export default function TodayPage() {
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
   const taskMap = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
 
+  const greeting = getGreeting();
+
   // Build timeline
   const timeline = useMemo(() => {
     const items: TimelineItem[] = [];
-
-    // Calendar events
     for (const ev of events) {
       if (ev.is_all_day) continue;
       const start = new Date(ev.start_time);
       const end = new Date(ev.end_time);
       if (!isToday(start)) continue;
       items.push({
-        type: 'event',
-        id: ev.id,
-        title: ev.title,
+        type: 'event', id: ev.id, title: ev.title,
         startMinutes: start.getHours() * 60 + start.getMinutes(),
         durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
       });
     }
-
-    // Planned blocks
     for (const block of blocks) {
       const [h, m] = block.start_time.split(':').map(Number);
       const task = block.task_id ? taskMap.get(block.task_id) : null;
       const project = task?.project_id ? projectMap.get(task.project_id) : null;
       items.push({
-        type: 'block',
-        id: block.id,
-        title: task?.title ?? 'Planned Block',
-        startMinutes: h * 60 + m,
-        durationMinutes: block.duration_minutes,
-        projectName: project?.name,
-        task: task ?? undefined,
+        type: 'block', id: block.id, title: task?.title ?? 'Planned Block',
+        startMinutes: h * 60 + m, durationMinutes: block.duration_minutes,
+        projectName: project?.name, task: task ?? undefined,
       });
     }
-
     return items.sort((a, b) => a.startMinutes - b.startMinutes);
   }, [events, blocks, taskMap, projectMap]);
 
-  // Now indicator
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // Urgent deadlines
   const urgentDeadlines = useMemo(() => {
     const cutoff = addDays(new Date(), 2);
     return tasks
       .filter(t => t.status !== 'Done' && t.due_date)
-      .filter(t => {
-        const d = new Date(t.due_date!);
-        return isBefore(d, cutoff) || isToday(d);
-      })
+      .filter(t => { const d = new Date(t.due_date!); return isBefore(d, cutoff) || isToday(d); })
       .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
   }, [tasks]);
 
@@ -107,10 +100,7 @@ export default function TodayPage() {
     const end = addDays(new Date(), 8);
     return tasks
       .filter(t => t.status !== 'Done' && t.due_date)
-      .filter(t => {
-        const d = new Date(t.due_date!);
-        return !isBefore(d, start) && isBefore(d, end);
-      })
+      .filter(t => { const d = new Date(t.due_date!); return !isBefore(d, start) && isBefore(d, end); })
       .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
   }, [tasks]);
 
@@ -126,7 +116,7 @@ export default function TodayPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
   const handleMarkDone = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Marked done') });
+    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Marked done ✨') });
   }, [updateTask]);
 
   const formatDueLabel = (dateStr: string) => {
@@ -147,7 +137,18 @@ export default function TodayPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Greeting */}
+        <div className="pt-2">
+          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+            <span>{greeting.emoji}</span>
+            {greeting.text}, Brietta
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
+          </p>
+        </div>
+
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
@@ -156,50 +157,50 @@ export default function TodayPage() {
         {/* Today's Timeline */}
         {timeline.length > 0 && (
           <section>
-            <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-              <CalendarDays className="h-3.5 w-3.5" /> Today's Timeline
+            <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
+              <span>📅</span> Today's Timeline
             </h2>
-            <div className="space-y-1">
-              {timeline.map((item, idx) => {
-                const isPast = item.startMinutes + item.durationMinutes < nowMinutes;
+            <div className="space-y-2">
+              {timeline.map((item) => {
+                const isPastItem = item.startMinutes + item.durationMinutes < nowMinutes;
                 const isCurrent = item.startMinutes <= nowMinutes && item.startMinutes + item.durationMinutes > nowMinutes;
 
                 return (
                   <Card
                     key={`${item.type}-${item.id}`}
                     className={cn(
-                      "p-2 flex items-center gap-3 transition-colors",
-                      item.type === 'block' && "cursor-pointer hover:bg-muted/50",
-                      isPast && "opacity-50",
-                      isCurrent && "border-primary/50 bg-accent/30"
+                      "p-3 flex items-center gap-3 transition-all duration-200 rounded-xl shadow-card",
+                      item.type === 'block' && "cursor-pointer hover:shadow-elevated hover:-translate-y-0.5",
+                      isPastItem && "opacity-40",
+                      isCurrent && "border-primary/50 bg-accent/40 shadow-elevated"
                     )}
                     onClick={() => item.task && setDetailTask(item.task)}
                   >
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground w-20 flex-shrink-0">
-                      <Clock className="h-3 w-3" />
+                    <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground w-20 flex-shrink-0">
+                      <Clock className="h-3.5 w-3.5" />
                       {formatTime(item.startMinutes)}
                     </div>
                     <div className={cn(
-                      "w-1 h-6 rounded-full flex-shrink-0",
-                      item.type === 'event' ? "bg-muted-foreground/40" : "bg-primary/60"
+                      "w-1 h-7 rounded-full flex-shrink-0",
+                      item.type === 'event' ? "bg-muted-foreground/30" : "bg-primary/60"
                     )} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs truncate">{item.title}</p>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-muted-foreground">{item.durationMinutes}m</span>
-                        {item.projectName && <span className="text-[10px] text-primary">{item.projectName}</span>}
-                        {item.type === 'event' && <Badge variant="outline" className="text-[9px] h-4">Calendar</Badge>}
+                      <p className="text-sm font-medium truncate">{item.title}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-muted-foreground">{item.durationMinutes}m</span>
+                        {item.projectName && <span className="text-xs text-primary">{item.projectName}</span>}
+                        {item.type === 'event' && <Badge variant="outline" className="text-[10px] h-5 rounded-full">Calendar</Badge>}
                       </div>
                     </div>
                     {isCurrent && (
-                      <Badge variant="default" className="text-[9px] h-4 bg-primary">Now</Badge>
+                      <Badge variant="default" className="text-[10px] h-5 bg-primary rounded-full">Now</Badge>
                     )}
                     {item.type === 'block' && item.task && (
                       <Button
-                        variant="ghost" size="sm" className="h-6 px-1.5 text-[10px]"
+                        variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg"
                         onClick={e => { e.stopPropagation(); handleMarkDone(item.task!.id); }}
                       >
-                        <CheckCircle2 className="h-3 w-3 mr-0.5" /> Done
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Done
                       </Button>
                     )}
                   </Card>
@@ -212,25 +213,25 @@ export default function TodayPage() {
         {/* Urgent Deadlines */}
         {urgentOnlyIds.length > 0 && (
           <section>
-            <h2 className="font-mono text-xs font-semibold text-destructive flex items-center gap-1.5 mb-2">
-              <AlertTriangle className="h-3.5 w-3.5" /> Imminent Deadlines
+            <h2 className="font-sans text-lg font-semibold text-destructive flex items-center gap-2 mb-3">
+              <span>🚨</span> Imminent Deadlines
             </h2>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {urgentOnlyIds.map(t => (
-                <Card key={t.id} className="p-2 flex items-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setDetailTask(t)}>
-                  <span className="font-mono text-xs flex-1">{t.title}</span>
-                  <Badge variant="destructive" className="text-[10px] font-mono">{formatDueLabel(t.due_date!)}</Badge>
-                  {t.project_id && <span className="text-[10px] text-primary font-mono">{projectMap.get(t.project_id)?.name}</span>}
+                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 rounded-xl shadow-card border-destructive/20" onClick={() => setDetailTask(t)}>
+                  <span className="text-sm flex-1 font-medium">{t.title}</span>
+                  <Badge variant="destructive" className="text-[10px] font-mono rounded-full">{formatDueLabel(t.due_date!)}</Badge>
+                  {t.project_id && <span className="text-xs text-primary">{projectMap.get(t.project_id)?.name}</span>}
                 </Card>
               ))}
             </div>
           </section>
         )}
 
-        {/* Next Tasks */}
+        {/* Next Tasks - Focus */}
         <section>
-          <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-            <Crosshair className="h-3.5 w-3.5" /> Next — Focus
+          <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
+            <span>🎯</span> Focus
           </h2>
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
@@ -243,15 +244,15 @@ export default function TodayPage() {
         {/* Upcoming Deadlines */}
         {upcomingDeadlines.length > 0 && (
           <section>
-            <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
-              <CalendarClock className="h-3.5 w-3.5" /> Coming Up (7 days)
+            <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
+              <span>📆</span> Coming Up (7 days)
             </h2>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {upcomingDeadlines.map(t => (
-                <Card key={t.id} className="p-2 flex items-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setDetailTask(t)}>
-                  <span className="font-mono text-xs flex-1 text-muted-foreground">{t.title}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono">📅 {format(new Date(t.due_date!), 'EEE, MMM d')}</Badge>
-                  {t.project_id && <span className="text-[10px] text-primary font-mono">{projectMap.get(t.project_id)?.name}</span>}
+                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 rounded-xl shadow-card" onClick={() => setDetailTask(t)}>
+                  <span className="text-sm flex-1 text-muted-foreground">{t.title}</span>
+                  <Badge variant="outline" className="text-[10px] font-mono rounded-full">📅 {format(new Date(t.due_date!), 'EEE, MMM d')}</Badge>
+                  {t.project_id && <span className="text-xs text-primary">{projectMap.get(t.project_id)?.name}</span>}
                 </Card>
               ))}
             </div>

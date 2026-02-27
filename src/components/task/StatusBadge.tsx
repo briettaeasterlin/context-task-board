@@ -1,16 +1,21 @@
 import type { TaskStatus } from '@/types/task';
 import { cn } from '@/lib/utils';
 
-const statusStyles: Record<TaskStatus, string> = {
-  Backlog: 'bg-status-backlog/15 text-status-backlog',
-  Next: 'bg-status-next/15 text-status-next',
-  Waiting: 'bg-status-waiting/15 text-status-waiting',
-  Done: 'bg-status-done/15 text-status-done',
+const statusConfig: Record<TaskStatus, { bg: string; text: string; emoji: string }> = {
+  Backlog: { bg: 'bg-status-backlog/10', text: 'text-status-backlog', emoji: '📋' },
+  Next: { bg: 'bg-status-next/12', text: 'text-status-next', emoji: '🎯' },
+  Waiting: { bg: 'bg-status-waiting/12', text: 'text-status-waiting', emoji: '⏳' },
+  Done: { bg: 'bg-status-done/12', text: 'text-status-done', emoji: '✅' },
 };
 
 export function StatusBadge({ status, className }: { status: TaskStatus; className?: string }) {
+  const config = statusConfig[status];
   return (
-    <span className={cn('inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium font-mono', statusStyles[status], className)}>
+    <span className={cn(
+      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium font-mono transition-colors',
+      config.bg, config.text, className
+    )}>
+      <span className="text-[10px]">{config.emoji}</span>
       {status}
     </span>
   );
