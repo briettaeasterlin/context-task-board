@@ -12,6 +12,7 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import KanbanPage from "./pages/KanbanPage";
 import InboxPage from "./pages/InboxPage";
 import TaskListPage from "./pages/TaskListPage";
+import WeekPlannerPage from "./pages/WeekPlannerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/inbox" element={<ProtectedRoute><InboxPage /></ProtectedRoute>} />
             <Route path="/waiting" element={<ProtectedRoute><TaskListPage filterStatus="Waiting" /></ProtectedRoute>} />
             <Route path="/done" element={<ProtectedRoute><TaskListPage filterStatus="Done" /></ProtectedRoute>} />
+            <Route path="/planner" element={<ProtectedRoute><WeekPlannerPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

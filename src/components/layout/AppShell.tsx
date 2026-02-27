@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Sun, Layers, Columns3, Clock, CheckCircle2, Inbox, LayoutDashboard } from 'lucide-react';
+import { LogOut, Sun, Layers, Columns3, Clock, CheckCircle2, Inbox, LayoutDashboard, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_ITEMS = [
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { path: '/waiting', label: 'Waiting', icon: Clock },
   { path: '/done', label: 'Done', icon: CheckCircle2 },
   { path: '/inbox', label: 'Inbox', icon: Inbox },
+  { path: '/planner', label: 'Planner', icon: CalendarDays },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

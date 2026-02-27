@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_events_cache: {
+        Row: {
+          end_time: string
+          id: string
+          is_all_day: boolean
+          location: string | null
+          start_time: string
+          synced_at: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          end_time: string
+          id: string
+          is_all_day?: boolean
+          location?: string | null
+          start_time: string
+          synced_at?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          end_time?: string
+          id?: string
+          is_all_day?: boolean
+          location?: string | null
+          start_time?: string
+          synced_at?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clarify_questions: {
         Row: {
           answer: string | null
@@ -141,6 +174,56 @@ export type Database = {
           },
         ]
       }
+      planned_task_blocks: {
+        Row: {
+          created_at: string
+          date: string
+          duration_minutes: number
+          id: string
+          locked: boolean
+          notes: string | null
+          source: string
+          start_time: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          duration_minutes?: number
+          id?: string
+          locked?: boolean
+          notes?: string | null
+          source?: string
+          start_time: string
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          duration_minutes?: number
+          id?: string
+          locked?: boolean
+          notes?: string | null
+          source?: string
+          start_time?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planned_task_blocks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           area: Database["public"]["Enums"]["task_area"]
@@ -179,8 +262,10 @@ export type Database = {
           area: Database["public"]["Enums"]["task_area"]
           blocked_by: string | null
           context: string | null
+          context_tag: string | null
           created_at: string
           due_date: string | null
+          estimated_minutes: number | null
           id: string
           milestone_id: string | null
           notes: string | null
@@ -199,8 +284,10 @@ export type Database = {
           area?: Database["public"]["Enums"]["task_area"]
           blocked_by?: string | null
           context?: string | null
+          context_tag?: string | null
           created_at?: string
           due_date?: string | null
+          estimated_minutes?: number | null
           id?: string
           milestone_id?: string | null
           notes?: string | null
@@ -219,8 +306,10 @@ export type Database = {
           area?: Database["public"]["Enums"]["task_area"]
           blocked_by?: string | null
           context?: string | null
+          context_tag?: string | null
           created_at?: string
           due_date?: string | null
+          estimated_minutes?: number | null
           id?: string
           milestone_id?: string | null
           notes?: string | null
@@ -292,6 +381,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_planner_settings: {
+        Row: {
+          created_at: string
+          gcal_access_token: string | null
+          gcal_connected: boolean
+          gcal_refresh_token: string | null
+          gcal_timezone: string | null
+          gcal_token_expires_at: string | null
+          max_next_tasks: number
+          overlay_ics_token: string | null
+          updated_at: string
+          user_id: string
+          workday_end: string
+          workday_start: string
+        }
+        Insert: {
+          created_at?: string
+          gcal_access_token?: string | null
+          gcal_connected?: boolean
+          gcal_refresh_token?: string | null
+          gcal_timezone?: string | null
+          gcal_token_expires_at?: string | null
+          max_next_tasks?: number
+          overlay_ics_token?: string | null
+          updated_at?: string
+          user_id: string
+          workday_end?: string
+          workday_start?: string
+        }
+        Update: {
+          created_at?: string
+          gcal_access_token?: string | null
+          gcal_connected?: boolean
+          gcal_refresh_token?: string | null
+          gcal_timezone?: string | null
+          gcal_token_expires_at?: string | null
+          max_next_tasks?: number
+          overlay_ics_token?: string | null
+          updated_at?: string
+          user_id?: string
+          workday_end?: string
+          workday_start?: string
+        }
+        Relationships: []
       }
     }
     Views: {
