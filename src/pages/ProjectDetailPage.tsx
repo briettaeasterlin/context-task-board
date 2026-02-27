@@ -126,7 +126,7 @@ export default function ProjectDetailPage() {
     <AppShell>
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => navigate('/projects')}>
+          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => navigate('/review')}>
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
           <div className="flex-1">
