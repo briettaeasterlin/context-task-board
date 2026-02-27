@@ -6,7 +6,6 @@ import { useMilestones } from '@/hooks/useProjects';
 import { useSeedData } from '@/hooks/useSeedData';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import type { Task, TaskArea, TaskStatus, TaskUpdate, TaskInsert, Project } from '@/types/task';
-import { AREAS } from '@/types/task';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
@@ -21,6 +20,13 @@ import { Card } from '@/components/ui/card';
 import { Plus, Copy, Check, Sparkles, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+
+function getGreeting(): { text: string; emoji: string } {
+  const hour = new Date().getHours();
+  if (hour < 12) return { text: 'Good morning', emoji: '☀️' };
+  if (hour < 17) return { text: 'Good afternoon', emoji: '🌤️' };
+  return { text: 'Good evening', emoji: '🌙' };
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -38,6 +44,17 @@ export default function Dashboard() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+
+  const greeting = getGreeting();
+  const openTasks = tasks.filter(t => t.status !== 'Done').length;
+  const nextCount = tasks.filter(t => t.status === 'Next').length;
+  const waitingCount = tasks.filter(t => t.status === 'Waiting').length;
+  const doneToday = tasks.filter(t => {
+    if (t.status !== 'Done') return false;
+    const d = new Date(t.updated_at);
+    const today = new Date();
+    return d.toDateString() === today.toDateString();
+  }).length;
 
   const nextTasks = useMemo(() => {
     let result = tasks.filter(t => t.status === 'Next');
@@ -147,29 +164,59 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Greeting Banner */}
+        <div className="rounded-2xl bg-accent/50 border border-accent p-6">
+          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+            <span>{greeting.emoji}</span>
+            {greeting.text}, Brietta
+          </h1>
+          <div className="flex items-center gap-6 mt-3 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="text-base">🎯</span>
+              <span className="font-medium text-foreground">{nextCount}</span> in focus
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-base">⏳</span>
+              <span className="font-medium text-foreground">{waitingCount}</span> waiting
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-base">📋</span>
+              <span className="font-medium text-foreground">{openTasks}</span> open
+            </span>
+            {doneToday > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="text-base">✅</span>
+                <span className="font-medium text-status-done">{doneToday}</span> done today
+              </span>
+            )}
+          </div>
+        </div>
+
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => navigate('/planner')}>
-            <CalendarDays className="h-3 w-3 mr-1" /> Plan My Week
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => navigate('/planner')}>
+            <CalendarDays className="h-3.5 w-3.5 mr-1.5" /> Plan My Week
           </Button>
-          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setReviewMode(true)}>
-            <Sparkles className="h-3 w-3 mr-1" /> Run AI Status Review
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => setReviewMode(true)}>
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Run AI Status Review
           </Button>
-          <Button variant="outline" size="sm" className="text-xs h-7" onClick={copyAllForAI}>
-            {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={copyAllForAI}>
+            {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
             {copied ? 'Copied!' : 'Copy All for AI'}
           </Button>
         </div>
 
         {activeProjects.length > 0 && (
           <section>
-            <h2 className="font-mono text-xs font-semibold text-muted-foreground mb-2">Active Projects</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <h2 className="font-sans text-lg font-semibold mb-3 flex items-center gap-2">
+              <span>📁</span> Active Projects
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {activeProjects.map(p => (
                 <ProjectCard key={p.id} project={p} tasks={tasks.filter(t => t.project_id === p.id)}
                   milestones={milestones}
@@ -181,19 +228,21 @@ export default function Dashboard() {
         )}
 
         <section>
-          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-            <h2 className="font-mono text-xs font-semibold text-muted-foreground">Next — All Areas</h2>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h2 className="font-sans text-lg font-semibold flex items-center gap-2">
+              <span>🎯</span> Next — All Areas
+            </h2>
             <div className="flex items-center gap-2">
               <BulkActions selectedCount={selectedIds.size} selectedTasks={nextTasks.filter(t => selectedIds.has(t.id))}
                 onBulkUpdate={handleBulkUpdate} onBulkDelete={ids => ids.forEach(id => deleteTask.mutate(id, { onSuccess: () => setSelectedIds(new Set()) }))} onClearSelection={() => setSelectedIds(new Set())} allTasks={tasks} projects={projects} />
-              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setBulkAddOpen(true)}>
-                <Plus className="h-3 w-3 mr-1" /> Bulk Add
+              <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => setBulkAddOpen(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Bulk Add
               </Button>
             </div>
           </div>
           <FilterBar search={search} onSearchChange={setSearch} areaFilter={areaFilter} onAreaChange={setAreaFilter}
             projectFilter={projectFilter} onProjectChange={setProjectFilter} projects={projects} />
-          <div className="mt-2">
+          <div className="mt-3">
             {isLoading ? <p className="text-sm text-muted-foreground text-center py-8">Loading...</p> :
               <TaskTable tasks={nextTasks} projects={projects} selectedIds={selectedIds} onToggleSelect={toggleSelect}
                 onSelectAll={selectAll} onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} />}
@@ -202,15 +251,17 @@ export default function Dashboard() {
 
         {waitingTasks.length > 0 && (
           <section>
-            <h2 className="font-mono text-xs font-semibold text-muted-foreground mb-2">What's blocking me?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <h2 className="font-sans text-lg font-semibold mb-3 flex items-center gap-2">
+              <span>⏳</span> What's blocking me?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {Object.entries(waitingByProject).map(([projectName, pTasks]) => (
-                <Card key={projectName} className="p-3">
-                  <h3 className="font-mono text-xs font-medium mb-2">{projectName}</h3>
-                  <div className="space-y-1">
+                <Card key={projectName} className="p-4 rounded-xl shadow-card">
+                  <h3 className="font-sans text-sm font-semibold mb-3">{projectName}</h3>
+                  <div className="space-y-2">
                     {pTasks.map(t => (
-                      <div key={t.id} className="text-xs text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => setDetailTask(t)}>
-                        {t.title} {t.blocked_by && <span className="text-status-waiting">⏳ {t.blocked_by}</span>}
+                      <div key={t.id} className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors rounded-lg p-2 hover:bg-muted/30" onClick={() => setDetailTask(t)}>
+                        {t.title} {t.blocked_by && <span className="text-status-waiting font-medium">⏳ {t.blocked_by}</span>}
                       </div>
                     ))}
                   </div>

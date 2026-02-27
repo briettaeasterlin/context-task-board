@@ -3,9 +3,9 @@ import type { Task, Project, Milestone } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Check, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { isPast, isToday, format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface ProjectGroup {
   project: Project | null;
@@ -24,8 +24,20 @@ interface Props {
   formatDueLabel: (d: string) => string;
 }
 
+function guessEmoji(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes('baby') || n.includes('birth') || n.includes('nursery')) return '👶';
+  if (n.includes('career') || n.includes('learning') || n.includes('sprint')) return '🚀';
+  if (n.includes('tax') || n.includes('legal') || n.includes('admin')) return '📝';
+  if (n.includes('home') || n.includes('house') || n.includes('garage')) return '🏠';
+  if (n.includes('client') || n.includes('consulting') || n.includes('portfolio')) return '💼';
+  if (n.includes('report') || n.includes('dashboard') || n.includes('data')) return '📊';
+  if (n.includes('ai') || n.includes('product') || n.includes('bootcamp')) return '🧠';
+  if (n.includes('operation') || n.includes('business') || n.includes('finance')) return '⚙️';
+  return '📌';
+}
+
 export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMarkDone, onSelect, formatDueLabel }: Props) {
-  // Track which task index is shown per project group
   const [activeIndexes, setActiveIndexes] = useState<Record<string, number>>({});
 
   const groups: ProjectGroup[] = useMemo(() => {
@@ -42,23 +54,13 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
       const projectAllTasks = key === '__none__'
         ? allTasks.filter(t => !t.project_id)
         : allTasks.filter(t => t.project_id === key);
-      result.push({
-        project,
-        tasks,
-        totalTasks: projectAllTasks.length,
-        doneTasks: projectAllTasks.filter(t => t.status === 'Done').length,
-      });
+      result.push({ project, tasks, totalTasks: projectAllTasks.length, doneTasks: projectAllTasks.filter(t => t.status === 'Done').length });
     }
-
-    // Sort groups: groups with highest-priority task first (by sort_order of first task)
     result.sort((a, b) => (a.tasks[0]?.sort_order ?? 0) - (b.tasks[0]?.sort_order ?? 0));
     return result;
   }, [nextTasks, allTasks, projects]);
 
-  const getActiveIndex = (groupKey: string, maxLen: number) => {
-    const idx = activeIndexes[groupKey] ?? 0;
-    return Math.min(idx, maxLen - 1);
-  };
+  const getActiveIndex = (groupKey: string, maxLen: number) => Math.min(activeIndexes[groupKey] ?? 0, maxLen - 1);
 
   const navigate = (groupKey: string, delta: number, maxLen: number) => {
     const dir = delta > 0 ? 'left' : 'right';
@@ -75,23 +77,19 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
   const [slideDir, setSlideDir] = useState<Record<string, 'left' | 'right' | null>>({});
 
   const makeSwipeHandlers = (groupKey: string, maxLen: number) => ({
-    onTouchStart: (e: React.TouchEvent) => {
-      touchStartRef.current = e.touches[0].clientX;
-    },
+    onTouchStart: (e: React.TouchEvent) => { touchStartRef.current = e.touches[0].clientX; },
     onTouchEnd: (e: React.TouchEvent) => {
       if (touchStartRef.current === null) return;
       const diff = e.changedTouches[0].clientX - touchStartRef.current;
       touchStartRef.current = null;
-      if (Math.abs(diff) > 50) {
-        navigate(groupKey, diff < 0 ? 1 : -1, maxLen);
-      }
+      if (Math.abs(diff) > 50) navigate(groupKey, diff < 0 ? 1 : -1, maxLen);
     },
   });
 
   if (groups.length === 0) {
     return (
-      <Card className="p-6 text-center">
-        <p className="text-sm text-muted-foreground">No tasks marked Next. Add one above or promote from Backlog.</p>
+      <Card className="p-8 text-center rounded-xl shadow-card">
+        <p className="text-sm text-muted-foreground">No tasks marked Next. Add one above or promote from Backlog. 🌿</p>
       </Card>
     );
   }
@@ -104,82 +102,77 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
         const activeTask = group.tasks[activeIdx];
         const progress = group.totalTasks > 0 ? Math.round((group.doneTasks / group.totalTasks) * 100) : 0;
         const swipe = makeSwipeHandlers(groupKey, group.tasks.length);
+        const emoji = group.project ? guessEmoji(group.project.name) : '📌';
 
         return (
-          <Card key={groupKey} className="relative overflow-hidden">
+          <Card key={groupKey} className="relative overflow-hidden rounded-xl shadow-card hover:shadow-elevated transition-all duration-200">
             {/* Project header */}
-            <div className="px-4 pt-3 pb-2 border-b border-border/50">
+            <div className="px-5 pt-4 pb-3 border-b border-border/40">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="font-mono text-xs font-semibold truncate">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-base">{emoji}</span>
+                  <h3 className="font-sans text-sm font-semibold truncate">
                     {group.project?.name ?? 'Standalone Tasks'}
                   </h3>
                   {group.tasks.length > 1 && (
-                    <Badge variant="secondary" className="text-[10px] font-mono shrink-0">
+                    <Badge variant="secondary" className="text-[10px] font-mono shrink-0 rounded-full">
                       <Layers className="h-2.5 w-2.5 mr-0.5" />
                       {group.tasks.length}
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono shrink-0">
-                  <span>{group.doneTasks}/{group.totalTasks}</span>
-                  <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
+                  <span className="font-medium">{group.doneTasks}/{group.totalTasks}</span>
+                  <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-primary transition-all duration-500 animate-progress-fill"
+                      style={{ width: `${progress}%` }} />
                   </div>
                 </div>
               </div>
               {group.project?.summary && (
-                <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">{group.project.summary}</p>
+                <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1 leading-relaxed">{group.project.summary}</p>
               )}
             </div>
 
             {/* Active task card */}
-            <div className="p-4 overflow-hidden" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd}>
+            <div className="p-5 overflow-hidden" onTouchStart={swipe.onTouchStart} onTouchEnd={swipe.onTouchEnd}>
               <div
                 key={activeTask.id}
-                className={`flex items-start gap-3 cursor-pointer group transition-all duration-300 ease-out ${
-                  slideDir[groupKey] === 'left' ? 'animate-fade-in' :
-                  slideDir[groupKey] === 'right' ? 'animate-fade-in' :
-                  ''
-                }`}
+                className={cn(
+                  "flex items-start gap-3 cursor-pointer group transition-all duration-300 ease-out",
+                  slideDir[groupKey] ? "animate-fade-in" : ""
+                )}
                 style={slideDir[groupKey] ? { animationDuration: '0.25s' } : undefined}
                 onClick={() => onSelect(activeTask)}
               >
-                {/* Done button */}
                 <Button
-                  size="icon"
-                  variant="outline"
-                  className="shrink-0 h-7 w-7 rounded-full border-primary/30 hover:bg-primary hover:text-primary-foreground transition-colors"
+                  size="icon" variant="outline"
+                  className="shrink-0 h-8 w-8 rounded-full border-primary/30 hover:bg-primary hover:text-primary-foreground transition-all duration-200"
                   onClick={e => {
                     e.stopPropagation();
                     onMarkDone(activeTask.id);
-                    // If we completed the last visible, step back
-                    if (activeIdx >= group.tasks.length - 1 && activeIdx > 0) {
+                    if (activeIdx >= group.tasks.length - 1 && activeIdx > 0)
                       setActiveIndexes(prev => ({ ...prev, [groupKey]: activeIdx - 1 }));
-                    }
                   }}
                 >
-                  <Check className="h-3.5 w-3.5" />
+                  <Check className="h-4 w-4" />
                 </Button>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-mono text-sm font-medium group-hover:text-primary transition-colors">
+                  <p className="text-sm font-medium leading-relaxed group-hover:text-primary transition-colors">
                     {activeTask.title}
                   </p>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     {activeTask.due_date && (
                       <Badge
                         variant={isPast(new Date(activeTask.due_date)) && !isToday(new Date(activeTask.due_date)) ? 'destructive' : 'outline'}
-                        className="text-[10px] font-mono"
+                        className="text-[10px] font-mono rounded-full"
                       >
                         📅 {formatDueLabel(activeTask.due_date)}
                       </Badge>
                     )}
                     {activeTask.target_window && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-mono">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent text-accent-foreground font-mono">
                         🎯 {activeTask.target_window}
                       </span>
                     )}
@@ -193,40 +186,29 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
                 </div>
               </div>
 
-              {/* Navigation for multiple tasks */}
               {group.tasks.length > 1 && (
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 px-2 text-[11px] font-mono"
-                    disabled={activeIdx === 0}
-                    onClick={() => navigate(groupKey, -1, group.tasks.length)}
-                  >
-                    <ChevronLeft className="h-3 w-3 mr-0.5" /> Prev
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                  <Button size="sm" variant="ghost" className="h-7 px-2.5 text-xs rounded-lg"
+                    disabled={activeIdx === 0} onClick={() => navigate(groupKey, -1, group.tasks.length)}>
+                    <ChevronLeft className="h-3.5 w-3.5 mr-0.5" /> Prev
                   </Button>
-                  <span className="text-[10px] text-muted-foreground font-mono">
+                  <span className="text-[11px] text-muted-foreground font-mono">
                     {activeIdx + 1} of {group.tasks.length}
                   </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 px-2 text-[11px] font-mono"
-                    disabled={activeIdx === group.tasks.length - 1}
-                    onClick={() => navigate(groupKey, 1, group.tasks.length)}
-                  >
-                    Next <ChevronRight className="h-3 w-3 ml-0.5" />
+                  <Button size="sm" variant="ghost" className="h-7 px-2.5 text-xs rounded-lg"
+                    disabled={activeIdx === group.tasks.length - 1} onClick={() => navigate(groupKey, 1, group.tasks.length)}>
+                    Next <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Stacked card visual effect */}
+            {/* Stacked card visual */}
             {group.tasks.length > 1 && (
               <>
-                <div className="absolute bottom-0 left-2 right-2 h-1 bg-muted/60 rounded-b-lg -z-10 translate-y-1" />
+                <div className="absolute bottom-0 left-3 right-3 h-1.5 bg-muted/50 rounded-b-xl -z-10 translate-y-1" />
                 {group.tasks.length > 2 && (
-                  <div className="absolute bottom-0 left-4 right-4 h-1 bg-muted/30 rounded-b-lg -z-20 translate-y-2" />
+                  <div className="absolute bottom-0 left-5 right-5 h-1.5 bg-muted/25 rounded-b-xl -z-20 translate-y-2" />
                 )}
               </>
             )}
