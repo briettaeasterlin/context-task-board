@@ -228,6 +228,7 @@ export type Database = {
         Row: {
           area: Database["public"]["Enums"]["task_area"]
           created_at: string
+          deleted_at: string | null
           id: string
           name: string
           scope_notes: string | null
@@ -238,6 +239,7 @@ export type Database = {
         Insert: {
           area?: Database["public"]["Enums"]["task_area"]
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name: string
           scope_notes?: string | null
@@ -248,6 +250,7 @@ export type Database = {
         Update: {
           area?: Database["public"]["Enums"]["task_area"]
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name?: string
           scope_notes?: string | null
@@ -264,6 +267,7 @@ export type Database = {
           context: string | null
           context_tag: string | null
           created_at: string
+          deleted_at: string | null
           due_date: string | null
           estimated_minutes: number | null
           id: string
@@ -286,6 +290,7 @@ export type Database = {
           context?: string | null
           context_tag?: string | null
           created_at?: string
+          deleted_at?: string | null
           due_date?: string | null
           estimated_minutes?: number | null
           id?: string
@@ -308,6 +313,7 @@ export type Database = {
           context?: string | null
           context_tag?: string | null
           created_at?: string
+          deleted_at?: string | null
           due_date?: string | null
           estimated_minutes?: number | null
           id?: string

@@ -11,7 +11,7 @@ export function useTasks(projectId?: string) {
     queryKey: ['tasks', user?.id, projectId],
     queryFn: async (): Promise<Task[]> => {
       if (!user) return [];
-      let query = supabase.from('tasks').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      let query = supabase.from('tasks').select('*').eq('user_id', user.id).is('deleted_at', null).order('created_at', { ascending: false });
       if (projectId) query = query.eq('project_id', projectId);
       const { data, error } = await query;
       if (error) throw error;
@@ -60,7 +60,7 @@ export function useTasks(projectId?: string) {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      const { error } = await supabase.from('tasks').update({ deleted_at: new Date().toISOString() } as any).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
