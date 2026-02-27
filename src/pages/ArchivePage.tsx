@@ -190,7 +190,7 @@ export default function ArchivePage() {
                     <p className="text-sm font-medium line-through">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-[10px] rounded-full">{task.area}</Badge>
-                      <Badge variant="secondary" className="text-[10px] rounded-full">{task.status}</Badge>
+                      <Badge variant="destructive" className="text-[10px] rounded-full">Deleted</Badge>
                       {task.project_id && projectMap.get(task.project_id) && (
                         <span className="text-[10px] text-muted-foreground">{projectMap.get(task.project_id)!.name}</span>
                       )}
