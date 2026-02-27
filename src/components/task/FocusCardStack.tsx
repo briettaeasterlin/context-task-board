@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface ProjectGroup {
   project: Project | null;
+  areaLabel: string | null;
   tasks: Task[];
   totalTasks: number;
   doneTasks: number;
@@ -23,6 +24,14 @@ interface Props {
   onSelect: (task: Task) => void;
   formatDueLabel: (d: string) => string;
 }
+
+const AREA_EMOJI: Record<string, string> = {
+  Personal: '🧘',
+  Business: '💼',
+  Home: '🏠',
+  Family: '👨‍👩‍👧',
+  Client: '🤝',
+};
 
 function guessEmoji(name: string): string {
   const n = name.toLowerCase();
@@ -43,18 +52,23 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
   const groups: ProjectGroup[] = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const t of nextTasks) {
-      const key = t.project_id ?? '__none__';
+      // Group by project_id, or by area for standalone tasks
+      const key = t.project_id ?? `__area__${t.area}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(t);
     }
 
     const result: ProjectGroup[] = [];
     for (const [key, tasks] of map) {
-      const project = key === '__none__' ? null : projects.find(p => p.id === key) ?? null;
-      const projectAllTasks = key === '__none__'
-        ? allTasks.filter(t => !t.project_id)
-        : allTasks.filter(t => t.project_id === key);
-      result.push({ project, tasks, totalTasks: projectAllTasks.length, doneTasks: projectAllTasks.filter(t => t.status === 'Done').length });
+      if (key.startsWith('__area__')) {
+        const area = key.replace('__area__', '');
+        const areaAllTasks = allTasks.filter(t => !t.project_id && t.area === area);
+        result.push({ project: null, areaLabel: area, tasks, totalTasks: areaAllTasks.length, doneTasks: areaAllTasks.filter(t => t.status === 'Done').length });
+      } else {
+        const project = projects.find(p => p.id === key) ?? null;
+        const projectAllTasks = allTasks.filter(t => t.project_id === key);
+        result.push({ project, areaLabel: null, tasks, totalTasks: projectAllTasks.length, doneTasks: projectAllTasks.filter(t => t.status === 'Done').length });
+      }
     }
     result.sort((a, b) => (a.tasks[0]?.sort_order ?? 0) - (b.tasks[0]?.sort_order ?? 0));
     return result;
@@ -97,12 +111,13 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
   return (
     <div className="space-y-3">
       {groups.map(group => {
-        const groupKey = group.project?.id ?? '__none__';
+        const groupKey = group.project?.id ?? `__area__${group.areaLabel}`;
         const activeIdx = getActiveIndex(groupKey, group.tasks.length);
         const activeTask = group.tasks[activeIdx];
         const progress = group.totalTasks > 0 ? Math.round((group.doneTasks / group.totalTasks) * 100) : 0;
         const swipe = makeSwipeHandlers(groupKey, group.tasks.length);
-        const emoji = group.project ? guessEmoji(group.project.name) : '📌';
+        const emoji = group.project ? guessEmoji(group.project.name) : (group.areaLabel ? AREA_EMOJI[group.areaLabel] ?? '📌' : '📌');
+        const groupName = group.project?.name ?? (group.areaLabel ? `${group.areaLabel} Tasks` : 'Tasks');
 
         return (
           <Card key={groupKey} className="relative overflow-hidden rounded-xl shadow-card hover:shadow-elevated transition-all duration-200">
@@ -112,7 +127,7 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className="text-base">{emoji}</span>
                   <h3 className="font-sans text-sm font-semibold truncate">
-                    {group.project?.name ?? 'Standalone Tasks'}
+                    {groupName}
                   </h3>
                   {group.tasks.length > 1 && (
                     <Badge variant="secondary" className="text-[10px] font-mono shrink-0 rounded-full">
