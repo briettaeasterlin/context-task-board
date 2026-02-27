@@ -2,3 +2,6 @@ project_id = "izzjcdoysbcunsvgwmew"
 
 [functions.ai-extract]
 verify_jwt = false
+
+[functions.ai-status-review]
+verify_jwt = false

@@ -14,10 +14,11 @@ import { BulkAddModal } from '@/components/task/BulkAddModal';
 import { BulkActions } from '@/components/task/BulkActions';
 import { FilterBar } from '@/components/task/FilterBar';
 import { ProjectCard } from '@/components/project/ProjectCard';
+import { StatusReviewPanel } from '@/components/review/StatusReviewPanel';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Copy, Check } from 'lucide-react';
+import { Plus, Copy, Check, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [bulkAddOpen, setBulkAddOpen] = useState(false);
+  const [reviewMode, setReviewMode] = useState(false);
 
   const nextTasks = useMemo(() => {
     let result = tasks.filter(t => t.status === 'Next');
@@ -126,6 +128,21 @@ export default function Dashboard() {
     });
   }, [tasks, projects]);
 
+  // Review mode
+  if (reviewMode) {
+    return (
+      <AppShell>
+        <StatusReviewPanel
+          tasks={tasks}
+          projects={projects}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+          onClose={() => { setReviewMode(false); queryClient.invalidateQueries({ queryKey: ['tasks'] }); }}
+        />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-4">
@@ -134,7 +151,10 @@ export default function Dashboard() {
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setReviewMode(true)}>
+            <Sparkles className="h-3 w-3 mr-1" /> Run AI Status Review
+          </Button>
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={copyAllForAI}>
             {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
             {copied ? 'Copied!' : 'Copy All for AI'}
