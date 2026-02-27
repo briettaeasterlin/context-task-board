@@ -17,7 +17,7 @@ import { ProjectCard } from '@/components/project/ProjectCard';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
+import { Plus, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
@@ -85,6 +85,46 @@ export default function Dashboard() {
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
   const toggleSelect = useCallback((id: string) => { setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); }, []);
   const selectAll = useCallback(() => { setSelectedIds(prev => prev.size === nextTasks.length ? new Set() : new Set(nextTasks.map(t => t.id))); }, [nextTasks]);
+  const [copied, setCopied] = useState(false);
+
+  const copyAllForAI = useCallback(() => {
+    const projectMap = new Map(projects.map(p => [p.id, p]));
+    const grouped: Record<string, { project?: Project; tasks: Task[] }> = {};
+    for (const t of tasks) {
+      const key = t.project_id || '__none__';
+      if (!grouped[key]) grouped[key] = { project: t.project_id ? projectMap.get(t.project_id) : undefined, tasks: [] };
+      grouped[key].tasks.push(t);
+    }
+    let text = `I need help doing a status review of my tasks. For each project/group below, please:\n1. Summarize the current state of the initiative\n2. For any task where the status is unclear or stale, ASK ME whether it has been completed, is still in progress, is waiting on someone, or should be deprioritized/removed entirely\n3. Suggest updated statuses where you're confident, but flag anything ambiguous as a question\n\nStatuses: Backlog (not started), Next (actively working), Waiting (blocked/waiting on someone), Done (completed)\n\n`;
+    const sortedKeys = Object.keys(grouped).sort((a, b) => {
+      if (a === '__none__') return 1;
+      if (b === '__none__') return -1;
+      return (grouped[a].project?.name ?? '').localeCompare(grouped[b].project?.name ?? '');
+    });
+    for (const key of sortedKeys) {
+      const { project, tasks: groupTasks } = grouped[key];
+      const name = project?.name ?? 'No Project';
+      text += `## ${name}\n`;
+      if (project?.summary) text += `Summary: ${project.summary}\n`;
+      if (project?.scope_notes) text += `Scope: ${project.scope_notes}\n`;
+      text += '\n';
+      for (const t of groupTasks) {
+        text += `- [${t.status}] ${t.title}`;
+        if (t.area) text += ` (${t.area})`;
+        if (t.blocked_by) text += ` — blocked by: ${t.blocked_by}`;
+        if (t.context) text += ` — ${t.context}`;
+        if (t.due_date) text += ` — due: ${t.due_date}`;
+        if (t.notes) text += ` | notes: ${t.notes}`;
+        text += '\n';
+      }
+      text += '\n';
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      toast.success('Copied to clipboard — paste into ChatGPT or Claude');
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [tasks, projects]);
 
   return (
     <AppShell>
@@ -93,6 +133,13 @@ export default function Dashboard() {
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
+
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={copyAllForAI}>
+            {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+            {copied ? 'Copied!' : 'Copy All for AI'}
+          </Button>
+        </div>
 
         {activeProjects.length > 0 && (
           <section>
