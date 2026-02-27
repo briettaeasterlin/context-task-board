@@ -11,7 +11,7 @@ export function useProjects() {
     queryKey: ['projects', user?.id],
     queryFn: async (): Promise<Project[]> => {
       if (!user) return [];
-      const { data, error } = await supabase.from('projects').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('projects').select('*').eq('user_id', user.id).is('deleted_at', null).order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Project[];
     },
@@ -39,7 +39,7 @@ export function useProjects() {
 
   const deleteProject = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('projects').delete().eq('id', id);
+      const { error } = await supabase.from('projects').update({ deleted_at: new Date().toISOString() } as any).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
