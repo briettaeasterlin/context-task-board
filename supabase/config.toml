@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.tasks-overlay-ics]
 verify_jwt = false
+
+[functions.gcal-auth]
+verify_jwt = false
+
+[functions.gcal-sync]
+verify_jwt = false
