@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks/usePlanner';
@@ -10,9 +10,11 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format, startOfWeek, addDays, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, GripVertical, Clock, Calendar, Lock, Unlock, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GripVertical, Clock, Calendar, Lock, Unlock, Trash2, RefreshCw, Link2, Unlink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const HOUR_HEIGHT = 60; // px per hour
@@ -43,7 +45,9 @@ function minutesToHeight(duration: number): number {
 export default function WeekPlannerPage() {
   const { tasks } = useTasks();
   const { projects } = useProjects();
+  const queryClient = useQueryClient();
   const [weekOffset, setWeekOffset] = useState(0);
+  const [syncing, setSyncing] = useState(false);
 
   const weekStart = useMemo(() => {
     const now = new Date();
@@ -63,7 +67,76 @@ export default function WeekPlannerPage() {
     new Date(weekStartStr).toISOString(),
     new Date(weekEndStr + 'T23:59:59').toISOString()
   );
-  const { settings } = usePlannerSettings();
+  const { settings, upsertSettings } = usePlannerSettings();
+
+  // Listen for gcal-connected message from OAuth popup
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'gcal-connected') {
+        queryClient.invalidateQueries({ queryKey: ['planner_settings'] });
+        queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
+        toast.success('Google Calendar connected!');
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [queryClient]);
+
+  const handleConnectGcal = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Not authenticated'); return; }
+
+      const res = await supabase.functions.invoke('gcal-auth/authorize', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (res.error) throw res.error;
+      const { url } = res.data;
+      window.open(url, 'gcal-auth', 'width=500,height=700');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to start Google auth');
+    }
+  }, []);
+
+  const handleDisconnectGcal = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await supabase.functions.invoke('gcal-auth/disconnect', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      queryClient.invalidateQueries({ queryKey: ['planner_settings'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
+      toast.success('Google Calendar disconnected');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to disconnect');
+    }
+  }, [queryClient]);
+
+  const handleSyncGcal = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Not authenticated'); return; }
+
+      const timeMin = new Date(weekStartStr).toISOString();
+      const timeMax = new Date(weekEndStr + 'T23:59:59').toISOString();
+
+      const res = await supabase.functions.invoke('gcal-sync', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { timeMin, timeMax },
+      });
+
+      if (res.error) throw res.error;
+      queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
+      toast.success(`Synced ${res.data.count} events`);
+    } catch (err: any) {
+      toast.error(err.message || 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  }, [weekStartStr, weekEndStr, queryClient]);
 
   // Unscheduled tasks (Next status, not already in a block this week)
   const scheduledTaskIds = new Set(blocks.map(b => b.task_id).filter(Boolean));
@@ -225,6 +298,23 @@ export default function WeekPlannerPage() {
               {weekOffset !== 0 && (
                 <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setWeekOffset(0)}>
                   Today
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {settings?.gcal_connected ? (
+                <>
+                  <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1" onClick={handleSyncGcal} disabled={syncing}>
+                    <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
+                    {syncing ? 'Syncing...' : 'Sync Calendar'}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={handleDisconnectGcal}>
+                    <Unlink className="h-3 w-3" /> Disconnect
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1" onClick={handleConnectGcal}>
+                  <Link2 className="h-3 w-3" /> Connect Google Calendar
                 </Button>
               )}
             </div>
