@@ -93,7 +93,7 @@ export default function WeekPlannerPage() {
 
       if (res.error) throw res.error;
       const { url } = res.data;
-      window.open(url, 'gcal-auth', 'width=500,height=700');
+      window.open(url, '_blank');
     } catch (err: any) {
       toast.error(err.message || 'Failed to start Google auth');
     }
