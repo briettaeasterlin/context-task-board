@@ -18,10 +18,12 @@ import { StatusReviewPanel } from '@/components/review/StatusReviewPanel';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Copy, Check, Sparkles } from 'lucide-react';
+import { Plus, Copy, Check, Sparkles, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   useSeedData();
   const { tasks, isLoading, createTask, createManyTasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
@@ -152,6 +154,9 @@ export default function Dashboard() {
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
         <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => navigate('/planner')}>
+            <CalendarDays className="h-3 w-3 mr-1" /> Plan My Week
+          </Button>
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setReviewMode(true)}>
             <Sparkles className="h-3 w-3 mr-1" /> Run AI Status Review
           </Button>

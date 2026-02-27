@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.ai-status-review]
 verify_jwt = false
+
+[functions.tasks-overlay-ics]
+verify_jwt = false

@@ -2,18 +2,30 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects, useMilestones } from '@/hooks/useProjects';
-import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
+import { usePlannedBlocks, useCalendarEvents } from '@/hooks/usePlanner';
 import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Crosshair, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, ArrowRight, CalendarDays } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
+import { cn } from '@/lib/utils';
+
+interface TimelineItem {
+  type: 'event' | 'block';
+  id: string;
+  title: string;
+  startMinutes: number;
+  durationMinutes: number;
+  projectName?: string;
+  task?: Task;
+}
 
 export default function TodayPage() {
   const queryClient = useQueryClient();
@@ -21,9 +33,60 @@ export default function TodayPage() {
   const { projects } = useProjects();
   const { milestones } = useMilestones();
 
-  const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const { blocks } = usePlannedBlocks(todayStr, todayStr);
+  const { events } = useCalendarEvents(
+    new Date(todayStr).toISOString(),
+    new Date(todayStr + 'T23:59:59').toISOString()
+  );
 
-  // Tasks with imminent hard deadlines (today, tomorrow, or overdue) — not Done
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
+  const taskMap = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
+
+  // Build timeline
+  const timeline = useMemo(() => {
+    const items: TimelineItem[] = [];
+
+    // Calendar events
+    for (const ev of events) {
+      if (ev.is_all_day) continue;
+      const start = new Date(ev.start_time);
+      const end = new Date(ev.end_time);
+      if (!isToday(start)) continue;
+      items.push({
+        type: 'event',
+        id: ev.id,
+        title: ev.title,
+        startMinutes: start.getHours() * 60 + start.getMinutes(),
+        durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
+      });
+    }
+
+    // Planned blocks
+    for (const block of blocks) {
+      const [h, m] = block.start_time.split(':').map(Number);
+      const task = block.task_id ? taskMap.get(block.task_id) : null;
+      const project = task?.project_id ? projectMap.get(task.project_id) : null;
+      items.push({
+        type: 'block',
+        id: block.id,
+        title: task?.title ?? 'Planned Block',
+        startMinutes: h * 60 + m,
+        durationMinutes: block.duration_minutes,
+        projectName: project?.name,
+        task: task ?? undefined,
+      });
+    }
+
+    return items.sort((a, b) => a.startMinutes - b.startMinutes);
+  }, [events, blocks, taskMap, projectMap]);
+
+  // Now indicator
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // Urgent deadlines
   const urgentDeadlines = useMemo(() => {
     const cutoff = addDays(new Date(), 2);
     return tasks
@@ -35,14 +98,10 @@ export default function TodayPage() {
       .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
   }, [tasks]);
 
-  // All Next tasks sorted by sort_order (user's manual order)
-  const nextTasks = useMemo(() => {
-    return tasks
-      .filter(t => t.status === 'Next')
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-  }, [tasks]);
+  const nextTasks = useMemo(() =>
+    tasks.filter(t => t.status === 'Next').sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+  [tasks]);
 
-  // Upcoming deadlines (next 7 days, not in urgent)
   const upcomingDeadlines = useMemo(() => {
     const start = addDays(new Date(), 2);
     const end = addDays(new Date(), 8);
@@ -55,7 +114,6 @@ export default function TodayPage() {
       .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
   }, [tasks]);
 
-  // Merge urgent deadlines with Next tasks, deduplicating
   const nextIds = new Set(nextTasks.map(t => t.id));
   const urgentOnlyIds = urgentDeadlines.filter(t => !nextIds.has(t.id));
 
@@ -79,6 +137,14 @@ export default function TodayPage() {
     return `Due ${format(d, 'EEE, MMM d')}`;
   };
 
+  const formatTime = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+  };
+
   return (
     <AppShell>
       <div className="space-y-4">
@@ -87,7 +153,63 @@ export default function TodayPage() {
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
-        {/* Urgent Deadlines (not already in Next) */}
+        {/* Today's Timeline */}
+        {timeline.length > 0 && (
+          <section>
+            <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
+              <CalendarDays className="h-3.5 w-3.5" /> Today's Timeline
+            </h2>
+            <div className="space-y-1">
+              {timeline.map((item, idx) => {
+                const isPast = item.startMinutes + item.durationMinutes < nowMinutes;
+                const isCurrent = item.startMinutes <= nowMinutes && item.startMinutes + item.durationMinutes > nowMinutes;
+
+                return (
+                  <Card
+                    key={`${item.type}-${item.id}`}
+                    className={cn(
+                      "p-2 flex items-center gap-3 transition-colors",
+                      item.type === 'block' && "cursor-pointer hover:bg-muted/50",
+                      isPast && "opacity-50",
+                      isCurrent && "border-primary/50 bg-accent/30"
+                    )}
+                    onClick={() => item.task && setDetailTask(item.task)}
+                  >
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground w-20 flex-shrink-0">
+                      <Clock className="h-3 w-3" />
+                      {formatTime(item.startMinutes)}
+                    </div>
+                    <div className={cn(
+                      "w-1 h-6 rounded-full flex-shrink-0",
+                      item.type === 'event' ? "bg-muted-foreground/40" : "bg-primary/60"
+                    )} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-xs truncate">{item.title}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-muted-foreground">{item.durationMinutes}m</span>
+                        {item.projectName && <span className="text-[10px] text-primary">{item.projectName}</span>}
+                        {item.type === 'event' && <Badge variant="outline" className="text-[9px] h-4">Calendar</Badge>}
+                      </div>
+                    </div>
+                    {isCurrent && (
+                      <Badge variant="default" className="text-[9px] h-4 bg-primary">Now</Badge>
+                    )}
+                    {item.type === 'block' && item.task && (
+                      <Button
+                        variant="ghost" size="sm" className="h-6 px-1.5 text-[10px]"
+                        onClick={e => { e.stopPropagation(); handleMarkDone(item.task!.id); }}
+                      >
+                        <CheckCircle2 className="h-3 w-3 mr-0.5" /> Done
+                      </Button>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Urgent Deadlines */}
         {urgentOnlyIds.length > 0 && (
           <section>
             <h2 className="font-mono text-xs font-semibold text-destructive flex items-center gap-1.5 mb-2">
@@ -97,19 +219,15 @@ export default function TodayPage() {
               {urgentOnlyIds.map(t => (
                 <Card key={t.id} className="p-2 flex items-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setDetailTask(t)}>
                   <span className="font-mono text-xs flex-1">{t.title}</span>
-                  <Badge variant="destructive" className="text-[10px] font-mono">
-                    {formatDueLabel(t.due_date!)}
-                  </Badge>
-                  {t.project_id && (
-                    <span className="text-[10px] text-primary font-mono">{projects.find(p => p.id === t.project_id)?.name}</span>
-                  )}
+                  <Badge variant="destructive" className="text-[10px] font-mono">{formatDueLabel(t.due_date!)}</Badge>
+                  {t.project_id && <span className="text-[10px] text-primary font-mono">{projectMap.get(t.project_id)?.name}</span>}
                 </Card>
               ))}
             </div>
           </section>
         )}
 
-        {/* Next Tasks — grouped by project as stacked cards */}
+        {/* Next Tasks */}
         <section>
           <h2 className="font-mono text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
             <Crosshair className="h-3.5 w-3.5" /> Next — Focus
@@ -117,15 +235,8 @@ export default function TodayPage() {
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
           ) : (
-            <FocusCardStack
-              nextTasks={nextTasks}
-              allTasks={tasks}
-              projects={projects}
-              milestones={milestones}
-              onMarkDone={handleMarkDone}
-              onSelect={setDetailTask}
-              formatDueLabel={formatDueLabel}
-            />
+            <FocusCardStack nextTasks={nextTasks} allTasks={tasks} projects={projects} milestones={milestones}
+              onMarkDone={handleMarkDone} onSelect={setDetailTask} formatDueLabel={formatDueLabel} />
           )}
         </section>
 
@@ -139,19 +250,14 @@ export default function TodayPage() {
               {upcomingDeadlines.map(t => (
                 <Card key={t.id} className="p-2 flex items-center gap-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setDetailTask(t)}>
                   <span className="font-mono text-xs flex-1 text-muted-foreground">{t.title}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono">
-                    📅 {format(new Date(t.due_date!), 'EEE, MMM d')}
-                  </Badge>
-                  {t.project_id && (
-                    <span className="text-[10px] text-primary font-mono">{projects.find(p => p.id === t.project_id)?.name}</span>
-                  )}
+                  <Badge variant="outline" className="text-[10px] font-mono">📅 {format(new Date(t.due_date!), 'EEE, MMM d')}</Badge>
+                  {t.project_id && <span className="text-[10px] text-primary font-mono">{projectMap.get(t.project_id)?.name}</span>}
                 </Card>
               ))}
             </div>
           </section>
         )}
 
-        {/* Habit Intentions */}
         <HabitSection />
       </div>
 

@@ -26,6 +26,8 @@ export interface Task {
   due_date: string | null;
   target_window: string | null;
   sort_order: number;
+  estimated_minutes: number | null;
+  context_tag: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -78,7 +80,7 @@ export interface ClarifyQuestion {
   updated_at: string;
 }
 
-export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'sort_order'> & { sort_order?: number };
+export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'sort_order' | 'estimated_minutes' | 'context_tag'> & { sort_order?: number; estimated_minutes?: number | null; context_tag?: string | null };
 export type TaskUpdate = Partial<Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
 
 export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', defaultStatus: TaskStatus = 'Backlog'): Omit<TaskInsert, 'user_id'> {
