@@ -51,9 +51,16 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Get the return URL from the request body
+      let returnUrl = "";
+      try {
+        const body = await req.json();
+        returnUrl = body.returnUrl || "";
+      } catch { /* no body */ }
+
       const userId = data.claims.sub;
-      // Encode user ID in state for the callback
-      const state = btoa(JSON.stringify({ userId }));
+      // Encode user ID and returnUrl in state for the callback
+      const state = btoa(JSON.stringify({ userId, returnUrl }));
 
       const authUrl = new URL(GOOGLE_AUTH_URL);
       authUrl.searchParams.set("client_id", clientId);
@@ -87,9 +94,11 @@ Deno.serve(async (req) => {
       }
 
       let userId: string;
+      let returnUrl = "";
       try {
         const parsed = JSON.parse(atob(state));
         userId = parsed.userId;
+        returnUrl = parsed.returnUrl || "";
       } catch {
         return new Response("Invalid state", { status: 400 });
       }
@@ -136,14 +145,18 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Redirect back to the app if returnUrl is provided
+      if (returnUrl) {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: returnUrl },
+        });
+      }
+
       return new Response(
         `<html><body style="font-family:system-ui;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column">
           <h2 style="color:#2a9d8f">✓ Google Calendar Connected!</h2>
           <p>You can close this window and return to Task OS.</p>
-          <script>
-            if (window.opener) { window.opener.postMessage({ type: 'gcal-connected' }, '*'); }
-            setTimeout(() => window.close(), 2000);
-          </script>
         </body></html>`,
         { headers: { "Content-Type": "text/html" } },
       );
