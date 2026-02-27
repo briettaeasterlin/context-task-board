@@ -33,10 +33,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       key={item.path}
                       to={item.path}
                       className={cn(
-                        'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200',
+                        'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200',
                         isActive
-                          ? 'bg-accent text-accent-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                       )}
                     >
                       <span className="text-sm">{item.emoji}</span>
