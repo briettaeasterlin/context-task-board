@@ -69,17 +69,16 @@ export default function WeekPlannerPage() {
   );
   const { settings, upsertSettings } = usePlannerSettings();
 
-  // Listen for gcal-connected message from OAuth popup
+  // Check for gcal-connected redirect param
   useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'gcal-connected') {
-        queryClient.invalidateQueries({ queryKey: ['planner_settings'] });
-        queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
-        toast.success('Google Calendar connected!');
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('gcal') === 'connected') {
+      queryClient.invalidateQueries({ queryKey: ['planner_settings'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
+      toast.success('Google Calendar connected!');
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [queryClient]);
 
   const handleConnectGcal = useCallback(async () => {
@@ -87,13 +86,17 @@ export default function WeekPlannerPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error('Not authenticated'); return; }
 
+      const returnUrl = window.location.origin + '/planner?gcal=connected';
+
       const res = await supabase.functions.invoke('gcal-auth/authorize', {
         headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { returnUrl },
       });
 
       if (res.error) throw res.error;
       const { url } = res.data;
-      window.open(url, '_blank');
+      // Redirect current page (popups blocked in iframe)
+      window.location.href = url;
     } catch (err: any) {
       toast.error(err.message || 'Failed to start Google auth');
     }
