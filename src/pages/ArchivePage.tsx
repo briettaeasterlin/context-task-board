@@ -79,7 +79,7 @@ export default function ArchivePage() {
 
         <TaskTable tasks={doneTasks} projects={projects} selectedIds={selectedIds} onToggleSelect={toggleSelect}
           onSelectAll={() => setSelectedIds(prev => prev.size === doneTasks.length ? new Set() : new Set(doneTasks.map(t => t.id)))}
-          onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} />
+          onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} showCompletedAt />
       </div>
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
