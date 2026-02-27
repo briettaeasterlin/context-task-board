@@ -14,9 +14,20 @@ interface Props {
   onSelectAll: () => void;
   onTaskClick: (task: Task) => void;
   onInlineUpdate: (id: string, updates: TaskUpdate) => void;
+  showCompletedAt?: boolean;
 }
 
-export function TaskTable({ tasks, projects = [], selectedIds, onToggleSelect, onSelectAll, onTaskClick, onInlineUpdate }: Props) {
+function formatPacific(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+    hour12: true,
+  });
+}
+
+export function TaskTable({ tasks, projects = [], selectedIds, onToggleSelect, onSelectAll, onTaskClick, onInlineUpdate, showCompletedAt = false }: Props) {
   const projectMap = new Map(projects.map(p => [p.id, p.name]));
 
   return (
@@ -31,6 +42,7 @@ export function TaskTable({ tasks, projects = [], selectedIds, onToggleSelect, o
             <th className="text-left p-2 font-medium text-muted-foreground text-xs w-[90px]">Area</th>
             <th className="text-left p-2 font-medium text-muted-foreground text-xs w-[90px]">Status</th>
             <th className="text-left p-2 font-medium text-muted-foreground text-xs w-[120px]">Project</th>
+            {showCompletedAt && <th className="text-left p-2 font-medium text-muted-foreground text-xs w-[140px]">Completed</th>}
           </tr>
         </thead>
         <tbody>
@@ -74,10 +86,15 @@ export function TaskTable({ tasks, projects = [], selectedIds, onToggleSelect, o
               <td className="p-2 text-xs text-muted-foreground" onClick={() => onTaskClick(task)}>
                 {task.project_id ? projectMap.get(task.project_id) ?? '—' : '—'}
               </td>
+              {showCompletedAt && (
+                <td className="p-2 text-xs text-muted-foreground font-mono" onClick={() => onTaskClick(task)}>
+                  {task.status === 'Done' ? formatPacific(task.updated_at) : '—'}
+                </td>
+              )}
             </tr>
           ))}
           {tasks.length === 0 && (
-            <tr><td colSpan={5} className="p-8 text-center text-muted-foreground text-sm">No tasks found.</td></tr>
+            <tr><td colSpan={showCompletedAt ? 6 : 5} className="p-8 text-center text-muted-foreground text-sm">No tasks found.</td></tr>
           )}
         </tbody>
       </table>
