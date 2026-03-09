@@ -47,12 +47,11 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     }
   }, [task]);
 
-  if (!task) return null;
-
   const projectMilestones = milestones.filter(m => m.project_id === form.project_id);
-
   const estDuration = useMemo(() => estimateDuration(form.title), [form.title]);
   const suggestedImpact = useMemo(() => suggestImpactScore(form.title), [form.title]);
+
+  if (!task) return null;
 
   const save = () => {
     const impactVal = form.impact_score ? parseInt(form.impact_score, 10) : null;
