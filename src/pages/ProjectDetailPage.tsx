@@ -172,6 +172,15 @@ export default function ProjectDetailPage() {
               onSelectAll={() => setSelectedIds(prev => prev.size === tasks.length ? new Set() : new Set(tasks.map(t => t.id)))}
               onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} />
           </TabsContent>
+          <TabsContent value="plan" className="mt-4">
+            <ProjectPlanTab project={project} tasks={tasks} milestones={milestones}
+              onTaskClick={setDetailTask}
+              onCreateTask={(title) => createTask.mutate({
+                title, area: project.area, status: 'Backlog', context: null, notes: null,
+                tags: [], project_id: id!, milestone_id: null, blocked_by: null,
+                source: 'decomposition', due_date: null, target_window: null,
+              })} />
+          </TabsContent>
           <TabsContent value="updates" className="mt-4 space-y-4">
             <UpdateForm projects={projects} defaultProjectId={id} onCreated={() => queryClient.invalidateQueries()} />
             {updates.length > 0 && (
