@@ -134,6 +134,25 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
               <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} className="text-sm" />
             </div>
           )}
+          {/* Scoring */}
+          <div className="flex gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Est. Duration</Label>
+              <Badge variant="outline" className="text-xs font-mono">{estDuration}</Badge>
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Impact (1-5)</Label>
+              <div className="flex items-center gap-2">
+                <Select value={form.impact_score || suggestedImpact.toString()} onValueChange={v => setForm(f => ({ ...f, impact_score: v }))}>
+                  <SelectTrigger className="h-9 text-xs w-[80px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(v => <SelectItem key={v} value={v.toString()}>{v} — {['', 'Maintenance', 'Minor', 'Useful', 'High', 'Major'][v]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {!form.impact_score && <span className="text-[10px] text-muted-foreground italic">auto-suggested</span>}
+              </div>
+            </div>
+          </div>
           <div className="flex gap-3">
             <div className="flex-1 space-y-1.5">
               <Label className="text-xs text-muted-foreground">Due Date</Label>
