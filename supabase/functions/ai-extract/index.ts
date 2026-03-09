@@ -57,7 +57,8 @@ CORE PRINCIPLES:
 - The system must feel like a thinking partner, not a task enforcer.
 
 Areas available: Client, Business, Home, Family, Personal.
-Statuses available: Backlog, Next, Waiting, Done.
+Statuses available: Backlog, Next, Waiting, Done, Someday.
+- "Someday" is for speculative ideas or tasks with no clear timeline. Use when input mentions ideas, explorations, or "maybe/someday" language.
 ${defaults.area ? `Default area hint from UI: ${defaults.area}` : ''}
 ${defaults.status ? `Default status hint from UI: ${defaults.status}` : ''}
 ${body.existingProjects ? `Existing projects: ${JSON.stringify(body.existingProjects)}` : ''}
