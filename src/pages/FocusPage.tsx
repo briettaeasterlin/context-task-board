@@ -10,12 +10,13 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, CheckCircle2 } from 'lucide-react';
+import { Clock, CheckCircle2, Zap, CalendarCheck } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
 import { format, isToday, isPast, isTomorrow, addDays, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { generateDailyPlan, getQuickWins, type ScoredTask } from '@/lib/task-scoring';
 
 interface TimelineItem {
   type: 'event' | 'block';
@@ -237,6 +238,12 @@ export default function FocusPage() {
           )}
         </section>
 
+        {/* Daily Plan Generator */}
+        <DailyPlanSection tasks={tasks} onSelect={setDetailTask} onMarkDone={handleMarkDone} />
+
+        {/* Quick Wins */}
+        <QuickWinsSection tasks={tasks} onSelect={setDetailTask} onMarkDone={handleMarkDone} />
+
         {/* Waiting follow-ups (minimal) */}
         {waitingTasks.length > 0 && (
           <section>
@@ -264,5 +271,113 @@ export default function FocusPage() {
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
     </AppShell>
+  );
+}
+
+// ─── Daily Plan Generator ───
+
+const TIME_BUDGETS = [
+  { label: '1h', minutes: 60 },
+  { label: '2h', minutes: 120 },
+  { label: '4h', minutes: 240 },
+  { label: 'Full day', minutes: 480 },
+];
+
+function DailyPlanSection({ tasks, onSelect, onMarkDone }: { tasks: Task[]; onSelect: (t: Task) => void; onMarkDone: (id: string) => void }) {
+  const [budget, setBudget] = useState<number | null>(null);
+
+  const plan = useMemo(() => {
+    if (budget === null) return [];
+    return generateDailyPlan(tasks, budget, tasks);
+  }, [tasks, budget]);
+
+  const totalMinutes = plan.reduce((sum, t) => sum + t.estimatedMinutesCalc, 0);
+
+  return (
+    <section>
+      <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
+        <CalendarCheck className="h-5 w-5 text-primary" /> Daily Plan
+      </h2>
+      <div className="flex gap-2 mb-3">
+        {TIME_BUDGETS.map(b => (
+          <Button
+            key={b.minutes}
+            variant={budget === b.minutes ? 'default' : 'outline'}
+            size="sm"
+            className="text-xs h-7 rounded-lg"
+            onClick={() => setBudget(budget === b.minutes ? null : b.minutes)}
+          >
+            {b.label}
+          </Button>
+        ))}
+      </div>
+      {budget !== null && (
+        <Card className="p-4 rounded-xl shadow-card space-y-2">
+          {plan.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No Next tasks to fill this time budget.</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground font-mono">
+                  {totalMinutes}m planned of {budget}m budget
+                </span>
+                <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (totalMinutes / budget) * 100)}%` }} />
+                </div>
+              </div>
+              {plan.map((t, i) => (
+                <div key={t.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+                  onClick={() => onSelect(t)}>
+                  <span className="text-xs text-muted-foreground font-mono w-5">{i + 1}.</span>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-sm font-medium flex-1 truncate">{t.title}</span>
+                  <span className="text-[11px] font-mono text-muted-foreground shrink-0">{t.estimatedDuration}</span>
+                  <span className={cn(
+                    'text-[10px] font-mono px-1.5 py-0.5 rounded-full shrink-0',
+                    t.priorityScore >= 8 ? 'bg-destructive/10 text-destructive' :
+                    t.priorityScore >= 5 ? 'bg-status-next/10 text-status-next' :
+                    'bg-muted text-muted-foreground'
+                  )}>
+                    {t.priorityScore}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+        </Card>
+      )}
+    </section>
+  );
+}
+
+// ─── Quick Wins ───
+
+function QuickWinsSection({ tasks, onSelect, onMarkDone }: { tasks: Task[]; onSelect: (t: Task) => void; onMarkDone: (id: string) => void }) {
+  const quickWins = useMemo(() => getQuickWins(tasks, tasks), [tasks]);
+
+  if (quickWins.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="font-sans text-base font-semibold flex items-center gap-2 mb-2 text-muted-foreground">
+        <Zap className="h-4 w-4 text-status-waiting" /> Quick Wins ({quickWins.length})
+      </h2>
+      <div className="space-y-1">
+        {quickWins.map(t => (
+          <div key={t.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/30 transition-colors rounded-lg p-2 group"
+            onClick={() => onSelect(t)}>
+            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
+              <CheckCircle2 className="h-3 w-3" />
+            </Button>
+            <span className="flex-1 truncate">{t.title}</span>
+            <span className="text-[10px] font-mono text-muted-foreground">{t.estimatedDuration}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

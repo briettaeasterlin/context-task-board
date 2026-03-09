@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AREAS, STATUSES, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone } from '@/types/task';
 import { Trash2 } from 'lucide-react';
+import { estimateDuration, suggestImpactScore, DURATION_MINUTES } from '@/lib/task-scoring';
 
 interface Props {
   task: Task | null;
@@ -24,6 +26,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus,
     project_id: '', milestone_id: '',
     due_date: '', target_window: '',
+    impact_score: '' as string,
   });
 
   useEffect(() => {
@@ -39,15 +42,19 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         milestone_id: task.milestone_id ?? '',
         due_date: task.due_date ?? '',
         target_window: task.target_window ?? '',
+        impact_score: (task as any).impact_score?.toString() ?? '',
       });
     }
   }, [task]);
 
+  const projectMilestones = milestones.filter(m => m.project_id === form.project_id);
+  const estDuration = useMemo(() => estimateDuration(form.title), [form.title]);
+  const suggestedImpact = useMemo(() => suggestImpactScore(form.title), [form.title]);
+
   if (!task) return null;
 
-  const projectMilestones = milestones.filter(m => m.project_id === form.project_id);
-
   const save = () => {
+    const impactVal = form.impact_score ? parseInt(form.impact_score, 10) : null;
     onUpdate(task.id, {
       title: form.title,
       context: form.context || null,
@@ -59,7 +66,8 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       milestone_id: form.milestone_id || null,
       due_date: form.due_date || null,
       target_window: form.target_window || null,
-    });
+      ...(impactVal !== null ? { impact_score: impactVal } : {}),
+    } as any);
     onClose();
   };
 
@@ -126,6 +134,25 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
               <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} className="text-sm" />
             </div>
           )}
+          {/* Scoring */}
+          <div className="flex gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Est. Duration</Label>
+              <Badge variant="outline" className="text-xs font-mono">{estDuration}</Badge>
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Impact (1-5)</Label>
+              <div className="flex items-center gap-2">
+                <Select value={form.impact_score || suggestedImpact.toString()} onValueChange={v => setForm(f => ({ ...f, impact_score: v }))}>
+                  <SelectTrigger className="h-9 text-xs w-[80px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(v => <SelectItem key={v} value={v.toString()}>{v} — {['', 'Maintenance', 'Minor', 'Useful', 'High', 'Major'][v]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {!form.impact_score && <span className="text-[10px] text-muted-foreground italic">auto-suggested</span>}
+              </div>
+            </div>
+          </div>
           <div className="flex gap-3">
             <div className="flex-1 space-y-1.5">
               <Label className="text-xs text-muted-foreground">Due Date</Label>

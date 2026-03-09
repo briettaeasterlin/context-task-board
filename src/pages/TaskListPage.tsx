@@ -49,9 +49,9 @@ export default function TaskListPage({ filterStatus }: Props) {
         </div>
         <FilterBar search={search} onSearchChange={setSearch} areaFilter={areaFilter} onAreaChange={setAreaFilter}
           projectFilter={projectFilter} onProjectChange={setProjectFilter} projects={projects} />
-        <TaskTable tasks={filtered} projects={projects} selectedIds={selectedIds} onToggleSelect={toggleSelect}
+        <TaskTable tasks={filtered} projects={projects} allTasks={tasks} selectedIds={selectedIds} onToggleSelect={toggleSelect}
           onSelectAll={() => setSelectedIds(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)))}
-          onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} />
+          onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} showScoring />
       </div>
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={id => deleteTask.mutate(id)} projects={projects} milestones={milestones} />

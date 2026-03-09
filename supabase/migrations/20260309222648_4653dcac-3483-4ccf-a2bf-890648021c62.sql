@@ -1,0 +1,1 @@
+ALTER TABLE public.tasks ADD COLUMN impact_score integer CHECK (impact_score >= 1 AND impact_score <= 5);

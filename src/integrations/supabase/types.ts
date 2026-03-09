@@ -271,6 +271,7 @@ export type Database = {
           due_date: string | null
           estimated_minutes: number | null
           id: string
+          impact_score: number | null
           milestone_id: string | null
           notes: string | null
           project: string | null
@@ -294,6 +295,7 @@ export type Database = {
           due_date?: string | null
           estimated_minutes?: number | null
           id?: string
+          impact_score?: number | null
           milestone_id?: string | null
           notes?: string | null
           project?: string | null
@@ -317,6 +319,7 @@ export type Database = {
           due_date?: string | null
           estimated_minutes?: number | null
           id?: string
+          impact_score?: number | null
           milestone_id?: string | null
           notes?: string | null
           project?: string | null
