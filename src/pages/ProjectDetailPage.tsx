@@ -7,6 +7,7 @@ import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoadmapTimeline } from '@/components/project/RoadmapTimeline';
+import { ProjectPlanTab } from '@/components/project/ProjectPlanTab';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { QuickAdd } from '@/components/task/QuickAdd';
@@ -155,6 +156,7 @@ export default function ProjectDetailPage() {
           <TabsList>
             <TabsTrigger value="roadmap" className="text-xs">Roadmap</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs">Tasks ({tasks.length})</TabsTrigger>
+            <TabsTrigger value="plan" className="text-xs">Plan</TabsTrigger>
             <TabsTrigger value="updates" className="text-xs">Updates ({updates.length})</TabsTrigger>
             <TabsTrigger value="clarify" className="text-xs">Clarify ({clarifyQuestions.filter(q => q.status === 'open').length})</TabsTrigger>
           </TabsList>
@@ -169,6 +171,15 @@ export default function ProjectDetailPage() {
               onToggleSelect={tid => setSelectedIds(prev => { const n = new Set(prev); if (n.has(tid)) n.delete(tid); else n.add(tid); return n; })}
               onSelectAll={() => setSelectedIds(prev => prev.size === tasks.length ? new Set() : new Set(tasks.map(t => t.id)))}
               onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} />
+          </TabsContent>
+          <TabsContent value="plan" className="mt-4">
+            <ProjectPlanTab project={project} tasks={tasks} milestones={milestones}
+              onTaskClick={setDetailTask}
+              onCreateTask={(title) => createTask.mutate({
+                title, area: project.area, status: 'Backlog', context: null, notes: null,
+                tags: [], project_id: id!, milestone_id: null, blocked_by: null,
+                source: 'decomposition', due_date: null, target_window: null,
+              })} />
           </TabsContent>
           <TabsContent value="updates" className="mt-4 space-y-4">
             <UpdateForm projects={projects} defaultProjectId={id} onCreated={() => queryClient.invalidateQueries()} />
