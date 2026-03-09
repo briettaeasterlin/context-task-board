@@ -12,12 +12,13 @@ import { FilterBar } from '@/components/task/FilterBar';
 import { BulkActions } from '@/components/task/BulkActions';
 import { KanbanBoard } from '@/components/task/KanbanBoard';
 import { StatusReviewPanel } from '@/components/review/StatusReviewPanel';
+import { BoardReviewPanel } from '@/components/review/BoardReviewPanel';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Copy, Check, Plus } from 'lucide-react';
+import { Sparkles, Copy, Check, Plus, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays, format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -44,6 +45,7 @@ export default function ReviewPage() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [reviewMode, setReviewMode] = useState(false);
+  const [boardReviewMode, setBoardReviewMode] = useState(false);
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<TaskArea | 'all'>('all');
   const [projectFilter, setProjectFilter] = useState('');
@@ -136,6 +138,16 @@ export default function ReviewPage() {
     );
   }
 
+  // Board Review mode
+  if (boardReviewMode) {
+    return (
+      <AppShell>
+        <BoardReviewPanel tasks={tasks} projects={projects} onUpdate={handleUpdate} onDelete={handleDelete}
+          onClose={() => { setBoardReviewMode(false); queryClient.invalidateQueries({ queryKey: ['tasks'] }); }} />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -162,7 +174,10 @@ export default function ReviewPage() {
 
         {/* Quick actions */}
         <div className="flex flex-wrap gap-2">
-          <Button variant="default" size="sm" className="text-xs rounded-lg" onClick={() => setReviewMode(true)}>
+          <Button variant="default" size="sm" className="text-xs rounded-lg" onClick={() => setBoardReviewMode(true)}>
+            <Zap className="h-3.5 w-3.5 mr-1.5" /> Run Weekly Review
+          </Button>
+          <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={() => setReviewMode(true)}>
             <Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Status Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={copyAllForAI}>
