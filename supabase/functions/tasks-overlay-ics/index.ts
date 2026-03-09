@@ -35,18 +35,18 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
 
-    if (!token) {
-      return new Response("Missing token", { status: 401 });
+    if (!token || typeof token !== "string" || token.length < 32 || token.length > 128) {
+      return new Response("Missing or invalid token", { status: 401 });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Find user by overlay_ics_token
+    // Find user by overlay_ics_token and check expiry
     const { data: settings, error: settingsError } = await supabase
       .from("user_planner_settings")
-      .select("user_id")
+      .select("user_id, overlay_ics_token_expires_at")
       .eq("overlay_ics_token", token)
       .single();
 
@@ -54,31 +54,39 @@ Deno.serve(async (req) => {
       return new Response("Invalid token", { status: 403 });
     }
 
+    // Check token expiry
+    if (settings.overlay_ics_token_expires_at) {
+      const expiresAt = new Date(settings.overlay_ics_token_expires_at);
+      if (expiresAt < new Date()) {
+        return new Response("Token expired. Please regenerate your ICS feed URL.", { status: 403 });
+      }
+    }
+
     const userId = settings.user_id;
 
-    // Fetch planned blocks with task titles
+    // Fetch planned blocks (only needed fields)
     const { data: blocks, error: blocksError } = await supabase
       .from("planned_task_blocks")
-      .select("*")
+      .select("id, task_id, date, start_time, duration_minutes")
       .eq("user_id", userId)
       .order("date");
 
     if (blocksError) throw blocksError;
 
-    // Fetch tasks for titles
+    // Fetch task titles only (no notes, context_tag, or other sensitive fields)
     const taskIds = [...new Set((blocks ?? []).map(b => b.task_id).filter(Boolean))];
     let tasksMap: Record<string, string> = {};
     if (taskIds.length > 0) {
       const { data: tasks } = await supabase
         .from("tasks")
-        .select("id, title, context_tag")
+        .select("id, title")
         .in("id", taskIds);
       if (tasks) {
         tasksMap = Object.fromEntries(tasks.map(t => [t.id, t.title]));
       }
     }
 
-    // Generate ICS
+    // Generate ICS - only title and time, no sensitive data
     const events = (blocks ?? []).map(block => {
       const title = block.task_id ? (tasksMap[block.task_id] ?? "Task") : "Planned Block";
       const dtStart = formatICSDate(block.date, block.start_time);
@@ -87,11 +95,10 @@ Deno.serve(async (req) => {
 
       return [
         "BEGIN:VEVENT",
-        `UID:${block.id}@taskos`,
+        `UID:${block.id}@vector`,
         `DTSTART:${dtStart}`,
         `DTEND:${dtEnd}`,
         `SUMMARY:📋 ${escapeICS(title)}`,
-        `DESCRIPTION:Task overlay — does not block availability`,
         `TRANSP:TRANSPARENT`,
         "END:VEVENT",
       ].join("\r\n");
@@ -100,7 +107,7 @@ Deno.serve(async (req) => {
     const ics = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//TaskOS//Overlay//EN",
+      "PRODID:-//Vector//Overlay//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
       "X-WR-CALNAME:Vector Task Overlay",
