@@ -158,8 +158,10 @@ export default function ProjectDetailPage() {
             <TabsTrigger value="updates" className="text-xs">Updates ({updates.length})</TabsTrigger>
             <TabsTrigger value="clarify" className="text-xs">Clarify ({clarifyQuestions.filter(q => q.status === 'open').length})</TabsTrigger>
           </TabsList>
-          <TabsContent value="roadmap" className="mt-4">
+          <TabsContent value="roadmap" className="mt-4 space-y-6">
             <RoadmapTimeline milestones={milestones} tasks={tasks} />
+            <RecommendedOrder tasks={tasks} allTasks={allTasksHook.tasks} onSelect={setDetailTask}
+              onMarkDone={(id) => updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Done ✨') })} />
           </TabsContent>
           <TabsContent value="tasks" className="mt-4 space-y-3">
             <QuickAdd defaultStatus="Next" projects={projects} defaultProjectId={id} onAdd={handleQuickAdd} />
