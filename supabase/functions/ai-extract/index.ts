@@ -88,6 +88,14 @@ Classify each piece of information into exactly ONE of these buckets:
    - When input implies a sequence of dependent tasks, infer the order. Only the earliest unblocked task may be Next.
 
 2) TASK UPDATES — text implying progress, blocking, or completion of EXISTING tasks.
+   SPRINT STATUS UPDATES: When the user pastes a structured status report (with ✅ Done, ▶ In Progress, ⬚ Backlog sections, or similar formatting):
+   - Parse EVERY item in the report. This is the primary use case — do not skip items.
+   - Items under "Done" / "✅" / "Completed" → create taskUpdate with newStatus="Done"
+   - Items under "In Progress" / "Next" / "▶" → create taskUpdate with newStatus="Next"
+   - Items under "Backlog" / "Up Next" / "⬚" → create taskUpdate with newStatus="Backlog"
+   - Items under "Waiting" → create taskUpdate with newStatus="Waiting" + blockedBy if mentioned
+   - For each item, extract a concise matchHint from the item text (a distinctive keyword phrase from the task title, not the full description).
+   - If an item clearly describes NEW work not in existing tasks, create it as a new task with the appropriate status instead.
    ACCOMPLISHMENT LOGS: When the user pastes a list of what they accomplished (e.g. "Today I did X, Y, Z" or bullet points of completed work), treat each accomplishment as a task update:
    - If an existing task matches → create a taskUpdate with newStatus="Done" and a matchHint.
    - If NO existing task matches → create a NEW TASK with status="Done" so there's a record of the work.
