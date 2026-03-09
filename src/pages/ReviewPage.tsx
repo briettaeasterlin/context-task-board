@@ -36,7 +36,7 @@ function getRitualMessage(): string {
 export default function ReviewPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { tasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
+  const { tasks, createTask, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
   const { projects, createProject } = useProjects();
   const { milestones } = useMilestones();
   const { clarifyQuestions } = useClarifyQuestions();
