@@ -81,9 +81,10 @@ export default function VectorSyncPanel() {
     if (!parsedPayload) return;
     setProcessing(true);
     try {
-      const result = await ingest.ingest.mutateAsync(parsedPayload);
+      const result = await ingest.mutateAsync(parsedPayload);
       if (result.success) {
-        toast.success(`Processed: ${Object.values(result.actions).reduce((a, b) => a + b, 0)} actions`);
+        const total = Object.values(result.actions).reduce((a: number, b: number) => a + b, 0);
+        toast.success(`Processed: ${total} actions`);
       } else {
         toast.warning(`Processed with ${result.errors.length} error(s)`);
       }
