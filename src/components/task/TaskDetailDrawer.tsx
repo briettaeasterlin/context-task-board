@@ -26,6 +26,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus,
     project_id: '', milestone_id: '',
     due_date: '', target_window: '',
+    impact_score: '' as string,
   });
 
   useEffect(() => {
