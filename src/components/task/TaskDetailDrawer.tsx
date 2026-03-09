@@ -51,7 +51,11 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
 
   const projectMilestones = milestones.filter(m => m.project_id === form.project_id);
 
+  const estDuration = useMemo(() => estimateDuration(form.title), [form.title]);
+  const suggestedImpact = useMemo(() => suggestImpactScore(form.title), [form.title]);
+
   const save = () => {
+    const impactVal = form.impact_score ? parseInt(form.impact_score, 10) : null;
     onUpdate(task.id, {
       title: form.title,
       context: form.context || null,
@@ -63,7 +67,8 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       milestone_id: form.milestone_id || null,
       due_date: form.due_date || null,
       target_window: form.target_window || null,
-    });
+      ...(impactVal !== null ? { impact_score: impactVal } : {}),
+    } as any);
     onClose();
   };
 
