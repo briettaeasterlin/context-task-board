@@ -229,3 +229,44 @@ export default function ProjectDetailPage() {
     </AppShell>
   );
 }
+
+// ─── Recommended Order ───
+
+function RecommendedOrder({ tasks, allTasks, onSelect, onMarkDone }: { tasks: Task[]; allTasks: Task[]; onSelect: (t: Task) => void; onMarkDone: (id: string) => void }) {
+  const recommended = useMemo(() => {
+    const active = tasks.filter(t => t.status !== 'Done' && t.status !== 'Someday');
+    return scoreTasks(active, allTasks).slice(0, 7);
+  }, [tasks, allTasks]);
+
+  if (recommended.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="font-sans text-base font-semibold flex items-center gap-2 mb-3">
+        <span>🏆</span> Recommended Order
+      </h2>
+      <Card className="p-3 rounded-xl shadow-card space-y-1">
+        {recommended.map((t, i) => (
+          <div key={t.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
+            onClick={() => onSelect(t)}>
+            <span className="text-xs text-muted-foreground font-mono w-5">{i + 1}.</span>
+            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
+              <CheckCircle2 className="h-3 w-3" />
+            </Button>
+            <span className="text-sm flex-1 truncate">{t.title}</span>
+            <span className="text-[10px] font-mono text-muted-foreground">{t.estimatedDuration}</span>
+            <span className={cn(
+              'text-[10px] font-mono px-1.5 py-0.5 rounded-full',
+              t.priorityScore >= 8 ? 'bg-destructive/10 text-destructive' :
+              t.priorityScore >= 5 ? 'bg-status-next/10 text-status-next' :
+              'bg-muted text-muted-foreground'
+            )}>
+              {t.priorityScore}
+            </span>
+          </div>
+        ))}
+      </Card>
+    </section>
+  );
+}
