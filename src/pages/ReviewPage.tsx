@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AREAS } from '@/types/task';
+const VectorSyncPanel = lazy(() => import('@/components/vector/VectorSyncPanel'));
 
 function getRitualMessage(): string {
   const day = new Date().getDay();
