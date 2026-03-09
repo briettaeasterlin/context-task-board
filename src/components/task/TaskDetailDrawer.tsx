@@ -42,6 +42,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         milestone_id: task.milestone_id ?? '',
         due_date: task.due_date ?? '',
         target_window: task.target_window ?? '',
+        impact_score: (task as any).impact_score?.toString() ?? '',
       });
     }
   }, [task]);
