@@ -19,9 +19,11 @@ import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
 import { AREAS } from '@/types/task';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { scoreTasks } from '@/lib/task-scoring';
+import { cn } from '@/lib/utils';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
