@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AREAS } from '@/types/task';
+const VectorSyncPanel = lazy(() => import('@/components/vector/VectorSyncPanel'));
 
 function getRitualMessage(): string {
   const day = new Date().getDay();
@@ -192,6 +193,7 @@ export default function ReviewPage() {
             <TabsTrigger value="stuck" className="text-sm rounded-lg">🚧 What's Stuck</TabsTrigger>
             <TabsTrigger value="projects" className="text-sm rounded-lg">📁 Projects</TabsTrigger>
             <TabsTrigger value="kanban" className="text-sm rounded-lg">🗂️ Kanban</TabsTrigger>
+            <TabsTrigger value="vector" className="text-sm rounded-lg">📡 Vector Sync</TabsTrigger>
           </TabsList>
 
           {/* Overview: What happened */}
@@ -335,6 +337,13 @@ export default function ReviewPage() {
                 onToggleSelect={toggleSelect} onTaskClick={setDetailTask}
                 onStatusChange={(id, status) => handleUpdate(id, { status })} />
             </div>
+          </TabsContent>
+
+          {/* Vector Sync */}
+          <TabsContent value="vector">
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
+              <VectorSyncPanel />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>

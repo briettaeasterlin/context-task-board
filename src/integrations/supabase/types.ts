@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          label: string
+          last_used_at: string | null
+          permissions: string[]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          label?: string
+          last_used_at?: string | null
+          permissions?: string[]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          label?: string
+          last_used_at?: string | null
+          permissions?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_events_cache: {
         Row: {
           end_time: string
@@ -173,6 +209,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      operation_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          operation_id: string
+          payload: Json
+          processed_at: string | null
+          result: Json | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          operation_id: string
+          payload: Json
+          processed_at?: string | null
+          result?: Json | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          operation_id?: string
+          payload?: Json
+          processed_at?: string | null
+          result?: Json | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       planned_task_blocks: {
         Row: {

@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.gcal-sync]
 verify_jwt = false
+
+[functions.vector-ingest]
+verify_jwt = false
