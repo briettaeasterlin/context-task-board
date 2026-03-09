@@ -138,6 +138,16 @@ export default function ReviewPage() {
     );
   }
 
+  // Board Review mode
+  if (boardReviewMode) {
+    return (
+      <AppShell>
+        <BoardReviewPanel tasks={tasks} projects={projects} onUpdate={handleUpdate} onDelete={handleDelete}
+          onClose={() => { setBoardReviewMode(false); queryClient.invalidateQueries({ queryKey: ['tasks'] }); }} />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
