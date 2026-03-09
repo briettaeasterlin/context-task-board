@@ -50,7 +50,7 @@ function PreviewActions({ payload }: { payload: VectorPayload }) {
 export default function VectorSyncPanel() {
   const { operations, isLoading: opsLoading } = useOperationLog();
   const { keys, isLoading: keysLoading, createKey, toggleKey, deleteKey } = useApiKeys();
-  const { ingest } = useVectorIngest();
+  const ingest = useVectorIngest();
 
   const [pasteText, setPasteText] = useState('');
   const [parsedPayload, setParsedPayload] = useState<VectorPayload | null>(null);

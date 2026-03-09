@@ -115,7 +115,7 @@ export function useApiKeys() {
 export function useVectorIngest() {
   const queryClient = useQueryClient();
 
-  const ingest = useMutation({
+  return useMutation({
     mutationFn: async (payload: VectorPayload): Promise<PayloadProcessingResult> => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
@@ -145,6 +145,4 @@ export function useVectorIngest() {
       queryClient.invalidateQueries({ queryKey: ['clarify_questions'] });
     },
   });
-
-  return { ingest };
 }
