@@ -25,8 +25,8 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="font-mono text-2xl tracking-tight">Task OS</CardTitle>
-          <CardDescription>Welcome back, Brietta</CardDescription>
+          <CardTitle className="font-mono text-2xl tracking-tight">Vector</CardTitle>
+          <CardDescription>AI-powered execution planning</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
