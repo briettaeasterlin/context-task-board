@@ -214,7 +214,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                       taskMatchHints: { type: 'array', items: { type: 'string' }, description: 'Keywords to match existing tasks' },
                       projectMatchHint: { type: 'string', description: 'Name of the project to group into' },
                       newArea: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
-                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
+                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'] },
                       milestones: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' } }, required: ['name'], additionalProperties: false } },
                       keepNextHints: { type: 'array', items: { type: 'string' }, description: 'Task keywords to keep as Next' },
                       demoteToBacklog: { type: 'boolean', description: 'Whether to demote all other Next tasks to Backlog' }
