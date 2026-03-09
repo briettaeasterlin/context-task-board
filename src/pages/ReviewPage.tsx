@@ -338,6 +338,13 @@ export default function ReviewPage() {
                 onStatusChange={(id, status) => handleUpdate(id, { status })} />
             </div>
           </TabsContent>
+
+          {/* Vector Sync */}
+          <TabsContent value="vector">
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
+              <VectorSyncPanel />
+            </Suspense>
+          </TabsContent>
         </Tabs>
       </div>
 
