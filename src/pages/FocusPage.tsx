@@ -238,6 +238,12 @@ export default function FocusPage() {
           )}
         </section>
 
+        {/* Daily Plan Generator */}
+        <DailyPlanSection tasks={tasks} onSelect={setDetailTask} onMarkDone={handleMarkDone} />
+
+        {/* Quick Wins */}
+        <QuickWinsSection tasks={tasks} onSelect={setDetailTask} onMarkDone={handleMarkDone} />
+
         {/* Waiting follow-ups (minimal) */}
         {waitingTasks.length > 0 && (
           <section>
