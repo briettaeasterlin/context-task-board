@@ -163,7 +163,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                     properties: {
                       description: { type: 'string', description: 'What changed' },
                       matchHint: { type: 'string', description: 'Keyword to fuzzy-match an existing task title' },
-                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'], description: 'New status if applicable' },
+                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'], description: 'New status if applicable' },
                       blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting)' }
                     },
                     required: ['description'],
