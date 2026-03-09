@@ -7,6 +7,7 @@ import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoadmapTimeline } from '@/components/project/RoadmapTimeline';
+import { ProjectPlanTab } from '@/components/project/ProjectPlanTab';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { QuickAdd } from '@/components/task/QuickAdd';
