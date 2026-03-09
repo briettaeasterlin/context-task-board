@@ -30,7 +30,7 @@ export function KanbanBoard({ tasks, projects = [], selectedIds, onToggleSelect,
   }));
 
   return (
-    <div className="grid grid-cols-4 gap-4 min-h-[400px]">
+    <div className="grid grid-cols-5 gap-4 min-h-[400px]">
       {columns.map(col => {
         const config = columnConfig[col.status];
         return (
