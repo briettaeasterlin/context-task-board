@@ -156,6 +156,7 @@ export default function ProjectDetailPage() {
           <TabsList>
             <TabsTrigger value="roadmap" className="text-xs">Roadmap</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs">Tasks ({tasks.length})</TabsTrigger>
+            <TabsTrigger value="plan" className="text-xs">Plan</TabsTrigger>
             <TabsTrigger value="updates" className="text-xs">Updates ({updates.length})</TabsTrigger>
             <TabsTrigger value="clarify" className="text-xs">Clarify ({clarifyQuestions.filter(q => q.status === 'open').length})</TabsTrigger>
           </TabsList>
