@@ -401,6 +401,7 @@ export type Database = {
           gcal_token_expires_at: string | null
           max_next_tasks: number
           overlay_ics_token: string | null
+          overlay_ics_token_expires_at: string | null
           updated_at: string
           user_id: string
           workday_end: string
@@ -415,6 +416,7 @@ export type Database = {
           gcal_token_expires_at?: string | null
           max_next_tasks?: number
           overlay_ics_token?: string | null
+          overlay_ics_token_expires_at?: string | null
           updated_at?: string
           user_id: string
           workday_end?: string
@@ -429,6 +431,7 @@ export type Database = {
           gcal_token_expires_at?: string | null
           max_next_tasks?: number
           overlay_ics_token?: string | null
+          overlay_ics_token_expires_at?: string | null
           updated_at?: string
           user_id?: string
           workday_end?: string

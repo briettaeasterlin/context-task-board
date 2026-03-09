@@ -9,6 +9,33 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 
+// HMAC-based state signing to prevent CSRF/state forgery
+async function signState(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function verifyState(payload: string, signature: string, secret: string): Promise<boolean> {
+  const expected = await signState(payload, secret);
+  // Constant-time comparison
+  if (expected.length !== signature.length) return false;
+  let result = 0;
+  for (let i = 0; i < expected.length; i++) {
+    result |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,6 +48,7 @@ Deno.serve(async (req) => {
   const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const hmacSecret = serviceKey; // Use service role key as HMAC secret
 
   if (!clientId || !clientSecret) {
     return new Response(JSON.stringify({ error: "Google OAuth credentials not configured" }), {
@@ -59,8 +87,10 @@ Deno.serve(async (req) => {
       } catch { /* no body */ }
 
       const userId = data.claims.sub;
-      // Encode user ID and returnUrl in state for the callback
-      const state = btoa(JSON.stringify({ userId, returnUrl }));
+      // Create signed state to prevent CSRF
+      const statePayload = btoa(JSON.stringify({ userId, returnUrl }));
+      const stateSig = await signState(statePayload, hmacSecret);
+      const state = `${statePayload}.${stateSig}`;
 
       const authUrl = new URL(GOOGLE_AUTH_URL);
       authUrl.searchParams.set("client_id", clientId);
@@ -84,7 +114,7 @@ Deno.serve(async (req) => {
 
       if (error) {
         return new Response(
-          `<html><body><h2>Authorization failed</h2><p>${error}</p><script>window.close();</script></body></html>`,
+          `<html><body><h2>Authorization failed</h2><p>Please try again.</p><script>window.close();</script></body></html>`,
           { headers: { "Content-Type": "text/html" } },
         );
       }
@@ -93,10 +123,23 @@ Deno.serve(async (req) => {
         return new Response("Missing code or state", { status: 400 });
       }
 
+      // Verify HMAC signature on state
+      const dotIndex = state.lastIndexOf(".");
+      if (dotIndex === -1) {
+        return new Response("Invalid state format", { status: 400 });
+      }
+      const statePayload = state.substring(0, dotIndex);
+      const stateSig = state.substring(dotIndex + 1);
+
+      const isValid = await verifyState(statePayload, stateSig, hmacSecret);
+      if (!isValid) {
+        return new Response("Invalid state signature", { status: 403 });
+      }
+
       let userId: string;
       let returnUrl = "";
       try {
-        const parsed = JSON.parse(atob(state));
+        const parsed = JSON.parse(atob(statePayload));
         userId = parsed.userId;
         returnUrl = parsed.returnUrl || "";
       } catch {
@@ -118,9 +161,9 @@ Deno.serve(async (req) => {
 
       const tokens = await tokenRes.json();
       if (!tokenRes.ok) {
-        console.error("Token exchange failed:", tokens);
+        console.error("Token exchange failed:", tokenRes.status);
         return new Response(
-          `<html><body><h2>Token exchange failed</h2><pre>${JSON.stringify(tokens)}</pre><script>setTimeout(() => window.close(), 3000);</script></body></html>`,
+          `<html><body><h2>Token exchange failed</h2><p>Please try again.</p><script>setTimeout(() => window.close(), 3000);</script></body></html>`,
           { headers: { "Content-Type": "text/html" } },
         );
       }
@@ -138,7 +181,7 @@ Deno.serve(async (req) => {
       }, { onConflict: "user_id" });
 
       if (upsertError) {
-        console.error("Failed to save tokens:", upsertError);
+        console.error("Failed to save tokens:", upsertError.message);
         return new Response(
           `<html><body><h2>Failed to save credentials</h2><script>setTimeout(() => window.close(), 3000);</script></body></html>`,
           { headers: { "Content-Type": "text/html" } },
