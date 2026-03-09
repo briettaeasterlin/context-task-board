@@ -145,7 +145,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                     properties: {
                       title: { type: 'string', description: 'Short, actionable task title (under 10 words)' },
                       area: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
-                      status: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
+                      status: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'] },
                       context: { type: 'string', description: 'Additional context or details' },
                       blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting tasks)' },
                       dueDate: { type: 'string', description: 'Hard deadline in YYYY-MM-DD format. Only for real commitments/events.' },
