@@ -1,20 +1,49 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const VALID_AREAS = ['Client', 'Business', 'Home', 'Family', 'Personal'];
+const VALID_STATUSES = ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function sanitizeString(s: string, maxLen: number): string {
+  return s.replace(/[\x00-\x1f\x7f]/g, '').slice(0, maxLen);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
+    // --- Auth check ---
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const body = await req.json();
     // Support both old (content) and new (rawText) payload shapes
     const rawText = body.rawText ?? body.content;
     const projectId = body.projectId ?? null;
-    const projectName = body.projectName ?? null;
-    const source = body.source ?? null;
+    const projectName = body.projectName ? sanitizeString(String(body.projectName), 200) : null;
+    const source = body.source ? sanitizeString(String(body.source), 100) : null;
 
     if (!rawText || typeof rawText !== 'string' || rawText.trim().length === 0) {
       return new Response(JSON.stringify({ error: 'rawText is required' }), {
@@ -28,10 +57,32 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
+    // --- Input validation ---
+    if (projectId && !UUID_RE.test(projectId)) {
+      return new Response(JSON.stringify({ error: 'Invalid projectId format' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const defaults = body.defaults ?? {};
+    if (defaults.area && !VALID_AREAS.includes(defaults.area)) {
+      return new Response(JSON.stringify({ error: 'Invalid defaults.area value' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    if (defaults.status && !VALID_STATUSES.includes(defaults.status)) {
+      return new Response(JSON.stringify({ error: 'Invalid defaults.status value' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Sanitize existingProjects/existingTaskTitles to plain string arrays
+    const existingProjects = Array.isArray(body.existingProjects)
+      ? body.existingProjects.map((p: unknown) => sanitizeString(String(p), 200)).slice(0, 100)
+      : null;
+    const existingTaskTitles = Array.isArray(body.existingTaskTitles)
+      ? body.existingTaskTitles.map((t: unknown) => sanitizeString(String(t), 200)).slice(0, 500)
+      : null;
     const todayISO = new Date().toISOString().slice(0, 10);
     const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
