@@ -12,6 +12,7 @@ import { FilterBar } from '@/components/task/FilterBar';
 import { BulkActions } from '@/components/task/BulkActions';
 import { KanbanBoard } from '@/components/task/KanbanBoard';
 import { StatusReviewPanel } from '@/components/review/StatusReviewPanel';
+import { QuickAdd } from '@/components/task/QuickAdd';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
