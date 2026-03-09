@@ -1,7 +1,7 @@
 export const AREAS = ['Client', 'Business', 'Home', 'Family', 'Personal'] as const;
 export type TaskArea = typeof AREAS[number];
 
-export const STATUSES = ['Backlog', 'Next', 'Waiting', 'Done'] as const;
+export const STATUSES = ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'] as const;
 export type TaskStatus = typeof STATUSES[number];
 
 export const UPDATE_SOURCES = ['chatgpt', 'meeting', 'email', 'call', 'doc'] as const;

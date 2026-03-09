@@ -78,6 +78,7 @@ export default {
           next: "hsl(var(--status-next))",
           waiting: "hsl(var(--status-waiting))",
           done: "hsl(var(--status-done))",
+          someday: "hsl(var(--status-someday))",
         },
       },
       borderRadius: {

@@ -63,6 +63,7 @@
     --status-next: 174 42% 40%;
     --status-waiting: 38 65% 52%;
     --status-done: 150 35% 45%;
+    --status-someday: 270 30% 60%;
 
     /* Warm tokens */
     --shadow-soft: 0 2px 12px -2px hsl(220 10% 50% / 0.08);

@@ -19,6 +19,7 @@ const columnConfig: Record<TaskStatus, { emoji: string; bg: string; headerBg: st
   Next: { emoji: '🎯', bg: 'bg-status-next/5', headerBg: 'bg-status-next/8' },
   Waiting: { emoji: '⏳', bg: 'bg-status-waiting/5', headerBg: 'bg-status-waiting/8' },
   Done: { emoji: '✅', bg: 'bg-status-done/5', headerBg: 'bg-status-done/8' },
+  Someday: { emoji: '💭', bg: 'bg-status-someday/5', headerBg: 'bg-status-someday/8' },
 };
 
 export function KanbanBoard({ tasks, projects = [], selectedIds, onToggleSelect, onTaskClick, onStatusChange }: Props) {
@@ -29,7 +30,7 @@ export function KanbanBoard({ tasks, projects = [], selectedIds, onToggleSelect,
   }));
 
   return (
-    <div className="grid grid-cols-4 gap-4 min-h-[400px]">
+    <div className="grid grid-cols-5 gap-4 min-h-[400px]">
       {columns.map(col => {
         const config = columnConfig[col.status];
         return (
