@@ -45,6 +45,7 @@ export default function ReviewPage() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [reviewMode, setReviewMode] = useState(false);
+  const [boardReviewMode, setBoardReviewMode] = useState(false);
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<TaskArea | 'all'>('all');
   const [projectFilter, setProjectFilter] = useState('');
