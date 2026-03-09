@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
       },
       manifest: {
-        name: "Task OS",
-        short_name: "Task OS",
-        description: "Lightweight task database for Brietta",
+        name: "Vector",
+        short_name: "Vector",
+        description: "AI-powered execution planning",
         theme_color: "#2a9d8f",
         background_color: "#eef0f4",
         display: "standalone",

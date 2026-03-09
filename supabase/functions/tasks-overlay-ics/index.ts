@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       "PRODID:-//TaskOS//Overlay//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
-      "X-WR-CALNAME:Task OS Overlay",
+      "X-WR-CALNAME:Vector Task Overlay",
       ...events,
       "END:VCALENDAR",
     ].join("\r\n");

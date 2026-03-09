@@ -22,8 +22,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-6">
               <Link to="/" className="flex items-center gap-1.5 font-sans text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
-                <span className="text-base">🌿</span>
-                <span>Task OS</span>
+                <span className="text-base">▸</span>
+                <span>Vector</span>
               </Link>
               <nav className="flex items-center gap-0.5">
                 {NAV_ITEMS.map(item => {
