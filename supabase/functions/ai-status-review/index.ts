@@ -81,6 +81,8 @@ CRITICAL: At the end, suggest a focused plan for the next 14 days with a HARD MA
                       projectName: { type: 'string' },
                       momentum: { type: 'string', description: '1-2 sentence momentum summary' },
                       bottlenecks: { type: 'string', description: 'Key bottlenecks, or null' },
+                      healthIndicator: { type: 'string', enum: ['🔥', '🌿', '⚠️', '💤'], description: 'Health: 🔥 High activity, 🌿 Steady, ⚠️ At risk, 💤 Dormant' },
+                      nextMilestone: { type: 'string', description: 'Next milestone name if identifiable, or null' },
                       strategicQuestions: {
                         type: 'array',
                         items: {
@@ -94,7 +96,7 @@ CRITICAL: At the end, suggest a focused plan for the next 14 days with a HARD MA
                         }
                       }
                     },
-                    required: ['projectId', 'projectName', 'momentum'],
+                    required: ['projectId', 'projectName', 'momentum', 'healthIndicator'],
                     additionalProperties: false
                   }
                 },
