@@ -116,7 +116,7 @@ CRITICAL: At the end, suggest a focused plan for the next 14 days with a HARD MA
                           type: 'object',
                           properties: {
                             label: { type: 'string', description: 'Button label like "Done", "Still working", "Waiting", "Deprioritize", "Remove"' },
-                            newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Remove'], description: 'Status to apply. "Remove" means delete.' },
+                            newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday', 'Remove'], description: 'Status to apply. "Someday" for speculative ideas. "Remove" means delete.' },
                             requiresInput: { type: 'boolean', description: 'Whether this action needs a text input (e.g. blocker name, note)' },
                             inputLabel: { type: 'string', description: 'Label for the text input if requiresInput is true' }
                           },
