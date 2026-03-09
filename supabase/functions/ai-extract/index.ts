@@ -57,7 +57,8 @@ CORE PRINCIPLES:
 - The system must feel like a thinking partner, not a task enforcer.
 
 Areas available: Client, Business, Home, Family, Personal.
-Statuses available: Backlog, Next, Waiting, Done.
+Statuses available: Backlog, Next, Waiting, Done, Someday.
+- "Someday" is for speculative ideas or tasks with no clear timeline. Use when input mentions ideas, explorations, or "maybe/someday" language.
 ${defaults.area ? `Default area hint from UI: ${defaults.area}` : ''}
 ${defaults.status ? `Default status hint from UI: ${defaults.status}` : ''}
 ${body.existingProjects ? `Existing projects: ${JSON.stringify(body.existingProjects)}` : ''}
@@ -87,6 +88,14 @@ Classify each piece of information into exactly ONE of these buckets:
    - When input implies a sequence of dependent tasks, infer the order. Only the earliest unblocked task may be Next.
 
 2) TASK UPDATES — text implying progress, blocking, or completion of EXISTING tasks.
+   SPRINT STATUS UPDATES: When the user pastes a structured status report (with ✅ Done, ▶ In Progress, ⬚ Backlog sections, or similar formatting):
+   - Parse EVERY item in the report. This is the primary use case — do not skip items.
+   - Items under "Done" / "✅" / "Completed" → create taskUpdate with newStatus="Done"
+   - Items under "In Progress" / "Next" / "▶" → create taskUpdate with newStatus="Next"
+   - Items under "Backlog" / "Up Next" / "⬚" → create taskUpdate with newStatus="Backlog"
+   - Items under "Waiting" → create taskUpdate with newStatus="Waiting" + blockedBy if mentioned
+   - For each item, extract a concise matchHint from the item text (a distinctive keyword phrase from the task title, not the full description).
+   - If an item clearly describes NEW work not in existing tasks, create it as a new task with the appropriate status instead.
    ACCOMPLISHMENT LOGS: When the user pastes a list of what they accomplished (e.g. "Today I did X, Y, Z" or bullet points of completed work), treat each accomplishment as a task update:
    - If an existing task matches → create a taskUpdate with newStatus="Done" and a matchHint.
    - If NO existing task matches → create a NEW TASK with status="Done" so there's a record of the work.
@@ -144,7 +153,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                     properties: {
                       title: { type: 'string', description: 'Short, actionable task title (under 10 words)' },
                       area: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
-                      status: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
+                      status: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'] },
                       context: { type: 'string', description: 'Additional context or details' },
                       blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting tasks)' },
                       dueDate: { type: 'string', description: 'Hard deadline in YYYY-MM-DD format. Only for real commitments/events.' },
@@ -162,7 +171,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                     properties: {
                       description: { type: 'string', description: 'What changed' },
                       matchHint: { type: 'string', description: 'Keyword to fuzzy-match an existing task title' },
-                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'], description: 'New status if applicable' },
+                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'], description: 'New status if applicable' },
                       blockedBy: { type: 'string', description: 'Who/what is blocking (only for Waiting)' }
                     },
                     required: ['description'],
@@ -213,7 +222,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                       taskMatchHints: { type: 'array', items: { type: 'string' }, description: 'Keywords to match existing tasks' },
                       projectMatchHint: { type: 'string', description: 'Name of the project to group into' },
                       newArea: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'] },
-                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done'] },
+                      newStatus: { type: 'string', enum: ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'] },
                       milestones: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' } }, required: ['name'], additionalProperties: false } },
                       keepNextHints: { type: 'array', items: { type: 'string' }, description: 'Task keywords to keep as Next' },
                       demoteToBacklog: { type: 'boolean', description: 'Whether to demote all other Next tasks to Backlog' }

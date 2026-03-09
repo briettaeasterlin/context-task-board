@@ -12,6 +12,7 @@ import { FilterBar } from '@/components/task/FilterBar';
 import { BulkActions } from '@/components/task/BulkActions';
 import { KanbanBoard } from '@/components/task/KanbanBoard';
 import { StatusReviewPanel } from '@/components/review/StatusReviewPanel';
+import { QuickAdd } from '@/components/task/QuickAdd';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -35,7 +36,7 @@ function getRitualMessage(): string {
 export default function ReviewPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { tasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
+  const { tasks, createTask, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
   const { projects, createProject } = useProjects();
   const { milestones } = useMilestones();
   const { clarifyQuestions } = useClarifyQuestions();
@@ -144,6 +145,20 @@ export default function ReviewPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1 italic">{getRitualMessage()}</p>
         </div>
+
+        {/* Command input — paste status updates, sprint reports, or high-level direction */}
+        <QuickAdd
+          defaultStatus="Backlog"
+          projects={projects}
+          milestones={milestones}
+          allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
+          onAdd={(title, area, status, projectId) => {
+            createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
+              onSuccess: () => toast.success('Task added'),
+            });
+          }}
+          onTasksCreated={() => queryClient.invalidateQueries()}
+        />
 
         {/* Quick actions */}
         <div className="flex flex-wrap gap-2">
