@@ -42,19 +42,22 @@ ANALYSIS RULES:
 - Flag tasks in "Waiting" without a blocked_by value
 - Flag projects with more than 5 "Next" tasks as overloaded
 - Identify backlog items that may be irrelevant (very old, no context)
-- Detect potential duplicate tasks
-- Limit suggested "Next" tasks to 3-5 total across all projects
+- Detect potential duplicate tasks across projects
+- **STRICT NEXT LIMIT**: The user should have 5-7 "Next" tasks TOTAL across all projects. If they currently have more than 7, this is a critical finding. Flag every task beyond 7 and suggest moving them to Backlog or Someday.
+- Suggest "Someday" status for speculative ideas, aspirational tasks, or items with no clear timeline. Reserve "Backlog" for tasks that are likely work within the next month.
 
-TONE: Strategic, calm, concise. Like a senior PM advisor. Encourage focus. Default to narrowing, not expanding.
+TONE: Strategic, calm, concise. Like a senior PM advisor. Encourage focus and ruthless prioritization. Default to narrowing, not expanding.
 
 For each project, provide:
 - A 1-2 sentence momentum summary
 - Key bottlenecks if any
+- A health indicator: 🔥 High activity, 🌿 Steady, ⚠️ At risk, 💤 Dormant
+- Next milestone if identifiable
 - 0-3 strategic questions about the project itself
 
 For each ambiguous/stale task, generate a clarification question with quick-action options.
 
-At the end, suggest a focused plan for the next 14 days (max 5 "Next" tasks total).`
+CRITICAL: At the end, suggest a focused plan for the next 14 days with a HARD MAX of 5-7 "Next" tasks total. If the user currently has more, your first recommendation must be to trim the Next list. Suggest moving speculative items to "Someday" rather than "Backlog".`
           },
           {
             role: 'user',
