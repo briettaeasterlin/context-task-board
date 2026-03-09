@@ -10,12 +10,13 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, CheckCircle2 } from 'lucide-react';
+import { Clock, CheckCircle2, Zap, CalendarCheck } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
 import { format, isToday, isPast, isTomorrow, addDays, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { generateDailyPlan, getQuickWins, type ScoredTask } from '@/lib/task-scoring';
 
 interface TimelineItem {
   type: 'event' | 'block';
