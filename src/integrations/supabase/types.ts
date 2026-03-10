@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       api_keys: {
         Row: {
+          allowed_ips: string[] | null
           created_at: string | null
           expires_at: string | null
           id: string
@@ -27,6 +28,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allowed_ips?: string[] | null
           created_at?: string | null
           expires_at?: string | null
           id?: string
@@ -38,6 +40,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allowed_ips?: string[] | null
           created_at?: string | null
           expires_at?: string | null
           id?: string
@@ -210,14 +213,63 @@ export type Database = {
           },
         ]
       }
+      operation_actions: {
+        Row: {
+          action_type: string
+          confidence: string | null
+          created_at: string | null
+          detail: Json | null
+          id: string
+          operation_log_id: string
+          target_id: string | null
+          target_title: string | null
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          confidence?: string | null
+          created_at?: string | null
+          detail?: Json | null
+          id?: string
+          operation_log_id: string
+          target_id?: string | null
+          target_title?: string | null
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          confidence?: string | null
+          created_at?: string | null
+          detail?: Json | null
+          id?: string
+          operation_log_id?: string
+          target_id?: string | null
+          target_title?: string | null
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operation_actions_operation_log_id_fkey"
+            columns: ["operation_log_id"]
+            isOneToOne: false
+            referencedRelation: "operation_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operation_log: {
         Row: {
           created_at: string | null
           id: string
           operation_id: string
           payload: Json
+          payload_hash: string | null
           processed_at: string | null
           result: Json | null
+          schema_version: string | null
           source: string
           user_id: string
         }
@@ -226,8 +278,10 @@ export type Database = {
           id?: string
           operation_id: string
           payload: Json
+          payload_hash?: string | null
           processed_at?: string | null
           result?: Json | null
+          schema_version?: string | null
           source: string
           user_id: string
         }
@@ -236,8 +290,10 @@ export type Database = {
           id?: string
           operation_id?: string
           payload?: Json
+          payload_hash?: string | null
           processed_at?: string | null
           result?: Json | null
+          schema_version?: string | null
           source?: string
           user_id?: string
         }
@@ -328,6 +384,32 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      rate_limit_log: {
+        Row: {
+          api_key_id: string
+          id: string
+          requested_at: string | null
+        }
+        Insert: {
+          api_key_id: string
+          id?: string
+          requested_at?: string | null
+        }
+        Update: {
+          api_key_id?: string
+          id?: string
+          requested_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_limit_log_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
