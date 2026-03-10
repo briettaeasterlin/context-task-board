@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.vector-ingest]
 verify_jwt = false
+
+[functions.vector-read]
+verify_jwt = false
