@@ -38,10 +38,9 @@ async function authenticate(
     const supabase = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const token = authHeader.replace("Bearer ", "");
-    const { data, error } = await supabase.auth.getClaims(token);
-    if (!error && data?.claims?.sub) {
-      return { userId: data.claims.sub as string, authMethod: "jwt" };
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (!error && user?.id) {
+      return { userId: user.id, authMethod: "jwt" };
     }
   }
 
