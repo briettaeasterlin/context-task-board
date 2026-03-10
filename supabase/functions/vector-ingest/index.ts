@@ -216,8 +216,12 @@ Deno.serve(async (req) => {
     if (!payload.operation_id || typeof payload.operation_id !== "string") {
       return jsonResponse({ error: "Missing or invalid operation_id" }, 400);
     }
-    if (!payload.timestamp || !payload.source) {
-      return jsonResponse({ error: "Missing timestamp or source" }, 400);
+    // Default timestamp if missing
+    if (!payload.timestamp) {
+      payload.timestamp = new Date().toISOString();
+    }
+    if (!payload.source) {
+      return jsonResponse({ error: "Missing required field: source (chatgpt, claude, or manual)" }, 400);
     }
     const validSources = ["chatgpt", "claude", "manual"];
     if (!validSources.includes(payload.source)) {
