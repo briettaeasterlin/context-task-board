@@ -154,11 +154,11 @@ Deno.serve(async (req) => {
       }
 
       let userId: string;
-      let returnUrl = "";
+      let returnUrl = "/";
       try {
         const parsed = JSON.parse(atob(statePayload));
         userId = parsed.userId;
-        returnUrl = parsed.returnUrl || "";
+        returnUrl = isValidReturnUrl(parsed.returnUrl || "");
       } catch {
         return new Response("Invalid state", { status: 400 });
       }
