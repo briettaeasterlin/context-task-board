@@ -341,6 +341,17 @@ export default function ReviewPage() {
             </div>
           </TabsContent>
 
+          {/* Import */}
+          <TabsContent value="import">
+            <Card className="p-6 rounded-xl shadow-card">
+              <AIImportPanel
+                compact
+                source="review-import"
+                onImportComplete={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}
+              />
+            </Card>
+          </TabsContent>
+
           {/* Vector Sync */}
           <TabsContent value="vector">
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
