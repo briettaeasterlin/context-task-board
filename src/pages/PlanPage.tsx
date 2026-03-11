@@ -7,6 +7,7 @@ import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks
 import { useAutoSchedule } from '@/hooks/useAutoSchedule';
 import { ExecutionPlanPanel } from '@/components/task/ExecutionPlanPanel';
 import type { ExecutionPlanTask } from '@/lib/daily-execution-engine';
+import { scoreTasks } from '@/lib/task-scoring';
 import { useWorkload } from '@/hooks/useWorkload';
 import type { Task, TaskArea, TaskStatus, TaskInsert } from '@/types/task';
 import type { PlannedBlock } from '@/hooks/usePlanner';
@@ -24,7 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, GripVertical, Clock, ChevronLeft, ChevronRight, RefreshCw, Link2, Unlink, Lock, Unlock, Trash2, Wand2 } from 'lucide-react';
+import { Plus, GripVertical, Clock, ChevronLeft, ChevronRight, RefreshCw, Link2, Unlink, Lock, Unlock, Trash2, Wand2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfWeek, addDays, isToday, isSunday, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -59,7 +60,7 @@ function getRitualMessage(mode: 'tomorrow' | 'week'): string {
 export default function PlanPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { tasks, createTask, createManyTasks, updateTask } = useTasks();
+  const { tasks, createTask, createManyTasks, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const { clarifyQuestions, updateClarifyQuestion } = useClarifyQuestions();
@@ -224,10 +225,12 @@ export default function PlanPage() {
   }, [weekStartStr, weekEndStr, queryClient]);
 
   const scheduledTaskIds = new Set(blocks.map(b => b.task_id).filter(Boolean));
-  const unscheduledTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Next' && !scheduledTaskIds.has(t.id))
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
-  [tasks, scheduledTaskIds]);
+  const unscheduledTasks = useMemo(() => {
+    const eligible = tasks.filter(t => t.status === 'Next' && !scheduledTaskIds.has(t.id));
+    // Sort by priority score descending
+    const scored = scoreTasks(eligible, tasks);
+    return scored as Task[];
+  }, [tasks, scheduledTaskIds]);
 
   const filteredTasks = useMemo(() => {
     if (!search) return unscheduledTasks;
@@ -334,18 +337,26 @@ export default function PlanPage() {
                 <Input placeholder="Filter..." value={search} onChange={e => setSearch(e.target.value)} className="mb-2 h-7 text-xs rounded-lg" />
                 <ScrollArea className="flex-1">
                   <div className="space-y-1.5 pr-2">
-                    {filteredTasks.map(task => (
+                    {filteredTasks.map((task, index) => (
                       <Card key={task.id} draggable onDragStart={e => handleDragStart(e, task)}
-                        className="p-2 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors rounded-xl shadow-card">
+                        className="p-2 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors rounded-xl shadow-card group relative">
                         <div className="flex items-start gap-1.5">
                           <GripVertical className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setDetailTask(task)}>
                             <p className="text-xs font-medium truncate">{task.title}</p>
                             <div className="flex items-center gap-1 mt-0.5">
+                              <Badge variant="outline" className="text-[9px] h-4 px-1 rounded-full font-mono">#{index + 1}</Badge>
                               {task.project_id && <span className="text-[10px] text-primary truncate">{projectMap.get(task.project_id)?.name}</span>}
                               {task.estimated_minutes && <Badge variant="outline" className="text-[9px] h-4 px-1 rounded-full"><Clock className="h-2.5 w-2.5 mr-0.5" />{task.estimated_minutes}m</Badge>}
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteTask.mutate(task.id, { onSuccess: () => toast.success('Task deleted') }); }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex-shrink-0"
+                            title="Delete task"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                       </Card>
                     ))}
@@ -534,7 +545,7 @@ export default function PlanPage() {
       </div>
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
-        onUpdate={(id, u) => updateTask.mutate({ id, ...u })} onDelete={() => {}} projects={projects} milestones={milestones} />
+        onUpdate={(id, u) => updateTask.mutate({ id, ...u })} onDelete={(id) => { deleteTask.mutate(id, { onSuccess: () => { setDetailTask(null); toast.success('Task deleted'); } }); }} projects={projects} milestones={milestones} />
       <BulkAddModal open={bulkAddOpen} onClose={() => setBulkAddOpen(false)} onConfirm={handleBulkAdd} projects={projects} />
     </AppShell>
   );
