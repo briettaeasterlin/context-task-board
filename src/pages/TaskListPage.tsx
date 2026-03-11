@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function TaskListPage({ filterStatus }: Props) {
-  const { tasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
+  const { tasks, updateTask, bulkUpdateTasks, deleteTask, hasMoreTasks, isLoadingMore, loadMore } = useTasks();
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const [search, setSearch] = useState('');
