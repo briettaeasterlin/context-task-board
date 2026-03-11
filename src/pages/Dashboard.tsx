@@ -201,6 +201,9 @@ export default function Dashboard() {
           </div>
         </div>
 
+
+        <BoardLimitBanner warnings={boardWarnings} onUpdate={handleUpdate} />
+
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
