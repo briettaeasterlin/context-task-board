@@ -399,6 +399,16 @@ export default function PlanPage() {
                   </div>
                 </div>
 
+                {/* Execution Plan Panel */}
+                {showExecutionPlan && (
+                  <ExecutionPlanPanel
+                    plan={executionPlan}
+                    onConfirm={handleExecutionPlanConfirm}
+                    onDismiss={() => setShowExecutionPlan(false)}
+                    isScheduling={autoScheduling}
+                  />
+                )}
+
                 {/* Day headers */}
                 <div className="flex">
                   <div className="w-12 flex-shrink-0" />
