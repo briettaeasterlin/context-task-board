@@ -335,6 +335,16 @@ export default function PlanPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-6 text-[10px] gap-1 rounded-lg"
+                      onClick={handleAutoSchedule}
+                      disabled={autoScheduling || autoSuggestions.length === 0}
+                    >
+                      <Wand2 className={cn("h-3 w-3", autoScheduling && "animate-spin")} />
+                      {autoScheduling ? 'Scheduling...' : `Auto-schedule ${autoSuggestions.length} tasks`}
+                    </Button>
                     {settings?.gcal_connected ? (
                       <>
                         <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1 rounded-lg" onClick={handleSyncGcal} disabled={syncing}>
