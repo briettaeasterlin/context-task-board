@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
       },
       manifest: {
-        name: "VectorHQ",
-        short_name: "VectorHQ",
-        description: "Your personal execution headquarters.",
+        name: "NextMove",
+        short_name: "NextMove",
+        description: "Always know your next move.",
         theme_color: "#2B3A67",
         background_color: "#f5f6f8",
         display: "standalone",

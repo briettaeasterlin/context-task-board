@@ -121,7 +121,7 @@ export function ExecutionPlanPanel({ plan, onConfirm, onDismiss, isScheduling }:
 
       {plan.frogTask?.task.project_id && plan.supportingTasks.some(s => s.task.project_id === plan.frogTask!.task.project_id) && (
         <p className="text-[10px] text-muted-foreground font-mono">
-          Tasks grouped to maintain project momentum.
+          NextMove groups tasks by project to maintain momentum.
         </p>
       )}
 

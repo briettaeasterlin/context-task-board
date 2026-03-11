@@ -61,7 +61,7 @@ export default function HQPage() {
 
   const handleMarkDone = useCallback((id: string) => {
     updateTask.mutate({ id, status: 'Done' }, {
-      onSuccess: () => toast.success('Task complete. Momentum builds momentum.'),
+      onSuccess: () => toast.success('Task complete — NextMove will find your next move.'),
     });
   }, [updateTask]);
 

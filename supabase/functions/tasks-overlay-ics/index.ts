@@ -119,10 +119,10 @@ Deno.serve(async (req) => {
     const ics = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//VectorHQ//Overlay//EN",
+      "PRODID:-//NextMove//Overlay//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
-      "X-WR-CALNAME:VectorHQ Task Overlay",
+      "X-WR-CALNAME:NextMove Task Overlay",
       ...events,
       "END:VCALENDAR",
     ].join("\r\n");

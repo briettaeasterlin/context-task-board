@@ -380,7 +380,7 @@ export default function PlanPage() {
                       disabled={autoScheduling || autoSuggestions.length === 0}
                     >
                       <Wand2 className={cn("h-3 w-3", autoScheduling && "animate-spin")} />
-                      {autoScheduling ? 'Scheduling...' : `Auto-schedule ${autoSuggestions.length} tasks`}
+                      {autoScheduling ? 'Planning...' : `Plan My Day (${autoSuggestions.length} tasks)`}
                     </Button>
                     {settings?.gcal_connected ? (
                       <>
