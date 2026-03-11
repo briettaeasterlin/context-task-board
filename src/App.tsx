@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import HQPage from "./pages/HQPage";
@@ -21,8 +22,20 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const needsOnboarding = useOnboardingCheck();
+
   if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground font-sans text-sm">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Redirect to onboarding if new user (zero projects), unless already on /onboarding
+  if (needsOnboarding === true && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Still checking project count
+  if (needsOnboarding === null) return <div className="flex min-h-screen items-center justify-center text-muted-foreground font-sans text-sm">Loading...</div>;
+
   return <>{children}</>;
 }
 
