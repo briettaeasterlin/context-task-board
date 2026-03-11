@@ -280,8 +280,34 @@ export default function PlanPage() {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const slotOffset = Math.floor(y / (HOUR_HEIGHT / 2)) * SLOT_MINUTES;
-    const minutes = hour * 60 + slotOffset;
+    let minutes = hour * 60 + slotOffset;
+    // Cap at 10PM (22:00)
+    minutes = Math.min(minutes, DAY_END_HOUR * 60 - SLOT_MINUTES);
     setDragOverSlot({ day: dayIndex, minutes });
+
+    // Auto-scroll when dragging near edges of the scroll area
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+    if (!viewport) return;
+    const vpRect = viewport.getBoundingClientRect();
+    const EDGE_ZONE = 60;
+    const SCROLL_SPEED = 8;
+
+    if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null; }
+
+    const distFromTop = e.clientY - vpRect.top;
+    const distFromBottom = vpRect.bottom - e.clientY;
+
+    if (distFromTop < EDGE_ZONE || distFromBottom < EDGE_ZONE) {
+      const scroll = () => {
+        if (distFromTop < EDGE_ZONE) {
+          viewport.scrollTop -= SCROLL_SPEED;
+        } else {
+          viewport.scrollTop += SCROLL_SPEED;
+        }
+        autoScrollRef.current = requestAnimationFrame(scroll);
+      };
+      autoScrollRef.current = requestAnimationFrame(scroll);
+    }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent, dayIndex: number) => {
