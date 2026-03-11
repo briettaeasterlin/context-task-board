@@ -15,7 +15,7 @@ import { AlertTriangle, CheckCircle2, TrendingUp, Plus, Zap, ChevronDown, Chevro
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, type ScoredTask } from '@/lib/task-scoring';
+import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, inferStrategicCategory, type ScoredTask } from '@/lib/task-scoring';
 import { STATUSES, type TaskStatus } from '@/types/task';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { useMilestones } from '@/hooks/useProjects';
