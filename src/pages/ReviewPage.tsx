@@ -6,6 +6,7 @@ import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import type { Task, TaskArea, TaskStatus, TaskUpdate, Project } from '@/types/task';
 import { ProjectCard } from '@/components/project/ProjectCard';
+import { DuplicateDetector } from '@/components/project/DuplicateDetector';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { FilterBar } from '@/components/task/FilterBar';
