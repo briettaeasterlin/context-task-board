@@ -160,13 +160,13 @@ export default function HQPage() {
 
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => navigate('/review')} className="rounded-xl font-display" size="sm">
-            <Zap className="h-3.5 w-3.5 mr-1.5" /> Run HQ Review
+            <Zap className="h-3.5 w-3.5 mr-1.5" /> Weekly Review
           </Button>
           <Button variant="outline" onClick={() => navigate('/plan')} className="rounded-xl font-display" size="sm">
-            🗓️ Plan My Week
+            🗓️ Plan My Day
           </Button>
           <Button variant="outline" onClick={() => navigate('/today')} className="rounded-xl font-display" size="sm">
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Suggest Next Tasks
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Today's Moves
           </Button>
         </div>
 
