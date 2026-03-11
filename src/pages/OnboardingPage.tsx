@@ -1,15 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTasks } from '@/hooks/useTasks';
-import { useProjects } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Copy, Check, AlertCircle, Inbox, Brain, RefreshCw, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { ArrowRight, ArrowLeft, Inbox, Brain, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TaskArea, TaskStatus } from '@/types/task';
+import { AIImportPanel } from '@/components/import/AIImportPanel';
 
 const AI_PROMPT = `I need help organizing everything I'm currently working on.
 
