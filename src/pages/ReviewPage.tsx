@@ -310,6 +310,9 @@ export default function ReviewPage() {
           {/* Projects */}
           <TabsContent value="projects">
             <div className="space-y-4">
+              {/* Duplicate Detection & Merge */}
+              <DuplicateDetector />
+
               <div className="flex items-center justify-between">
                 <h2 className="font-sans text-lg font-semibold flex items-center gap-2"><span>📁</span> All Projects</h2>
                 <Button size="sm" className="text-xs rounded-lg" onClick={() => setCreateOpen(true)}>
