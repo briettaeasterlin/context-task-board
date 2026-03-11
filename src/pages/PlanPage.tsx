@@ -614,7 +614,6 @@ export default function PlanPage() {
                                 style={{ top: minutesToTop(dragOverSlot.minutes), height: minutesToHeight(duration) }} />
                             );
                           })()}
-                          )}
                         </div>
                       );
                     })}
