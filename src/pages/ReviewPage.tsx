@@ -179,7 +179,7 @@ export default function ReviewPage() {
             <Zap className="h-3.5 w-3.5 mr-1.5" /> Run HQ Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={() => setReviewMode(true)}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> VectorHQ AI Review
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> NextMove AI Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={copyAllForAI}>
             {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
