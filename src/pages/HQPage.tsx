@@ -31,6 +31,13 @@ export default function HQPage() {
   const { milestones } = useMilestones();
   const [detailTask, setDetailTask] = useState<Task | null>(null);
 
+  const now = new Date();
+  const weekStartStr = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const weekEndStr = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const { blocks } = usePlannedBlocks(weekStartStr, weekEndStr);
+  const workload = useWorkload(tasks, blocks);
+  const nearingCompletion = useProjectCompletion(tasks, projects);
+
   const greeting = getGreeting();
 
   const focusTasks = useMemo(() =>
