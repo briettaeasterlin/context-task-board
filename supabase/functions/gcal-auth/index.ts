@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ALLOWED_ORIGINS = [
   "https://context-task-board.lovable.app",
   "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+  "https://6cb26484-5f83-41ed-b635-41425bad5c23.lovableproject.com",
   "http://localhost:5173",
 ];
 
@@ -19,9 +20,11 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 
-const ALLOWED_ORIGINS = [
+const ALLOWED_REDIRECT_ORIGINS = [
   "https://context-task-board.lovable.app",
   "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+  "https://6cb26484-5f83-41ed-b635-41425bad5c23.lovableproject.com",
+  "http://localhost:5173",
 ];
 
 function isValidReturnUrl(raw: string): string {
@@ -31,7 +34,7 @@ function isValidReturnUrl(raw: string): string {
   // Allow absolute URLs with approved origins
   try {
     const parsed = new URL(raw);
-    if (ALLOWED_ORIGINS.some((o) => parsed.origin === o)) return raw;
+    if (ALLOWED_REDIRECT_ORIGINS.some((o) => parsed.origin === o)) return raw;
   } catch { /* invalid URL */ }
   return "/";
 }
