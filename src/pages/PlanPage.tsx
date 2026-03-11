@@ -5,6 +5,8 @@ import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks/usePlanner';
 import { useAutoSchedule } from '@/hooks/useAutoSchedule';
+import { ExecutionPlanPanel } from '@/components/task/ExecutionPlanPanel';
+import type { ExecutionPlanTask } from '@/lib/daily-execution-engine';
 import { useWorkload } from '@/hooks/useWorkload';
 import type { Task, TaskArea, TaskStatus, TaskInsert } from '@/types/task';
 import type { PlannedBlock } from '@/hooks/usePlanner';
