@@ -35,72 +35,16 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            {/* Copyable prompt */}
-            <Card className="p-4 rounded-2xl shadow-card bg-muted/30 relative">
-              <pre className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed font-mono max-h-48 overflow-y-auto">
-                {AI_PROMPT}
-              </pre>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-3 right-3 h-7 text-[10px] gap-1 rounded-lg"
-                onClick={handleCopyPrompt}
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                {copied ? 'Copied' : 'Copy Prompt'}
-              </Button>
-            </Card>
+            <AIImportPanel source="onboarding" onImportComplete={() => setStep(2)} compact />
 
-            {/* JSON paste area */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Paste the JSON result here</label>
-              <Textarea
-                placeholder='{"projects": [...], "tasks": [...]}'
-                value={jsonInput}
-                onChange={e => handleJsonChange(e.target.value)}
-                rows={8}
-                className="rounded-xl font-mono text-xs"
-              />
-
-              {parseError && (
-                <div className="flex items-start gap-2 text-sm text-destructive p-3 rounded-xl bg-destructive/5">
-                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{parseError}</span>
-                </div>
-              )}
-
-              {parseResult && (
-                <Card className="p-4 rounded-xl bg-primary/5 border-primary/20 space-y-2">
-                  <p className="text-sm font-medium flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-primary" />
-                    Found {parseResult.projects.length} project{parseResult.projects.length !== 1 ? 's' : ''} and {parseResult.tasks.length} task{parseResult.tasks.length !== 1 ? 's' : ''}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {parseResult.projects.map(p => (
-                      <Badge key={p.name} variant="outline" className="text-[10px] rounded-full">{p.name}</Badge>
-                    ))}
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground"
-                onClick={() => setStep(2)}
-              >
-                Skip — I'll add things manually
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={!parseResult || importing}
-                className="flex-1 rounded-xl font-display"
-              >
-                {importing ? 'Importing...' : 'Continue'} <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => setStep(2)}
+            >
+              Skip — I'll add things manually
+            </Button>
           </div>
         )}
 
