@@ -177,8 +177,12 @@ export default function Dashboard() {
           </h1>
           <div className="flex items-center gap-6 mt-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
+              <span className="text-base">📌</span>
+              <span className="font-medium text-foreground">{todayCount}</span> today
+            </span>
+            <span className="flex items-center gap-1.5">
               <span className="text-base">🎯</span>
-              <span className="font-medium text-foreground">{nextCount}</span> in focus
+              <span className="font-medium text-foreground">{nextCount}</span> next
             </span>
             <span className="flex items-center gap-1.5">
               <span className="text-base">⏳</span>
