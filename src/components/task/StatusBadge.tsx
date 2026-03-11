@@ -8,6 +8,7 @@ const statusConfig: Record<TaskStatus, { bg: string; text: string; emoji: string
   Backlog: { bg: 'bg-status-backlog/10', text: 'text-status-backlog', emoji: '📋' },
   Closing: { bg: 'bg-status-closing/12', text: 'text-status-closing', emoji: '🏁' },
   Done: { bg: 'bg-status-done/12', text: 'text-status-done', emoji: '✅' },
+  Someday: { bg: 'bg-muted/10', text: 'text-muted-foreground', emoji: '💭' },
 };
 
 export function StatusBadge({ status, className }: { status: TaskStatus; className?: string }) {
