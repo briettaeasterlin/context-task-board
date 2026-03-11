@@ -14,6 +14,13 @@ async function sha256(message: string): Promise<string> {
     .join("");
 }
 
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 interface AuthResult {
   userId: string;
   authMethod: "jwt" | "api_key";
@@ -75,13 +82,6 @@ async function authenticate(
   }
 
   return json({ error: "Missing auth (Authorization or x-api-key)" }, 401);
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 }
 
 Deno.serve(async (req) => {
