@@ -205,8 +205,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Redirect back to the app if returnUrl is provided
-      if (returnUrl) {
+      // Redirect back to the app
+      if (returnUrl && returnUrl !== "/") {
         return new Response(null, {
           status: 302,
           headers: { Location: returnUrl },
