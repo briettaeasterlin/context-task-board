@@ -268,6 +268,18 @@ export default function PlanPage() {
     updateClarifyQuestion.mutate({ id, status: 'dismissed' as any });
   }, [updateClarifyQuestion]);
 
+  // Overlap detection
+  const wouldOverlap = useCallback((dayStr: string, startMin: number, duration: number, excludeBlockId?: string) => {
+    const endMin = startMin + duration;
+    return blocks.some(b => {
+      if (b.date !== dayStr) return false;
+      if (excludeBlockId && b.id === excludeBlockId) return false;
+      const bStart = timeToMinutes(b.start_time);
+      const bEnd = bStart + b.duration_minutes;
+      return startMin < bEnd && endMin > bStart;
+    });
+  }, [blocks]);
+
   // Drag & drop
   const handleDragStart = useCallback((e: React.DragEvent, task: Task) => {
     setDraggingTask(task);
