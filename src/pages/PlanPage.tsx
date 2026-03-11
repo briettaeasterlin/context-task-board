@@ -498,12 +498,15 @@ export default function PlanPage() {
                             const startMins = timeToMinutes(block.start_time);
                             const task = block.task_id ? taskMap.get(block.task_id) : null;
                             const project = task?.project_id ? projectMap.get(task.project_id) : null;
+                            const isResizingThis = resizing?.blockId === block.id;
+                            const displayDuration = isResizingThis ? Math.max(15, block.duration_minutes + resizeDelta) : block.duration_minutes;
                             return (
-                              <div key={block.id} draggable={!block.locked} onDragStart={e => handleBlockDragStart(e, block)}
-                                onClick={() => { if (task) setDetailTask(task); }}
+                              <div key={block.id} draggable={!block.locked && !resizing} onDragStart={e => handleBlockDragStart(e, block)}
+                                onClick={() => { if (task && !resizing) setDetailTask(task); }}
                                 className={cn("absolute left-0.5 right-0.5 rounded-lg border px-1.5 py-0.5 overflow-hidden z-20 cursor-pointer group",
-                                  "bg-primary/10 border-primary/30 hover:border-primary/60 transition-colors", block.locked && "opacity-80")}
-                                style={{ top: minutesToTop(startMins), height: Math.max(minutesToHeight(block.duration_minutes), 24) }}>
+                                  "bg-primary/10 border-primary/30 hover:border-primary/60 transition-colors", block.locked && "opacity-80",
+                                  isResizingThis && "ring-2 ring-primary/50")}
+                                style={{ top: minutesToTop(startMins), height: Math.max(minutesToHeight(displayDuration), 24) }}>
                                 <div className="flex items-start justify-between gap-0.5">
                                   <p className="text-[10px] font-medium truncate flex-1">{task?.title ?? 'Untitled'}</p>
                                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -516,9 +519,17 @@ export default function PlanPage() {
                                   </div>
                                 </div>
                                 {project && <p className="text-[9px] text-primary truncate">{project.name}</p>}
-                                <p className="text-[9px] text-muted-foreground">{block.duration_minutes}m</p>
+                                <p className="text-[9px] text-muted-foreground">{displayDuration}m</p>
                                 {block.notes && block.source === 'auto' && (
                                   <p className="text-[9px] text-muted-foreground/70 truncate italic">{block.notes}</p>
+                                )}
+                                {/* Resize handle */}
+                                {!block.locked && (
+                                  <div
+                                    onMouseDown={(e) => handleResizeStart(e, block.id, block.duration_minutes)}
+                                    className="absolute bottom-0 left-0 right-0 h-2 cursor-s-resize hover:bg-primary/20 transition-colors rounded-b-lg"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
                                 )}
                               </div>
                             );
