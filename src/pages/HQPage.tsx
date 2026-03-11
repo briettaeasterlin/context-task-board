@@ -31,7 +31,12 @@ export default function HQPage() {
   const greeting = getGreeting();
 
   const focusTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Next').sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).slice(0, 6),
+    tasks.filter(t => t.status === 'Today' || t.status === 'Next').sort((a, b) => {
+      // Today first, then Next; within each, sort by sort_order
+      if (a.status === 'Today' && b.status !== 'Today') return -1;
+      if (b.status === 'Today' && a.status !== 'Today') return 1;
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    }).slice(0, 6),
   [tasks]);
 
   const recentlyDone = useMemo(() =>
