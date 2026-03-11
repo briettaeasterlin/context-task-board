@@ -194,6 +194,7 @@ export default function ReviewPage() {
             <TabsTrigger value="stuck" className="text-sm rounded-lg">🚧 What's Stuck</TabsTrigger>
             <TabsTrigger value="projects" className="text-sm rounded-lg">📁 Projects</TabsTrigger>
             <TabsTrigger value="kanban" className="text-sm rounded-lg">🗂️ Kanban</TabsTrigger>
+            <TabsTrigger value="import" className="text-sm rounded-lg"><Upload className="h-3.5 w-3.5 mr-1" /> Import</TabsTrigger>
             <TabsTrigger value="vector" className="text-sm rounded-lg">📡 NextMove Sync</TabsTrigger>
           </TabsList>
 
