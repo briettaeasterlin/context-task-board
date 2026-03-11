@@ -174,7 +174,7 @@ export default function HQPage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-              🎯 Focus Tasks
+              🎯 Today's Moves
             </h2>
             <Button variant="ghost" size="sm" onClick={() => navigate('/today')} className="text-xs text-muted-foreground">
               View all <ArrowRight className="h-3 w-3 ml-1" />
