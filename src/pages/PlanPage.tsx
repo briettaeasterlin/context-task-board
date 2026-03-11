@@ -74,6 +74,8 @@ export default function PlanPage() {
   const [search, setSearch] = useState('');
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<{ day: number; minutes: number } | null>(null);
+  const [resizing, setResizing] = useState<{ blockId: string; startY: number; startDuration: number } | null>(null);
+  const [resizeDelta, setResizeDelta] = useState(0);
 
   const weekStart = useMemo(() => {
     const now = new Date();
