@@ -288,16 +288,11 @@ export function DuplicateDetector() {
         </div>
       )}
 
-      {/* Manual merge toggle */}
-      <Button variant="outline" size="sm" className="text-xs rounded-lg gap-1" onClick={() => setShowManual(!showManual)}>
-        <Merge className="h-3.5 w-3.5" />
-        Merge projects manually
-        {showManual ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-      </Button>
-      {showManual && <ManualMerge projects={projects} onMerge={mergeProjects} />}
+      {/* Manual merge — always visible */}
+      <ManualMerge projects={projects} onMerge={mergeProjects} />
 
-      {candidates.length === 0 && !showManual && (
-        <p className="text-xs text-muted-foreground">No duplicate projects detected. Use the merge button above to combine projects manually.</p>
+      {candidates.length === 0 && (
+        <p className="text-xs text-muted-foreground">No duplicate projects detected automatically. Use the merge tool above to combine projects with different names.</p>
       )}
     </div>
   );
