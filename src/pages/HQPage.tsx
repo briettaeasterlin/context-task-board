@@ -71,7 +71,7 @@ export default function HQPage() {
             {greeting.text}
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
-            {format(new Date(), 'EEEE, MMMM d')} · {stats.focus} tasks in focus
+            {format(new Date(), 'EEEE, MMMM d')} · {stats.today} today · {stats.focus} next
           </p>
         </div>
 
