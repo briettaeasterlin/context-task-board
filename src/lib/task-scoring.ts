@@ -1,4 +1,5 @@
 import type { Task } from '@/types/task';
+import type { StrategicPhase } from '@/types/task';
 import { differenceInHours, differenceInDays } from 'date-fns';
 
 // ─── Duration Estimation ───
