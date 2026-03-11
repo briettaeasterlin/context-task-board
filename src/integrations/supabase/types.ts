@@ -590,6 +590,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_rate_limit_log: {
+        Row: {
+          function_name: string
+          id: string
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          function_name: string
+          id?: string
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          function_name?: string
+          id?: string
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

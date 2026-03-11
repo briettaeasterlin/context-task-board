@@ -38,6 +38,28 @@ serve(async (req) => {
       });
     }
 
+    // --- Rate limit check ---
+    const RATE_LIMIT_PER_MINUTE = 20;
+    const FN_NAME = 'ai-extract';
+    const adminClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    {
+      const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+      const { count } = await adminClient
+        .from('user_rate_limit_log')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', claimsData.claims.sub)
+        .eq('function_name', FN_NAME)
+        .gte('requested_at', oneMinuteAgo);
+      if ((count ?? 0) >= RATE_LIMIT_PER_MINUTE) {
+        return new Response(JSON.stringify({
+          error: 'Rate limit exceeded. Please try again in a moment.',
+          retry_after_seconds: 60,
+          limit: `${RATE_LIMIT_PER_MINUTE} requests per minute`,
+        }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      await adminClient.from('user_rate_limit_log').insert({ user_id: claimsData.claims.sub, function_name: FN_NAME });
+    }
+
     const body = await req.json();
     // Support both old (content) and new (rawText) payload shapes
     const rawText = body.rawText ?? body.content;
@@ -85,6 +107,9 @@ serve(async (req) => {
       : null;
     const todayISO = new Date().toISOString().slice(0, 10);
     const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
