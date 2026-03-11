@@ -7,6 +7,7 @@ import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks
 import { useAutoSchedule } from '@/hooks/useAutoSchedule';
 import { ExecutionPlanPanel } from '@/components/task/ExecutionPlanPanel';
 import type { ExecutionPlanTask } from '@/lib/daily-execution-engine';
+import { scoreTasks } from '@/lib/task-scoring';
 import { useWorkload } from '@/hooks/useWorkload';
 import type { Task, TaskArea, TaskStatus, TaskInsert } from '@/types/task';
 import type { PlannedBlock } from '@/hooks/usePlanner';
