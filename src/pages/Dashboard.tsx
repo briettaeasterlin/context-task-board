@@ -50,6 +50,7 @@ export default function Dashboard() {
 
   const greeting = getGreeting();
   const openTasks = tasks.filter(t => t.status !== 'Done').length;
+  const todayCount = tasks.filter(t => t.status === 'Today').length;
   const nextCount = tasks.filter(t => t.status === 'Next').length;
   const waitingCount = tasks.filter(t => t.status === 'Waiting').length;
   const doneToday = tasks.filter(t => {
