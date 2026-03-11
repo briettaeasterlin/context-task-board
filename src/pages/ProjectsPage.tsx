@@ -5,7 +5,6 @@ import { useTasks } from '@/hooks/useTasks';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { AppShell } from '@/components/layout/AppShell';
-import { FilterBar } from '@/components/task/FilterBar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,8 +14,84 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AREAS, type TaskArea, type Project } from '@/types/task';
-import { Plus, AlertTriangle, Merge, X } from 'lucide-react';
+import { Plus, AlertTriangle, Merge, X, TrendingUp, Briefcase, Settings, Heart } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { inferStrategicCategory } from '@/lib/task-scoring';
+
+// ─── Work Categories ───
+
+type WorkCategory = 'pipeline' | 'client' | 'business' | 'personal';
+
+interface CategoryConfig {
+  label: string;
+  icon: React.ReactNode;
+  borderClass: string;
+  bgClass: string;
+  headerClass: string;
+  dotClass: string;
+}
+
+const CATEGORY_CONFIG: Record<WorkCategory, CategoryConfig> = {
+  pipeline: {
+    label: '📈 Pipeline',
+    icon: <TrendingUp className="h-4 w-4" />,
+    borderClass: 'border-l-[hsl(var(--cat-pipeline))]',
+    bgClass: 'bg-[hsl(var(--cat-pipeline)/0.04)]',
+    headerClass: 'text-[hsl(var(--cat-pipeline))]',
+    dotClass: 'bg-[hsl(var(--cat-pipeline))]',
+  },
+  client: {
+    label: '💼 Client Work',
+    icon: <Briefcase className="h-4 w-4" />,
+    borderClass: 'border-l-[hsl(var(--cat-client))]',
+    bgClass: 'bg-[hsl(var(--cat-client)/0.04)]',
+    headerClass: 'text-[hsl(var(--cat-client))]',
+    dotClass: 'bg-[hsl(var(--cat-client))]',
+  },
+  business: {
+    label: '⚙️ Business / Admin / Finance',
+    icon: <Settings className="h-4 w-4" />,
+    borderClass: 'border-l-[hsl(var(--cat-business))]',
+    bgClass: 'bg-[hsl(var(--cat-business)/0.04)]',
+    headerClass: 'text-[hsl(var(--cat-business))]',
+    dotClass: 'bg-[hsl(var(--cat-business))]',
+  },
+  personal: {
+    label: '💜 Personal / Family',
+    icon: <Heart className="h-4 w-4" />,
+    borderClass: 'border-l-[hsl(var(--cat-personal))]',
+    bgClass: 'bg-[hsl(var(--cat-personal)/0.04)]',
+    headerClass: 'text-[hsl(var(--cat-personal))]',
+    dotClass: 'bg-[hsl(var(--cat-personal))]',
+  },
+};
+
+const CATEGORY_ORDER: WorkCategory[] = ['pipeline', 'client', 'business', 'personal'];
+
+function classifyProject(project: Project, tasks: { area: TaskArea; title: string; context: string | null; notes: string | null }[]): WorkCategory {
+  // Check if project has strategic_phase set
+  const phase = (project as any).strategic_phase;
+  if (phase === 'scoping' || phase === 'closed_followup') return 'pipeline';
+  if (phase === 'active_engagement') return 'client';
+  if (phase === 'internal_ops') return 'business';
+
+  // Fall back to area-based mapping
+  if (project.area === 'Client') return 'client';
+  if (project.area === 'Personal' || project.area === 'Home' || project.area === 'Family') return 'personal';
+  if (project.area === 'Business') {
+    // Check if any tasks suggest pipeline work
+    const hasPipeline = tasks.some(t => {
+      const cat = inferStrategicCategory(t as any);
+      return cat === 'pipeline_relationship' || cat === 'revenue_generation';
+    });
+    if (hasPipeline) return 'pipeline';
+    return 'business';
+  }
+  return 'personal';
+}
+
+// ─── Duplicate Detection ───
 
 interface DuplicateGroup {
   normalizedName: string;
@@ -36,13 +111,14 @@ function detectDuplicates(projects: Project[]): DuplicateGroup[] {
     .map(([normalizedName, projects]) => ({ normalizedName, projects }));
 }
 
+// ─── Page ───
+
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const { projects, createProject, updateProject, deleteProject } = useProjects();
   const { tasks, updateTask } = useTasks();
   const { clarifyQuestions } = useClarifyQuestions();
   const [search, setSearch] = useState('');
-  const [areaFilter, setAreaFilter] = useState<TaskArea | 'all'>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newArea, setNewArea] = useState<TaskArea>('Personal');
@@ -58,7 +134,6 @@ export default function ProjectsPage() {
   const handleMerge = useCallback(async (group: DuplicateGroup) => {
     setMerging(true);
     try {
-      // Keep the project with the most tasks; break ties by oldest
       const projectTaskCounts = group.projects.map(p => ({
         project: p,
         taskCount: tasks.filter(t => t.project_id === p.id).length,
@@ -66,21 +141,18 @@ export default function ProjectsPage() {
       projectTaskCounts.sort((a, b) => b.taskCount - a.taskCount || new Date(a.project.created_at).getTime() - new Date(b.project.created_at).getTime());
 
       const keeper = projectTaskCounts[0].project;
-      const duplicates = projectTaskCounts.slice(1).map(p => p.project);
+      const dupes = projectTaskCounts.slice(1).map(p => p.project);
 
-      // Move all tasks from duplicates to keeper
-      for (const dup of duplicates) {
+      for (const dup of dupes) {
         const dupTasks = tasks.filter(t => t.project_id === dup.id);
         for (const t of dupTasks) {
           await updateTask.mutateAsync({ id: t.id, project_id: keeper.id });
         }
-        // Soft-delete the duplicate project
         await deleteProject.mutateAsync(dup.id);
       }
 
-      // Merge summaries if keeper has no summary but a duplicate does
       if (!keeper.summary) {
-        const donorSummary = duplicates.find(d => d.summary)?.summary;
+        const donorSummary = dupes.find(d => d.summary)?.summary;
         if (donorSummary) {
           await updateProject.mutateAsync({ id: keeper.id, summary: donorSummary });
         }
@@ -94,11 +166,24 @@ export default function ProjectsPage() {
     }
   }, [tasks, updateTask, deleteProject, updateProject]);
 
-  const filtered = projects.filter(p => {
-    if (areaFilter !== 'all' && p.area !== areaFilter) return false;
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  // Group projects by work category
+  const groupedProjects = useMemo(() => {
+    const filtered = projects.filter(p =>
+      !search || p.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const groups: Record<WorkCategory, Project[]> = {
+      pipeline: [], client: [], business: [], personal: [],
+    };
+
+    for (const p of filtered) {
+      const projectTasks = tasks.filter(t => t.project_id === p.id);
+      const cat = classifyProject(p, projectTasks);
+      groups[cat].push(p);
+    }
+
+    return groups;
+  }, [projects, tasks, search]);
 
   const handleCreate = () => {
     if (!newName.trim()) return;
@@ -110,7 +195,7 @@ export default function ProjectsPage() {
 
   return (
     <AppShell>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Duplicate Detection Banner */}
         {duplicates.length > 0 && (
           <div className="space-y-2">
@@ -130,21 +215,10 @@ export default function ProjectsPage() {
                       }).join(' ·')}
                     </p>
                     <div className="flex gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="h-7 text-xs gap-1 rounded-lg"
-                        disabled={merging}
-                        onClick={() => handleMerge(group)}
-                      >
+                      <Button size="sm" variant="default" className="h-7 text-xs gap-1 rounded-lg" disabled={merging} onClick={() => handleMerge(group)}>
                         <Merge className="h-3 w-3" /> Merge into one
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs gap-1 rounded-lg"
-                        onClick={() => setDismissedDuplicates(prev => new Set([...prev, group.normalizedName]))}
-                      >
+                      <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 rounded-lg" onClick={() => setDismissedDuplicates(prev => new Set([...prev, group.normalizedName]))}>
                         <X className="h-3 w-3" /> Dismiss
                       </Button>
                     </div>
@@ -155,31 +229,63 @@ export default function ProjectsPage() {
           </div>
         )}
 
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-mono text-sm font-semibold">Projects</h2>
-          <Button size="sm" className="text-xs h-7" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-3 w-3 mr-1" /> New Project
-          </Button>
+          <h1 className="text-2xl font-display font-bold">Projects</h1>
+          <div className="flex gap-2 items-center">
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="h-8 text-sm w-[180px]" />
+            <Button size="sm" className="text-xs h-8 gap-1" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> New Project
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects..." className="h-8 text-sm max-w-[250px]" />
-          <Select value={areaFilter} onValueChange={v => setAreaFilter(v as TaskArea | 'all')}>
-            <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Areas</SelectItem>
-              {AREAS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map(p => (
-            <ProjectCard key={p.id} project={p} tasks={tasks.filter(t => t.project_id === p.id)}
-              clarifyCount={clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open').length}
-              onClick={() => navigate(`/projects/${p.id}`)} />
-          ))}
-          {filtered.length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No projects yet.</p>}
-        </div>
+
+        {/* Category Sections */}
+        {CATEGORY_ORDER.map(cat => {
+          const config = CATEGORY_CONFIG[cat];
+          const catProjects = groupedProjects[cat];
+          if (catProjects.length === 0) return null;
+
+          return (
+            <section key={cat}>
+              <div className={cn(
+                "rounded-2xl border-l-4 overflow-hidden",
+                config.borderClass,
+                config.bgClass,
+              )}>
+                {/* Section header */}
+                <div className="px-5 py-3 flex items-center gap-2">
+                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", config.dotClass)} />
+                  <h2 className={cn("font-display font-semibold text-sm", config.headerClass)}>
+                    {config.label}
+                  </h2>
+                  <Badge variant="secondary" className="text-[10px] h-4 rounded-full ml-1">
+                    {catProjects.length}
+                  </Badge>
+                </div>
+
+                {/* Project cards */}
+                <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {catProjects.map(p => (
+                    <ProjectCard
+                      key={p.id}
+                      project={p}
+                      tasks={tasks.filter(t => t.project_id === p.id)}
+                      clarifyCount={clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open').length}
+                      onClick={() => navigate(`/projects/${p.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        })}
+
+        {projects.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-12">No projects yet. Create one to get started.</p>
+        )}
       </div>
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle className="font-mono text-sm">New Project</DialogTitle></DialogHeader>
