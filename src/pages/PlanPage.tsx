@@ -225,10 +225,12 @@ export default function PlanPage() {
   }, [weekStartStr, weekEndStr, queryClient]);
 
   const scheduledTaskIds = new Set(blocks.map(b => b.task_id).filter(Boolean));
-  const unscheduledTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Next' && !scheduledTaskIds.has(t.id))
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
-  [tasks, scheduledTaskIds]);
+  const unscheduledTasks = useMemo(() => {
+    const eligible = tasks.filter(t => t.status === 'Next' && !scheduledTaskIds.has(t.id));
+    // Sort by priority score descending
+    const scored = scoreTasks(eligible, tasks);
+    return scored.map(s => s.task);
+  }, [tasks, scheduledTaskIds]);
 
   const filteredTasks = useMemo(() => {
     if (!search) return unscheduledTasks;
