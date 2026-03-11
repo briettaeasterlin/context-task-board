@@ -98,7 +98,7 @@ export function useApiKeys() {
 
   const deleteKey = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('api_keys').delete().eq('id', id);
+      const { error } = await supabase.from('api_keys').delete().eq('id', id).eq('user_id', user!.id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['api_keys'] }),
