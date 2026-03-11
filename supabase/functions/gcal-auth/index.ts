@@ -34,7 +34,7 @@ function isValidReturnUrl(raw: string): string {
   // Allow absolute URLs with approved origins
   try {
     const parsed = new URL(raw);
-    if (ALLOWED_ORIGINS.some((o) => parsed.origin === o)) return raw;
+    if (ALLOWED_REDIRECT_ORIGINS.some((o) => parsed.origin === o)) return raw;
   } catch { /* invalid URL */ }
   return "/";
 }

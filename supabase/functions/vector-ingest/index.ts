@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ALLOWED_ORIGINS = [
   "https://context-task-board.lovable.app",
   "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+  "https://6cb26484-5f83-41ed-b635-41425bad5c23.lovableproject.com",
   "http://localhost:5173",
 ];
 
