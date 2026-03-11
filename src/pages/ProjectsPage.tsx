@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -11,15 +11,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AREAS, type TaskArea } from '@/types/task';
-import { Plus } from 'lucide-react';
+import { AREAS, type TaskArea, type Project } from '@/types/task';
+import { Plus, AlertTriangle, Merge, X } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface DuplicateGroup {
+  normalizedName: string;
+  projects: Project[];
+}
+
+function detectDuplicates(projects: Project[]): DuplicateGroup[] {
+  const groups = new Map<string, Project[]>();
+  for (const p of projects) {
+    const key = p.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    const existing = groups.get(key) ?? [];
+    existing.push(p);
+    groups.set(key, existing);
+  }
+  return Array.from(groups.entries())
+    .filter(([, ps]) => ps.length > 1)
+    .map(([normalizedName, projects]) => ({ normalizedName, projects }));
+}
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
-  const { projects, createProject } = useProjects();
-  const { tasks } = useTasks();
+  const { projects, createProject, updateProject, deleteProject } = useProjects();
+  const { tasks, updateTask } = useTasks();
   const { clarifyQuestions } = useClarifyQuestions();
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<TaskArea | 'all'>('all');
@@ -27,6 +47,52 @@ export default function ProjectsPage() {
   const [newName, setNewName] = useState('');
   const [newArea, setNewArea] = useState<TaskArea>('Personal');
   const [newSummary, setNewSummary] = useState('');
+  const [dismissedDuplicates, setDismissedDuplicates] = useState<Set<string>>(new Set());
+  const [merging, setMerging] = useState(false);
+
+  const duplicates = useMemo(() =>
+    detectDuplicates(projects).filter(g => !dismissedDuplicates.has(g.normalizedName)),
+    [projects, dismissedDuplicates]
+  );
+
+  const handleMerge = useCallback(async (group: DuplicateGroup) => {
+    setMerging(true);
+    try {
+      // Keep the project with the most tasks; break ties by oldest
+      const projectTaskCounts = group.projects.map(p => ({
+        project: p,
+        taskCount: tasks.filter(t => t.project_id === p.id).length,
+      }));
+      projectTaskCounts.sort((a, b) => b.taskCount - a.taskCount || new Date(a.project.created_at).getTime() - new Date(b.project.created_at).getTime());
+
+      const keeper = projectTaskCounts[0].project;
+      const duplicates = projectTaskCounts.slice(1).map(p => p.project);
+
+      // Move all tasks from duplicates to keeper
+      for (const dup of duplicates) {
+        const dupTasks = tasks.filter(t => t.project_id === dup.id);
+        for (const t of dupTasks) {
+          await updateTask.mutateAsync({ id: t.id, project_id: keeper.id });
+        }
+        // Soft-delete the duplicate project
+        await deleteProject.mutateAsync(dup.id);
+      }
+
+      // Merge summaries if keeper has no summary but a duplicate does
+      if (!keeper.summary) {
+        const donorSummary = duplicates.find(d => d.summary)?.summary;
+        if (donorSummary) {
+          await updateProject.mutateAsync({ id: keeper.id, summary: donorSummary });
+        }
+      }
+
+      toast.success(`Merged ${group.projects.length} "${keeper.name}" projects into one`);
+    } catch (err: any) {
+      toast.error(err.message || 'Merge failed');
+    } finally {
+      setMerging(false);
+    }
+  }, [tasks, updateTask, deleteProject, updateProject]);
 
   const filtered = projects.filter(p => {
     if (areaFilter !== 'all' && p.area !== areaFilter) return false;
@@ -45,6 +111,50 @@ export default function ProjectsPage() {
   return (
     <AppShell>
       <div className="space-y-4">
+        {/* Duplicate Detection Banner */}
+        {duplicates.length > 0 && (
+          <div className="space-y-2">
+            {duplicates.map(group => (
+              <Card key={group.normalizedName} className="p-4 rounded-2xl border-status-waiting/40 bg-status-waiting/5">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-status-waiting shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">
+                      Duplicate detected: <span className="font-semibold">"{group.projects[0].name}"</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {group.projects.length} projects with this name.
+                      {group.projects.map(p => {
+                        const count = tasks.filter(t => t.project_id === p.id).length;
+                        return ` ${p.area}: ${count} task${count !== 1 ? 's' : ''}`;
+                      }).join(' ·')}
+                    </p>
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="h-7 text-xs gap-1 rounded-lg"
+                        disabled={merging}
+                        onClick={() => handleMerge(group)}
+                      >
+                        <Merge className="h-3 w-3" /> Merge into one
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs gap-1 rounded-lg"
+                        onClick={() => setDismissedDuplicates(prev => new Set([...prev, group.normalizedName]))}
+                      >
+                        <X className="h-3 w-3" /> Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-sm font-semibold">Projects</h2>
           <Button size="sm" className="text-xs h-7" onClick={() => setCreateOpen(true)}>
