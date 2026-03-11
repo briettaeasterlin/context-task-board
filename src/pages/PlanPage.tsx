@@ -305,6 +305,32 @@ export default function PlanPage() {
     setDragOverSlot(null);
   }, [dragOverSlot, weekDays, updateBlock]);
 
+  const handleResizeStart = useCallback((e: React.MouseEvent, blockId: string, currentDuration: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setResizing({ blockId, startY: e.clientY, startDuration: currentDuration });
+    setResizeDelta(0);
+  }, []);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - resizing.startY;
+      // Convert pixel delta to minutes (HOUR_HEIGHT px = 60 min)
+      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15; // snap to 15min
+      setResizeDelta(deltaMinutes);
+    };
+    const handleMouseUp = () => {
+      const newDuration = Math.max(15, resizing.startDuration + resizeDelta);
+      updateBlock.mutate({ id: resizing.blockId, duration_minutes: newDuration });
+      setResizing(null);
+      setResizeDelta(0);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
+  }, [resizing, resizeDelta, updateBlock]);
+
   const getBlocksForDay = useCallback((dayStr: string) => blocks.filter(b => b.date === dayStr), [blocks]);
   const getEventsForDay = useCallback((day: Date) => {
     const dayStr = format(day, 'yyyy-MM-dd');
