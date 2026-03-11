@@ -21,8 +21,9 @@ import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { useMilestones } from '@/hooks/useProjects';
 
 export default function WorkloadPage() {
-  const { tasks, createTask } = useTasks();
+  const { tasks, createTask, updateTask } = useTasks();
   const { projects } = useProjects();
+  const { milestones } = useMilestones();
 
   const now = new Date();
   const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -31,6 +32,10 @@ export default function WorkloadPage() {
 
   const workload = useWorkload(tasks, blocks);
   const nearingCompletion = useProjectCompletion(tasks, projects);
+
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState<Record<string, string>>({});
+  const [detailTask, setDetailTask] = useState<ScoredTask | null>(null);
 
   const formatHours = (mins: number) => {
     const h = Math.floor(mins / 60);
