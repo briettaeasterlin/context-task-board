@@ -3,6 +3,7 @@ import type { Task } from '@/types/task';
 import type { PlannedBlock, CalendarEvent } from '@/hooks/usePlanner';
 import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, type ScoredTask } from '@/lib/task-scoring';
 import { format, addDays, startOfWeek, endOfWeek, isWeekend } from 'date-fns';
+import { generateDailyExecutionPlan, type DailyExecutionPlan } from '@/lib/daily-execution-engine';
 
 export interface FreeSlot {
   startMinutes: number;
@@ -307,5 +308,12 @@ export function useAutoSchedule(
     [allTasks, blocks, events, calendarUtilization]
   );
 
-  return { suggestions, weekSuggestions };
+  const executionPlan = useMemo(() =>
+    generateDailyExecutionPlan(allTasks, blocks, events, targetDate, {
+      calendarUtilization,
+    }),
+    [allTasks, blocks, events, targetDate, calendarUtilization]
+  );
+
+  return { suggestions, weekSuggestions, executionPlan };
 }

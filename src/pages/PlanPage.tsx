@@ -5,6 +5,8 @@ import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks/usePlanner';
 import { useAutoSchedule } from '@/hooks/useAutoSchedule';
+import { ExecutionPlanPanel } from '@/components/task/ExecutionPlanPanel';
+import type { ExecutionPlanTask } from '@/lib/daily-execution-engine';
 import { useWorkload } from '@/hooks/useWorkload';
 import type { Task, TaskArea, TaskStatus, TaskInsert } from '@/types/task';
 import type { PlannedBlock } from '@/hooks/usePlanner';
@@ -98,10 +100,11 @@ export default function PlanPage() {
   // Workload & auto-schedule
   const workload = useWorkload(tasks, blocks);
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { weekSuggestions: autoSuggestions } = useAutoSchedule(
+  const { weekSuggestions: autoSuggestions, executionPlan } = useAutoSchedule(
     tasks, blocks, events, todayStr, workload.calendarUtilization
   );
   const [autoScheduling, setAutoScheduling] = useState(false);
+  const [showExecutionPlan, setShowExecutionPlan] = useState(true);
 
   const handleAutoSchedule = useCallback(async () => {
     if (autoSuggestions.length === 0) {
@@ -133,6 +136,38 @@ export default function PlanPage() {
       setAutoScheduling(false);
     }
   }, [autoSuggestions, createBlock]);
+
+  const handleExecutionPlanConfirm = useCallback(async () => {
+    if (!executionPlan) return;
+    setAutoScheduling(true);
+    try {
+      const allPlanTasks: ExecutionPlanTask[] = [
+        ...(executionPlan.warmupTask ? [executionPlan.warmupTask] : []),
+        ...(executionPlan.frogTask ? [executionPlan.frogTask] : []),
+        ...executionPlan.supportingTasks,
+      ];
+      for (const item of allPlanTasks) {
+        const startH = Math.floor(item.startMinutes / 60);
+        const startM = item.startMinutes % 60;
+        const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
+        await createBlock.mutateAsync({
+          task_id: item.task.id,
+          date: item.date,
+          start_time: startTime,
+          duration_minutes: item.durationMinutes,
+          source: 'auto',
+          locked: false,
+          notes: item.reason,
+        });
+      }
+      toast.success(`Execution plan scheduled: ${allPlanTasks.length} tasks`);
+      setShowExecutionPlan(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to schedule execution plan');
+    } finally {
+      setAutoScheduling(false);
+    }
+  }, [executionPlan, createBlock]);
 
   // Check for gcal-connected redirect param
   useEffect(() => {
@@ -364,6 +399,16 @@ export default function PlanPage() {
                   </div>
                 </div>
 
+                {/* Execution Plan Panel */}
+                {showExecutionPlan && (
+                  <ExecutionPlanPanel
+                    plan={executionPlan}
+                    onConfirm={handleExecutionPlanConfirm}
+                    onDismiss={() => setShowExecutionPlan(false)}
+                    isScheduling={autoScheduling}
+                  />
+                )}
+
                 {/* Day headers */}
                 <div className="flex">
                   <div className="w-12 flex-shrink-0" />
@@ -432,6 +477,9 @@ export default function PlanPage() {
                                 </div>
                                 {project && <p className="text-[9px] text-primary truncate">{project.name}</p>}
                                 <p className="text-[9px] text-muted-foreground">{block.duration_minutes}m</p>
+                                {block.notes && block.source === 'auto' && (
+                                  <p className="text-[9px] text-muted-foreground/70 truncate italic">{block.notes}</p>
+                                )}
                               </div>
                             );
                           })}
