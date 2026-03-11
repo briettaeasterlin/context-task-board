@@ -111,6 +111,9 @@ export function autoSchedule(
 
   const freeSlots = findFreeSlots(occupied, dayStartHour, dayEndHour);
 
+  // Work tasks (Client/Business) can't be scheduled past the cutoff
+  const isWorkTask = (t: Task) => t.area === 'Client' || t.area === 'Business';
+
   // Get schedulable tasks (Today or Next, not already scheduled today)
   const scheduledIds = new Set(dayBlocks.map(b => b.task_id).filter(Boolean));
   const candidateTasks = allTasks.filter(t =>
