@@ -564,7 +564,10 @@ export default function PlanPage() {
                               </div>
                             );
                           })}
-                          {dayBlocks.map(block => {
+                          {dayBlocks.filter(b => {
+                            const m = timeToMinutes(b.start_time);
+                            return m >= DAY_START_HOUR * 60 && m < DAY_END_HOUR * 60;
+                          }).map(block => {
                             const startMins = timeToMinutes(block.start_time);
                             const task = block.task_id ? taskMap.get(block.task_id) : null;
                             const project = task?.project_id ? projectMap.get(task.project_id) : null;
