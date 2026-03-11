@@ -41,7 +41,7 @@ export default function HQPage() {
   [tasks]);
 
   const activeProjects = useMemo(() =>
-    projects.filter(p => !p.deleted_at).slice(0, 6),
+    projects.slice(0, 6),
   [projects]);
 
   const handleMarkDone = useCallback((id: string) => {

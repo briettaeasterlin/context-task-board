@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
       return new Response(
         `<html><body style="font-family:system-ui;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column">
           <h2 style="color:#2a9d8f">✓ Google Calendar Connected!</h2>
-          <p>You can close this window and return to Vector.</p>
+          <p>You can close this window and return to VectorHQ.</p>
         </body></html>`,
         { headers: { "Content-Type": "text/html" } },
       );

@@ -122,8 +122,8 @@ export function BoardReviewPanel({ tasks, projects, onUpdate, onDelete, onClose 
         <Header onClose={onClose} />
         <Card className="p-12 text-center rounded-xl">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Analyzing {tasks.length} tasks across {projects.length} projects…</p>
-          <p className="text-xs text-muted-foreground mt-1">This takes ~10 seconds</p>
+          <p className="text-sm text-muted-foreground">VectorHQ AI is reviewing your board…</p>
+          <p className="text-xs text-muted-foreground mt-1">Analyzing {tasks.length} tasks across {projects.length} projects</p>
         </Card>
       </div>
     );

@@ -216,7 +216,7 @@ export function StatusReviewPanel({ tasks, projects, onUpdate, onDelete, onClose
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}><ArrowLeft className="h-4 w-4" /></Button>
           <Sparkles className="h-4 w-4 text-primary" />
-          <h2 className="font-mono text-sm font-semibold">Weekly Review</h2>
+          <h2 className="font-display text-sm font-semibold">VectorHQ AI Review</h2>
         </div>
         <div className="flex items-center gap-2">
           {['tasks', 'projects', 'focus'].map((s, i) => (
