@@ -15,7 +15,7 @@ import { AlertTriangle, CheckCircle2, TrendingUp, Plus, Zap, ChevronDown, Chevro
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, type ScoredTask } from '@/lib/task-scoring';
+import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, inferStrategicCategory, type ScoredTask } from '@/lib/task-scoring';
 import { STATUSES, type TaskStatus } from '@/types/task';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { useMilestones } from '@/hooks/useProjects';
@@ -50,13 +50,14 @@ export default function WorkloadPage() {
     return scoreTasks(active, tasks, ctx).slice(0, 5);
   }, [tasks, workload.calendarUtilization]);
 
-  // Pipeline tasks recommendation
+  // Pipeline tasks recommendation — only true sales/relationship pipeline tasks
   const pipelineTasks = useMemo(() => {
     const ctx = buildScoringContext(tasks, workload.calendarUtilization);
-    const pipeline = tasks.filter(t =>
-      t.status !== 'Done' &&
-      (t.area === 'Client' || /\b(follow.?up|prospect|nurture|lead|pipeline|outreach|relationship)\b/i.test(t.title + ' ' + (t.context ?? '')))
-    );
+    const pipeline = tasks.filter(t => {
+      if (t.status === 'Done') return false;
+      const cat = inferStrategicCategory(t);
+      return cat === 'pipeline_relationship';
+    });
     return scoreTasks(pipeline, tasks, ctx).slice(0, 3);
   }, [tasks, workload.calendarUtilization]);
 
