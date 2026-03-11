@@ -545,7 +545,7 @@ export default function PlanPage() {
       </div>
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
-        onUpdate={(id, u) => updateTask.mutate({ id, ...u })} onDelete={() => {}} projects={projects} milestones={milestones} />
+        onUpdate={(id, u) => updateTask.mutate({ id, ...u })} onDelete={(id) => { deleteTask.mutate(id, { onSuccess: () => { setDetailTask(null); toast.success('Task deleted'); } }); }} projects={projects} milestones={milestones} />
       <BulkAddModal open={bulkAddOpen} onClose={() => setBulkAddOpen(false)} onConfirm={handleBulkAdd} projects={projects} />
     </AppShell>
   );
