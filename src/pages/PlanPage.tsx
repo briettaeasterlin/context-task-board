@@ -98,7 +98,7 @@ export default function PlanPage() {
   // Workload & auto-schedule
   const workload = useWorkload(tasks, blocks);
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { suggestions: autoSuggestions } = useAutoSchedule(
+  const { weekSuggestions: autoSuggestions } = useAutoSchedule(
     tasks, blocks, events, todayStr, workload.calendarUtilization
   );
   const [autoScheduling, setAutoScheduling] = useState(false);
@@ -116,7 +116,7 @@ export default function PlanPage() {
         const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
         await createBlock.mutateAsync({
           task_id: suggestion.task.id,
-          date: todayStr,
+          date: suggestion.date,
           start_time: startTime,
           duration_minutes: suggestion.durationMinutes,
           source: 'auto',
@@ -124,13 +124,15 @@ export default function PlanPage() {
           notes: null,
         });
       }
-      toast.success(`Auto-scheduled ${autoSuggestions.length} tasks for today`);
+      const days = [...new Set(autoSuggestions.map(s => s.date))];
+      const dayLabels = days.map(d => format(new Date(d + 'T12:00:00'), 'EEE')).join(', ');
+      toast.success(`Auto-scheduled ${autoSuggestions.length} tasks across ${dayLabels}`);
     } catch (err: any) {
       toast.error(err.message || 'Auto-schedule failed');
     } finally {
       setAutoScheduling(false);
     }
-  }, [autoSuggestions, todayStr, createBlock]);
+  }, [autoSuggestions, createBlock]);
 
   // Check for gcal-connected redirect param
   useEffect(() => {
