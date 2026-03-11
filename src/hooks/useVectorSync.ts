@@ -56,7 +56,8 @@ export function useApiKeys() {
         .from('api_keys')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as ApiKey[];
     },

@@ -11,7 +11,7 @@ export function useProjects() {
     queryKey: ['projects', user?.id],
     queryFn: async (): Promise<Project[]> => {
       if (!user) return [];
-      const { data, error } = await supabase.from('projects').select('*').eq('user_id', user.id).is('deleted_at', null).order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('projects').select('*').eq('user_id', user.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(100);
       if (error) throw error;
       return (data ?? []) as unknown as Project[];
     },
