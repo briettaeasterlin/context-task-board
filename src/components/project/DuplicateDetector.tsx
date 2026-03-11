@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Merge, X, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Merge, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -186,7 +186,6 @@ export function DuplicateDetector() {
   const { tasks, updateTask } = useTasks();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [merging, setMerging] = useState<string | null>(null);
-  const [showManual, setShowManual] = useState(false);
 
   const candidates = useMemo(
     () => detectSimilarProjects(projects, tasks).filter(c => {
@@ -289,16 +288,11 @@ export function DuplicateDetector() {
         </div>
       )}
 
-      {/* Manual merge toggle */}
-      <Button variant="outline" size="sm" className="text-xs rounded-lg gap-1" onClick={() => setShowManual(!showManual)}>
-        <Merge className="h-3.5 w-3.5" />
-        Merge projects manually
-        {showManual ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-      </Button>
-      {showManual && <ManualMerge projects={projects} onMerge={mergeProjects} />}
+      {/* Manual merge — always visible */}
+      <ManualMerge projects={projects} onMerge={mergeProjects} />
 
-      {candidates.length === 0 && !showManual && (
-        <p className="text-xs text-muted-foreground">No duplicate projects detected. Use the merge button above to combine projects manually.</p>
+      {candidates.length === 0 && (
+        <p className="text-xs text-muted-foreground">No duplicate projects detected automatically. Use the merge tool above to combine projects with different names.</p>
       )}
     </div>
   );
