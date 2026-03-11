@@ -19,6 +19,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus, Copy, Check, Sparkles, CalendarDays } from 'lucide-react';
+import { BoardLimitBanner } from '@/components/task/BoardLimitBanner';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
