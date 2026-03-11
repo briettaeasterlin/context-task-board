@@ -497,7 +497,7 @@ export default function PlanPage() {
                 </div>
 
                 {/* Time grid */}
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1" ref={scrollAreaRef}>
                   <div className="flex relative">
                     <div className="w-12 flex-shrink-0">
                       {HOURS.map(hour => (
