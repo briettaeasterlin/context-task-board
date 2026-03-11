@@ -40,7 +40,7 @@ interface StaleItem {
   taskTitle: string;
   currentStatus: string;
   daysSinceUpdate: number;
-  suggestedAction: 'Someday' | 'Archive' | 'Keep';
+  suggestedAction: 'Backlog' | 'Archive' | 'Keep';
 }
 
 interface BoardHealth {
