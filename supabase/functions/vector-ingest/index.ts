@@ -91,7 +91,7 @@ async function authenticate(
       if (!keyRecord.allowed_ips.includes(clientIp)) {
         return new Response(
           JSON.stringify({ error: "IP not allowed" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 403, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
