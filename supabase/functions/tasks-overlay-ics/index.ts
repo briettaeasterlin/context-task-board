@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
 
       return [
         "BEGIN:VEVENT",
-        `UID:${block.id}@vector`,
+        `UID:${block.id}@vectorhq`,
         `DTSTART:${dtStart}`,
         `DTEND:${dtEnd}`,
         `SUMMARY:📋 ${escapeICS(title)}`,
@@ -107,10 +107,10 @@ Deno.serve(async (req) => {
     const ics = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Vector//Overlay//EN",
+      "PRODID:-//VectorHQ//Overlay//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
-      "X-WR-CALNAME:Vector Task Overlay",
+      "X-WR-CALNAME:VectorHQ Task Overlay",
       ...events,
       "END:VCALENDAR",
     ].join("\r\n");

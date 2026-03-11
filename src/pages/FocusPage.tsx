@@ -116,7 +116,7 @@ export default function FocusPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
   const handleMarkDone = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Marked done ✨') });
+    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Task complete. Momentum builds momentum.') });
   }, [updateTask]);
 
   const formatDueLabel = (dateStr: string) => {

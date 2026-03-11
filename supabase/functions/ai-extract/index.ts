@@ -97,7 +97,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are Vector, a conversation-first task reasoning system for a single user.
+            content: `You are VectorHQ AI, a conversation-first task reasoning system for a single user.
 
 TODAY: ${todayISO} (${todayDay}). Use this to resolve relative dates like "Friday", "next week", "Feb 15".
 CRITICAL DATE RULE: When resolving relative or partial dates (e.g. "Friday", "Feb 20"), ALWAYS pick the NEXT upcoming occurrence. Never assign a date in the past. If "Friday" is mentioned and today is Wednesday Feb 11 2026, the due date is Feb 13 2026, NOT a past Friday.

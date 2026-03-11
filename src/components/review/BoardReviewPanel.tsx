@@ -122,8 +122,8 @@ export function BoardReviewPanel({ tasks, projects, onUpdate, onDelete, onClose 
         <Header onClose={onClose} />
         <Card className="p-12 text-center rounded-xl">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Analyzing {tasks.length} tasks across {projects.length} projects…</p>
-          <p className="text-xs text-muted-foreground mt-1">This takes ~10 seconds</p>
+          <p className="text-sm text-muted-foreground">VectorHQ AI is reviewing your board…</p>
+          <p className="text-xs text-muted-foreground mt-1">Analyzing {tasks.length} tasks across {projects.length} projects</p>
         </Card>
       </div>
     );
@@ -340,7 +340,7 @@ function Header({ onClose, changeCount }: { onClose: () => void; changeCount?: n
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={onClose}><ArrowLeft className="h-4 w-4" /></Button>
         <Zap className="h-4 w-4 text-primary" />
-        <h2 className="font-sans text-sm font-semibold">Weekly Board Review</h2>
+        <h2 className="font-display text-sm font-semibold">HQ Review</h2>
       </div>
       {changeCount !== undefined && changeCount > 0 && (
         <Badge variant="secondary" className="text-xs">{changeCount} applied</Badge>
