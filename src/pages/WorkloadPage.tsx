@@ -9,11 +9,16 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, CheckCircle2, TrendingUp, Plus, Zap } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, CheckCircle2, TrendingUp, Plus, Zap, ChevronDown, ChevronUp, Send, Clock } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { scoreTasks, buildScoringContext, type ScoredTask } from '@/lib/task-scoring';
+import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, type ScoredTask } from '@/lib/task-scoring';
+import { STATUSES, type TaskStatus } from '@/types/task';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
+import { useMilestones } from '@/hooks/useProjects';
 
 export default function WorkloadPage() {
   const { tasks, createTask } = useTasks();
