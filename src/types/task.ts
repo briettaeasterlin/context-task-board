@@ -91,7 +91,7 @@ export interface ClarifyQuestion {
   updated_at: string;
 }
 
-export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'sort_order' | 'estimated_minutes' | 'context_tag'> & { sort_order?: number; estimated_minutes?: number | null; context_tag?: string | null };
+export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'sort_order' | 'estimated_minutes' | 'context_tag' | 'strategic_phase'> & { sort_order?: number; estimated_minutes?: number | null; context_tag?: string | null; strategic_phase?: StrategicPhase | null };
 export type TaskUpdate = Partial<Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
 
 export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', defaultStatus: TaskStatus = 'Backlog'): Omit<TaskInsert, 'user_id'> {
