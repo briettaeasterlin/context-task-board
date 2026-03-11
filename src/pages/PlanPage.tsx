@@ -160,7 +160,7 @@ export default function PlanPage() {
           notes: item.reason,
         });
       }
-      toast.success(`Execution plan scheduled: ${allPlanTasks.length} tasks`);
+      toast.success(`NextMove created today's plan: ${allPlanTasks.length} tasks`);
       setShowExecutionPlan(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to schedule execution plan');
