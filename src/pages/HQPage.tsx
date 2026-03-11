@@ -184,8 +184,8 @@ export default function HQPage() {
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
           ) : focusTasks.length === 0 ? (
             <Card className="p-8 text-center rounded-2xl shadow-card">
-              <p className="text-muted-foreground mb-2">No tasks in focus yet.</p>
-              <p className="text-sm text-muted-foreground">Add your first task and start building momentum.</p>
+              <p className="text-muted-foreground mb-2">No tasks yet.</p>
+              <p className="text-sm text-muted-foreground">Add your first project and NextMove will start organizing your work.</p>
             </Card>
           ) : (
             <div className="space-y-2">
