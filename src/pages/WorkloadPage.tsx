@@ -50,13 +50,14 @@ export default function WorkloadPage() {
     return scoreTasks(active, tasks, ctx).slice(0, 5);
   }, [tasks, workload.calendarUtilization]);
 
-  // Pipeline tasks recommendation
+  // Pipeline tasks recommendation — only true sales/relationship pipeline tasks
   const pipelineTasks = useMemo(() => {
     const ctx = buildScoringContext(tasks, workload.calendarUtilization);
-    const pipeline = tasks.filter(t =>
-      t.status !== 'Done' &&
-      (t.area === 'Client' || /\b(follow.?up|prospect|nurture|lead|pipeline|outreach|relationship)\b/i.test(t.title + ' ' + (t.context ?? '')))
-    );
+    const pipeline = tasks.filter(t => {
+      if (t.status === 'Done') return false;
+      const cat = inferStrategicCategory(t);
+      return cat === 'pipeline_relationship';
+    });
     return scoreTasks(pipeline, tasks, ctx).slice(0, 3);
   }, [tasks, workload.calendarUtilization]);
 
