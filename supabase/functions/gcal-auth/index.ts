@@ -9,6 +9,23 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 
+const ALLOWED_ORIGINS = [
+  "https://context-task-board.lovable.app",
+  "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+];
+
+function isValidReturnUrl(raw: string): string {
+  if (!raw) return "/";
+  // Allow relative paths
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  // Allow absolute URLs with approved origins
+  try {
+    const parsed = new URL(raw);
+    if (ALLOWED_ORIGINS.some((o) => parsed.origin === o)) return raw;
+  } catch { /* invalid URL */ }
+  return "/";
+}
+
 // HMAC-based state signing to prevent CSRF/state forgery
 async function signState(payload: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -80,10 +97,10 @@ Deno.serve(async (req) => {
       }
 
       // Get the return URL from the request body
-      let returnUrl = "";
+      let returnUrl = "/";
       try {
         const body = await req.json();
-        returnUrl = body.returnUrl || "";
+        returnUrl = isValidReturnUrl(body.returnUrl || "");
       } catch { /* no body */ }
 
       const userId = data.claims.sub;
@@ -137,11 +154,11 @@ Deno.serve(async (req) => {
       }
 
       let userId: string;
-      let returnUrl = "";
+      let returnUrl = "/";
       try {
         const parsed = JSON.parse(atob(statePayload));
         userId = parsed.userId;
-        returnUrl = parsed.returnUrl || "";
+        returnUrl = isValidReturnUrl(parsed.returnUrl || "");
       } catch {
         return new Response("Invalid state", { status: 400 });
       }
@@ -188,8 +205,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Redirect back to the app if returnUrl is provided
-      if (returnUrl) {
+      // Redirect back to the app
+      if (returnUrl && returnUrl !== "/") {
         return new Response(null, {
           status: 302,
           headers: { Location: returnUrl },
