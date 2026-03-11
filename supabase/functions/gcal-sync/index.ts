@@ -42,6 +42,7 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

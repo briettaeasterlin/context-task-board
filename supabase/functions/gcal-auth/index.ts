@@ -64,6 +64,7 @@ async function verifyState(payload: string, signature: string, secret: string): 
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
