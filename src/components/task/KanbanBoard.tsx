@@ -21,6 +21,7 @@ const columnConfig: Record<TaskStatus, { emoji: string; bg: string; headerBg: st
   Backlog: { emoji: '📋', bg: 'bg-muted/20', headerBg: 'bg-status-backlog/5' },
   Closing: { emoji: '🏁', bg: 'bg-status-closing/5', headerBg: 'bg-status-closing/8' },
   Done: { emoji: '✅', bg: 'bg-status-done/5', headerBg: 'bg-status-done/8' },
+  Someday: { emoji: '💭', bg: 'bg-muted/20', headerBg: 'bg-muted/10' },
 };
 
 export function KanbanBoard({ tasks, projects = [], selectedIds, onToggleSelect, onTaskClick, onStatusChange }: Props) {
