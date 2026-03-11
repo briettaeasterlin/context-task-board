@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
 
       return [
         "BEGIN:VEVENT",
-        `UID:${block.id}@vectorhq`,
+        `UID:${block.id}@nextmove`,
         `DTSTART:${dtStart}`,
         `DTEND:${dtEnd}`,
         `SUMMARY:📋 ${escapeICS(title)}`,
