@@ -74,6 +74,8 @@ export default function PlanPage() {
   const [search, setSearch] = useState('');
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<{ day: number; minutes: number } | null>(null);
+  const [resizing, setResizing] = useState<{ blockId: string; startY: number; startDuration: number } | null>(null);
+  const [resizeDelta, setResizeDelta] = useState(0);
 
   const weekStart = useMemo(() => {
     const now = new Date();
@@ -303,6 +305,32 @@ export default function PlanPage() {
     setDragOverSlot(null);
   }, [dragOverSlot, weekDays, updateBlock]);
 
+  const handleResizeStart = useCallback((e: React.MouseEvent, blockId: string, currentDuration: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setResizing({ blockId, startY: e.clientY, startDuration: currentDuration });
+    setResizeDelta(0);
+  }, []);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - resizing.startY;
+      // Convert pixel delta to minutes (HOUR_HEIGHT px = 60 min)
+      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15; // snap to 15min
+      setResizeDelta(deltaMinutes);
+    };
+    const handleMouseUp = () => {
+      const newDuration = Math.max(15, resizing.startDuration + resizeDelta);
+      updateBlock.mutate({ id: resizing.blockId, duration_minutes: newDuration });
+      setResizing(null);
+      setResizeDelta(0);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
+  }, [resizing, resizeDelta, updateBlock]);
+
   const getBlocksForDay = useCallback((dayStr: string) => blocks.filter(b => b.date === dayStr), [blocks]);
   const getEventsForDay = useCallback((day: Date) => {
     const dayStr = format(day, 'yyyy-MM-dd');
@@ -470,12 +498,15 @@ export default function PlanPage() {
                             const startMins = timeToMinutes(block.start_time);
                             const task = block.task_id ? taskMap.get(block.task_id) : null;
                             const project = task?.project_id ? projectMap.get(task.project_id) : null;
+                            const isResizingThis = resizing?.blockId === block.id;
+                            const displayDuration = isResizingThis ? Math.max(15, block.duration_minutes + resizeDelta) : block.duration_minutes;
                             return (
-                              <div key={block.id} draggable={!block.locked} onDragStart={e => handleBlockDragStart(e, block)}
-                                onClick={() => { if (task) setDetailTask(task); }}
+                              <div key={block.id} draggable={!block.locked && !resizing} onDragStart={e => handleBlockDragStart(e, block)}
+                                onClick={() => { if (task && !resizing) setDetailTask(task); }}
                                 className={cn("absolute left-0.5 right-0.5 rounded-lg border px-1.5 py-0.5 overflow-hidden z-20 cursor-pointer group",
-                                  "bg-primary/10 border-primary/30 hover:border-primary/60 transition-colors", block.locked && "opacity-80")}
-                                style={{ top: minutesToTop(startMins), height: Math.max(minutesToHeight(block.duration_minutes), 24) }}>
+                                  "bg-primary/10 border-primary/30 hover:border-primary/60 transition-colors", block.locked && "opacity-80",
+                                  isResizingThis && "ring-2 ring-primary/50")}
+                                style={{ top: minutesToTop(startMins), height: Math.max(minutesToHeight(displayDuration), 24) }}>
                                 <div className="flex items-start justify-between gap-0.5">
                                   <p className="text-[10px] font-medium truncate flex-1">{task?.title ?? 'Untitled'}</p>
                                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -488,9 +519,17 @@ export default function PlanPage() {
                                   </div>
                                 </div>
                                 {project && <p className="text-[9px] text-primary truncate">{project.name}</p>}
-                                <p className="text-[9px] text-muted-foreground">{block.duration_minutes}m</p>
+                                <p className="text-[9px] text-muted-foreground">{displayDuration}m</p>
                                 {block.notes && block.source === 'auto' && (
                                   <p className="text-[9px] text-muted-foreground/70 truncate italic">{block.notes}</p>
+                                )}
+                                {/* Resize handle */}
+                                {!block.locked && (
+                                  <div
+                                    onMouseDown={(e) => handleResizeStart(e, block.id, block.duration_minutes)}
+                                    className="absolute bottom-0 left-0 right-0 h-2 cursor-s-resize hover:bg-primary/20 transition-colors rounded-b-lg"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
                                 )}
                               </div>
                             );
