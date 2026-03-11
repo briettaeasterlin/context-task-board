@@ -53,8 +53,10 @@ export function inferStrategicCategory(task: Task): StrategicCategory {
 
   if (area === 'Client') return 'client_delivery';
   if (/\b(invoice|billing|payment|revenue|contract|proposal|quote|pricing)\b/.test(t)) return 'revenue_generation';
-  if (/\b(follow.?up|prospect|nurture|lead|pipeline|outreach|relationship|networking)\b/.test(t)) return 'pipeline_relationship';
-  if (/\b(deploy|infra|server|domain|auth|security|policy|setup|config|ci|cd)\b/.test(t)) return 'business_infrastructure';
+  // "pipeline" alone is ambiguous — only match sales/relationship pipeline patterns
+  if (/\b(follow.?up|prospect|nurture|lead|outreach|relationship|networking)\b/.test(t)) return 'pipeline_relationship';
+  // Exclude data/product pipeline from sales pipeline category
+  if (/\b(deploy|infra|server|domain|auth|security|policy|setup|config|ci|cd|pipeline|etl|data)\b/.test(t)) return 'business_infrastructure';
   if (area === 'Personal' || area === 'Home' || area === 'Family') return 'personal_admin';
   if (area === 'Business') return 'business_infrastructure';
   return 'personal_admin';
