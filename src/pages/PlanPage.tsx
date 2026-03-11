@@ -229,7 +229,7 @@ export default function PlanPage() {
     const eligible = tasks.filter(t => t.status === 'Next' && !scheduledTaskIds.has(t.id));
     // Sort by priority score descending
     const scored = scoreTasks(eligible, tasks);
-    return scored.map(s => s.task);
+    return scored as Task[];
   }, [tasks, scheduledTaskIds]);
 
   const filteredTasks = useMemo(() => {
