@@ -31,7 +31,12 @@ export default function HQPage() {
   const greeting = getGreeting();
 
   const focusTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Next').sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).slice(0, 6),
+    tasks.filter(t => t.status === 'Today' || t.status === 'Next').sort((a, b) => {
+      // Today first, then Next; within each, sort by sort_order
+      if (a.status === 'Today' && b.status !== 'Today') return -1;
+      if (b.status === 'Today' && a.status !== 'Today') return 1;
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    }).slice(0, 6),
   [tasks]);
 
   const recentlyDone = useMemo(() =>
@@ -54,6 +59,7 @@ export default function HQPage() {
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
 
   const stats = useMemo(() => ({
+    today: tasks.filter(t => t.status === 'Today').length,
     focus: tasks.filter(t => t.status === 'Next').length,
     waiting: tasks.filter(t => t.status === 'Waiting').length,
     backlog: tasks.filter(t => t.status === 'Backlog').length,
@@ -70,13 +76,14 @@ export default function HQPage() {
             {greeting.text}
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
-            {format(new Date(), 'EEEE, MMMM d')} · {stats.focus} tasks in focus
+            {format(new Date(), 'EEEE, MMMM d')} · {stats.today} today · {stats.focus} next
           </p>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
+            { label: 'Today', value: stats.today, color: 'text-status-today' },
             { label: 'In Focus', value: stats.focus, color: 'text-accent' },
             { label: 'Completed (7d)', value: stats.doneThisWeek, color: 'text-success' },
             { label: 'Waiting', value: stats.waiting, color: 'text-status-waiting' },

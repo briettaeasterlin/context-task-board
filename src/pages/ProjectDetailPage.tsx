@@ -245,7 +245,7 @@ export default function ProjectDetailPage() {
 
 function RecommendedOrder({ tasks, allTasks, onSelect, onMarkDone }: { tasks: Task[]; allTasks: Task[]; onSelect: (t: Task) => void; onMarkDone: (id: string) => void }) {
   const recommended = useMemo(() => {
-    const active = tasks.filter(t => t.status !== 'Done' && t.status !== 'Someday');
+    const active = tasks.filter(t => t.status !== 'Done');
     return scoreTasks(active, allTasks).slice(0, 7);
   }, [tasks, allTasks]);
 

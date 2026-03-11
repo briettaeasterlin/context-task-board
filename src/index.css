@@ -62,11 +62,12 @@
     --area-personal: 265 35% 58%;
 
     /* Status colors */
-    --status-backlog: 220 10% 62%;
+    --status-today: 350 70% 55%;
     --status-next: 217 100% 61%;
     --status-waiting: 38 65% 52%;
+    --status-backlog: 220 10% 62%;
+    --status-closing: 280 45% 55%;
     --status-done: 160 60% 52%;
-    --status-someday: 270 30% 60%;
 
     /* Shadows */
     --shadow-soft: 0 2px 12px -2px hsl(220 15% 50% / 0.06);

@@ -78,11 +78,12 @@ export default {
           personal: "hsl(var(--area-personal))",
         },
         status: {
-          backlog: "hsl(var(--status-backlog))",
+          today: "hsl(var(--status-today))",
           next: "hsl(var(--status-next))",
           waiting: "hsl(var(--status-waiting))",
+          backlog: "hsl(var(--status-backlog))",
+          closing: "hsl(var(--status-closing))",
           done: "hsl(var(--status-done))",
-          someday: "hsl(var(--status-someday))",
         },
       },
       borderRadius: {

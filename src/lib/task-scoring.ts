@@ -119,7 +119,7 @@ export function generateDailyPlan(
   availableMinutes: number,
   allTasks: Task[]
 ): ScoredTask[] {
-  const nextTasks = tasks.filter(t => t.status === 'Next');
+  const nextTasks = tasks.filter(t => t.status === 'Today' || t.status === 'Next');
   const scored = scoreTasks(nextTasks, allTasks);
   const plan: ScoredTask[] = [];
   let remaining = availableMinutes;
@@ -137,7 +137,7 @@ export function generateDailyPlan(
 // ─── Quick Wins ───
 
 export function getQuickWins(tasks: Task[], allTasks: Task[]): ScoredTask[] {
-  const activeTasks = tasks.filter(t => t.status === 'Next' || t.status === 'Backlog');
+  const activeTasks = tasks.filter(t => t.status === 'Today' || t.status === 'Next' || t.status === 'Backlog');
   const scored = scoreTasks(activeTasks, allTasks);
   return scored
     .filter(t => DURATION_MINUTES[t.estimatedDuration] <= 15)

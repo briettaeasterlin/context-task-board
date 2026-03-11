@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface SuggestedAction {
   label: string;
-  newStatus: 'Backlog' | 'Next' | 'Waiting' | 'Done' | 'Remove';
+  newStatus: 'Today' | 'Next' | 'Waiting' | 'Backlog' | 'Closing' | 'Done' | 'Remove';
   requiresInput?: boolean;
   inputLabel?: string;
 }

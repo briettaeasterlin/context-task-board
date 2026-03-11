@@ -623,7 +623,14 @@ export type Database = {
       completion_rule: "manual" | "tasks_based"
       habit_cadence: "Daily" | "Weekly" | "Often" | "Seasonal"
       task_area: "Client" | "Business" | "Home" | "Family" | "Personal"
-      task_status: "Backlog" | "Next" | "Waiting" | "Done" | "Someday"
+      task_status:
+        | "Today"
+        | "Backlog"
+        | "Next"
+        | "Waiting"
+        | "Closing"
+        | "Done"
+        | "Someday"
       update_source: "chatgpt" | "meeting" | "email" | "call" | "doc"
     }
     CompositeTypes: {
@@ -756,7 +763,15 @@ export const Constants = {
       completion_rule: ["manual", "tasks_based"],
       habit_cadence: ["Daily", "Weekly", "Often", "Seasonal"],
       task_area: ["Client", "Business", "Home", "Family", "Personal"],
-      task_status: ["Backlog", "Next", "Waiting", "Done", "Someday"],
+      task_status: [
+        "Today",
+        "Backlog",
+        "Next",
+        "Waiting",
+        "Closing",
+        "Done",
+        "Someday",
+      ],
       update_source: ["chatgpt", "meeting", "email", "call", "doc"],
     },
   },
