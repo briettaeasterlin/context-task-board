@@ -154,7 +154,7 @@ function jsonResponse(body: any, status = 200) {
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
-  if (req.method === "OPTIONS") {
+  _corsHeaders = corsHeaders;
     return new Response(null, { headers: corsHeaders });
   }
 
