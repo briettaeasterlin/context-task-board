@@ -79,7 +79,7 @@ export function ExecutionPlanPanel({ plan, onConfirm, onDismiss, isScheduling }:
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Wand2 className="h-4 w-4 text-primary" />
-          <h3 className="font-mono text-xs font-semibold">Today's Execution Plan</h3>
+          <h3 className="font-mono text-xs font-semibold">NextMove Plan</h3>
         </div>
         {plan.meetingLimited && (
           <Badge variant="outline" className="text-[9px] h-4 px-1 text-warning border-warning">
