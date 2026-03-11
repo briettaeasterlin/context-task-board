@@ -9,6 +9,23 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 
+const ALLOWED_ORIGINS = [
+  "https://context-task-board.lovable.app",
+  "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+];
+
+function isValidReturnUrl(raw: string): string {
+  if (!raw) return "/";
+  // Allow relative paths
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  // Allow absolute URLs with approved origins
+  try {
+    const parsed = new URL(raw);
+    if (ALLOWED_ORIGINS.some((o) => parsed.origin === o)) return raw;
+  } catch { /* invalid URL */ }
+  return "/";
+}
+
 // HMAC-based state signing to prevent CSRF/state forgery
 async function signState(payload: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
