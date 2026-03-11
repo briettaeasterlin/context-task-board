@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTasks } from '@/hooks/useTasks';
+import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/useProjects';
 import { useMilestones } from '@/hooks/useProjects';
 import { AppShell } from '@/components/layout/AppShell';
