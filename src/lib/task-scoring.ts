@@ -137,7 +137,7 @@ export function generateDailyPlan(
 // ─── Quick Wins ───
 
 export function getQuickWins(tasks: Task[], allTasks: Task[]): ScoredTask[] {
-  const activeTasks = tasks.filter(t => t.status === 'Next' || t.status === 'Backlog');
+  const activeTasks = tasks.filter(t => t.status === 'Today' || t.status === 'Next' || t.status === 'Backlog');
   const scored = scoreTasks(activeTasks, allTasks);
   return scored
     .filter(t => DURATION_MINUTES[t.estimatedDuration] <= 15)

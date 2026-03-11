@@ -92,7 +92,11 @@ export default function TodayPage() {
   }, [tasks]);
 
   const nextTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Next').sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    tasks.filter(t => t.status === 'Today' || t.status === 'Next').sort((a, b) => {
+      if (a.status === 'Today' && b.status !== 'Today') return -1;
+      if (b.status === 'Today' && a.status !== 'Today') return 1;
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    }),
   [tasks]);
 
   const upcomingDeadlines = useMemo(() => {

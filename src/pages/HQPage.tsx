@@ -81,7 +81,7 @@ export default function HQPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
             { label: 'Today', value: stats.today, color: 'text-status-today' },
             { label: 'In Focus', value: stats.focus, color: 'text-accent' },
