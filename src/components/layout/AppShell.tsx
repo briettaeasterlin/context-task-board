@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { path: '/projects', label: 'Projects', emoji: '📁' },
   { path: '/review', label: 'Review', emoji: '🔁' },
   { path: '/plan', label: 'Calendar', emoji: '🗓️' },
+  { path: '/workload', label: 'Workload', emoji: '📊' },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

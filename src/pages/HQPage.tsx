@@ -2,15 +2,18 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
+import { usePlannedBlocks } from '@/hooks/usePlanner';
+import { useWorkload } from '@/hooks/useWorkload';
+import { useProjectCompletion } from '@/hooks/useProjectCompletion';
 import type { Task, TaskUpdate } from '@/types/task';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight, Zap, Sparkles } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Zap, Sparkles, AlertTriangle, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, startOfWeek, endOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useMilestones } from '@/hooks/useProjects';
 
@@ -27,6 +30,13 @@ export default function HQPage() {
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+
+  const now = new Date();
+  const weekStartStr = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const weekEndStr = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const { blocks } = usePlannedBlocks(weekStartStr, weekEndStr);
+  const workload = useWorkload(tasks, blocks);
+  const nearingCompletion = useProjectCompletion(tasks, projects);
 
   const greeting = getGreeting();
 
@@ -96,7 +106,58 @@ export default function HQPage() {
           ))}
         </div>
 
-        {/* Quick Actions */}
+        {/* Capacity Warning */}
+        {workload.isOverCapacity && (
+          <Card className="p-4 rounded-2xl border-destructive/40 bg-destructive/5 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-destructive">Consulting/Admin capacity exceeded</p>
+              <p className="text-xs text-muted-foreground">
+                {Math.floor(workload.consultingAdminMinutes / 60)}h / {Math.floor(workload.consultingAdminCapMinutes / 60)}h used this week
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => navigate('/workload')}>
+              View details
+            </Button>
+          </Card>
+        )}
+
+        {/* Pipeline Alert */}
+        {workload.shouldBoostPipeline && !workload.isOverCapacity && (
+          <Card className="p-4 rounded-2xl border-accent/30 bg-accent/5 flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-accent shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Pipeline needs attention</p>
+              <p className="text-xs text-muted-foreground">
+                {workload.pipelineStaleDays >= 5
+                  ? `No pipeline task completed in ${workload.pipelineStaleDays} days`
+                  : 'Calendar utilization is low — schedule pipeline work'}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => navigate('/workload')}>
+              View workload
+            </Button>
+          </Card>
+        )}
+
+        {/* Nearing Completion */}
+        {nearingCompletion.length > 0 && (
+          <Card className="p-4 rounded-2xl border-success/20 bg-success/5">
+            <p className="text-sm font-semibold flex items-center gap-1.5 mb-2">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              {nearingCompletion.length} project{nearingCompletion.length > 1 ? 's' : ''} nearing completion
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {nearingCompletion.map(nc => (
+                <Badge key={nc.project.id} variant="outline" className="text-xs rounded-full cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/projects/${nc.project.id}`)}>
+                  {nc.project.name} ({nc.openTasks.length} left)
+                </Badge>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => navigate('/review')} className="rounded-xl font-display" size="sm">
             <Zap className="h-3.5 w-3.5 mr-1.5" /> Run HQ Review

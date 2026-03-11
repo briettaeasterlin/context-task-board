@@ -1,5 +1,5 @@
 import type { Task } from '@/types/task';
-import { differenceInHours } from 'date-fns';
+import { differenceInHours, differenceInDays } from 'date-fns';
 
 // ─── Duration Estimation ───
 
@@ -28,15 +28,150 @@ export const DURATION_MINUTES: Record<EstimatedDuration, number> = {
   '2h': 120,
 };
 
-const TIME_COST: Record<EstimatedDuration, number> = {
-  '5m': 0,
-  '15m': 1,
-  '30m': 2,
-  '1h': 3,
-  '2h': 4,
+// ─── Strategic Value Categories ───
+
+export type StrategicCategory =
+  | 'client_delivery'
+  | 'revenue_generation'
+  | 'pipeline_relationship'
+  | 'business_infrastructure'
+  | 'personal_admin'
+  | 'side_project';
+
+const STRATEGIC_VALUES: Record<StrategicCategory, number> = {
+  client_delivery: 35,
+  revenue_generation: 30,
+  pipeline_relationship: 25,
+  business_infrastructure: 15,
+  personal_admin: 10,
+  side_project: 5,
 };
 
-// ─── Impact Score ───
+export function inferStrategicCategory(task: Task): StrategicCategory {
+  const t = (task.title + ' ' + (task.context ?? '') + ' ' + (task.notes ?? '')).toLowerCase();
+  const area = task.area;
+
+  if (area === 'Client') return 'client_delivery';
+  if (/\b(invoice|billing|payment|revenue|contract|proposal|quote|pricing)\b/.test(t)) return 'revenue_generation';
+  if (/\b(follow.?up|prospect|nurture|lead|pipeline|outreach|relationship|networking)\b/.test(t)) return 'pipeline_relationship';
+  if (/\b(deploy|infra|server|domain|auth|security|policy|setup|config|ci|cd)\b/.test(t)) return 'business_infrastructure';
+  if (area === 'Personal' || area === 'Home' || area === 'Family') return 'personal_admin';
+  if (area === 'Business') return 'business_infrastructure';
+  return 'personal_admin';
+}
+
+// ─── Priority Score (v2) ───
+
+export interface ScoredTask extends Task {
+  estimatedDuration: EstimatedDuration;
+  estimatedMinutesCalc: number;
+  impactScore: number;
+  priorityScore: number;
+  strategicCategory: StrategicCategory;
+  deadlineWeight: number;
+  projectCompletionWeight: number;
+  strategicValue: number;
+  taskAgeScore: number;
+  effortFitBonus: number;
+  pipelineBoost: number;
+}
+
+export interface ScoringContext {
+  /** Fraction of weekly capacity used (0-1) */
+  calendarUtilization?: number;
+  /** Available minutes for effort-fit scoring */
+  availableMinutes?: number;
+  /** Project task counts: projectId -> { open, total } */
+  projectTaskCounts?: Map<string, { open: number; total: number }>;
+}
+
+export function scoreTask(task: Task, allTasks: Task[], ctx: ScoringContext = {}): ScoredTask {
+  const duration = task.estimated_minutes
+    ? closestDuration(task.estimated_minutes)
+    : estimateDuration(task.title);
+
+  const estimatedMins = task.estimated_minutes ?? DURATION_MINUTES[duration];
+  const strategicCategory = inferStrategicCategory(task);
+
+  // 1. Deadline Weight
+  let deadlineWeight = 0;
+  if (task.due_date) {
+    const hoursUntilDue = differenceInHours(new Date(task.due_date), new Date());
+    if (hoursUntilDue < 0) deadlineWeight = 100; // overdue
+    else if (hoursUntilDue <= 72) deadlineWeight = 60; // <3 days
+    else if (hoursUntilDue <= 168) deadlineWeight = 40; // <7 days
+  }
+
+  // 2. Project Completion Weight
+  let projectCompletionWeight = 0;
+  if (task.project_id && ctx.projectTaskCounts) {
+    const counts = ctx.projectTaskCounts.get(task.project_id);
+    if (counts && counts.open > 0 && counts.open <= 3) {
+      projectCompletionWeight = 40;
+    }
+  }
+
+  // 3. Strategic Value
+  const strategicValue = STRATEGIC_VALUES[strategicCategory];
+
+  // 4. Task Age (+1 per day since last activity)
+  const taskAgeScore = Math.min(
+    differenceInDays(new Date(), new Date(task.updated_at)),
+    30 // cap at 30
+  );
+
+  // 5. Effort Fit bonus
+  let effortFitBonus = 0;
+  if (ctx.availableMinutes != null) {
+    if (estimatedMins <= ctx.availableMinutes && estimatedMins >= ctx.availableMinutes * 0.5) {
+      effortFitBonus = 15; // perfect fit
+    } else if (estimatedMins <= ctx.availableMinutes) {
+      effortFitBonus = 5;
+    }
+  }
+
+  // 6. Pipeline Boost
+  let pipelineBoost = 0;
+  if (strategicCategory === 'pipeline_relationship' && ctx.calendarUtilization != null) {
+    if (ctx.calendarUtilization < 0.5) pipelineBoost = 30;
+    else if (ctx.calendarUtilization < 0.7) pipelineBoost = 20;
+  }
+
+  const impactScore = (task as any).impact_score ?? suggestImpactScore(task.title);
+
+  const priorityScore =
+    deadlineWeight +
+    projectCompletionWeight +
+    strategicValue +
+    taskAgeScore +
+    effortFitBonus +
+    pipelineBoost;
+
+  return {
+    ...task,
+    estimatedDuration: duration,
+    estimatedMinutesCalc: estimatedMins,
+    impactScore,
+    priorityScore,
+    strategicCategory,
+    deadlineWeight,
+    projectCompletionWeight,
+    strategicValue,
+    taskAgeScore,
+    effortFitBonus,
+    pipelineBoost,
+  };
+}
+
+function closestDuration(minutes: number): EstimatedDuration {
+  if (minutes <= 10) return '5m';
+  if (minutes <= 20) return '15m';
+  if (minutes <= 45) return '30m';
+  if (minutes <= 90) return '1h';
+  return '2h';
+}
+
+// ─── Impact Score (legacy, still used for display) ───
 
 const IMPACT_KEYWORDS: [RegExp, number][] = [
   [/\b(ship|launch|deploy|release)\b/i, 5],
@@ -50,66 +185,31 @@ export function suggestImpactScore(title: string): number {
   for (const [regex, score] of IMPACT_KEYWORDS) {
     if (regex.test(title)) return score;
   }
-  return 3; // default: useful progress
+  return 3;
 }
 
-// ─── Priority Score ───
+// ─── Batch Scoring ───
 
-export interface ScoredTask extends Task {
-  estimatedDuration: EstimatedDuration;
-  estimatedMinutesCalc: number;
-  impactScore: number;
-  priorityScore: number;
-}
-
-export function scoreTask(task: Task, allTasks: Task[]): ScoredTask {
-  const duration = task.estimated_minutes
-    ? closestDuration(task.estimated_minutes)
-    : estimateDuration(task.title);
-
-  // Impact: use manual override (stored in estimated_minutes field as impact_score hack)
-  // Actually we'll use a convention: if the task has a context_tag starting with "impact:", parse it
-  // Better: we added impact_score column
-  const impactScore = (task as any).impact_score ?? suggestImpactScore(task.title);
-
-  // Blocker bonus: +3 if this task is blocking other tasks
-  const blockerBonus = allTasks.some(t =>
-    t.blocked_by && t.id !== task.id &&
-    t.blocked_by.toLowerCase().includes(task.title.toLowerCase().slice(0, 20))
-  ) ? 3 : 0;
-
-  // Deadline urgency
-  let deadlineUrgency = 0;
-  if (task.due_date) {
-    const hoursUntilDue = differenceInHours(new Date(task.due_date), new Date());
-    if (hoursUntilDue <= 48) deadlineUrgency = 2;
-    else if (hoursUntilDue <= 168) deadlineUrgency = 1; // 7 days
+export function buildScoringContext(
+  allTasks: Task[],
+  calendarUtilization?: number,
+  availableMinutes?: number,
+): ScoringContext {
+  const projectTaskCounts = new Map<string, { open: number; total: number }>();
+  for (const t of allTasks) {
+    if (!t.project_id) continue;
+    const entry = projectTaskCounts.get(t.project_id) ?? { open: 0, total: 0 };
+    entry.total++;
+    if (t.status !== 'Done') entry.open++;
+    projectTaskCounts.set(t.project_id, entry);
   }
-
-  const timeCost = TIME_COST[duration];
-
-  const priorityScore = (impactScore * 2) + blockerBonus + deadlineUrgency - timeCost;
-
-  return {
-    ...task,
-    estimatedDuration: duration,
-    estimatedMinutesCalc: DURATION_MINUTES[duration],
-    impactScore,
-    priorityScore,
-  };
+  return { calendarUtilization, availableMinutes, projectTaskCounts };
 }
 
-function closestDuration(minutes: number): EstimatedDuration {
-  if (minutes <= 10) return '5m';
-  if (minutes <= 20) return '15m';
-  if (minutes <= 45) return '30m';
-  if (minutes <= 90) return '1h';
-  return '2h';
-}
-
-export function scoreTasks(tasks: Task[], allTasks?: Task[]): ScoredTask[] {
+export function scoreTasks(tasks: Task[], allTasks?: Task[], ctx?: ScoringContext): ScoredTask[] {
   const all = allTasks ?? tasks;
-  return tasks.map(t => scoreTask(t, all)).sort((a, b) => b.priorityScore - a.priorityScore);
+  const context = ctx ?? buildScoringContext(all);
+  return tasks.map(t => scoreTask(t, all, context)).sort((a, b) => b.priorityScore - a.priorityScore);
 }
 
 // ─── Daily Plan Generator ───
@@ -119,8 +219,9 @@ export function generateDailyPlan(
   availableMinutes: number,
   allTasks: Task[]
 ): ScoredTask[] {
+  const ctx = buildScoringContext(allTasks, undefined, availableMinutes);
   const nextTasks = tasks.filter(t => t.status === 'Today' || t.status === 'Next');
-  const scored = scoreTasks(nextTasks, allTasks);
+  const scored = scoreTasks(nextTasks, allTasks, ctx);
   const plan: ScoredTask[] = [];
   let remaining = availableMinutes;
 

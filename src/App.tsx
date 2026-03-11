@@ -15,6 +15,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
+import WorkloadPage from "./pages/WorkloadPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/archive" element={<ProtectedRoute><ArchivePage /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
             <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+            <Route path="/workload" element={<ProtectedRoute><WorkloadPage /></ProtectedRoute>} />
             {/* Legacy redirects */}
             <Route path="/dashboard" element={<Navigate to="/hq" replace />} />
             <Route path="/kanban" element={<Navigate to="/review" replace />} />
