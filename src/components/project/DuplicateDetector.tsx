@@ -186,7 +186,6 @@ export function DuplicateDetector() {
   const { tasks, updateTask } = useTasks();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [merging, setMerging] = useState<string | null>(null);
-  const [showManual, setShowManual] = useState(false);
 
   const candidates = useMemo(
     () => detectSimilarProjects(projects, tasks).filter(c => {
