@@ -49,7 +49,7 @@ const STATUS_MAP: Record<string, TaskStatus> = {
   next: 'Next',
   waiting: 'Waiting',
   backlog: 'Backlog',
-  someday: 'Someday',
+  someday: 'Backlog',
   today: 'Today',
 };
 
