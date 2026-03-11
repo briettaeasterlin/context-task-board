@@ -4,6 +4,8 @@ import { useTasks } from '@/hooks/useTasks';
 import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks/usePlanner';
+import { useAutoSchedule } from '@/hooks/useAutoSchedule';
+import { useWorkload } from '@/hooks/useWorkload';
 import type { Task, TaskArea, TaskStatus, TaskInsert } from '@/types/task';
 import type { PlannedBlock } from '@/hooks/usePlanner';
 import { QuickAdd } from '@/components/task/QuickAdd';
