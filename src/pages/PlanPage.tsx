@@ -268,6 +268,18 @@ export default function PlanPage() {
     updateClarifyQuestion.mutate({ id, status: 'dismissed' as any });
   }, [updateClarifyQuestion]);
 
+  // Overlap detection
+  const wouldOverlap = useCallback((dayStr: string, startMin: number, duration: number, excludeBlockId?: string) => {
+    const endMin = startMin + duration;
+    return blocks.some(b => {
+      if (b.date !== dayStr) return false;
+      if (excludeBlockId && b.id === excludeBlockId) return false;
+      const bStart = timeToMinutes(b.start_time);
+      const bEnd = bStart + b.duration_minutes;
+      return startMin < bEnd && endMin > bStart;
+    });
+  }, [blocks]);
+
   // Drag & drop
   const handleDragStart = useCallback((e: React.DragEvent, task: Task) => {
     setDraggingTask(task);
@@ -319,12 +331,18 @@ export default function PlanPage() {
     stopAutoScroll();
     if (!dragOverSlot || !draggingTask) return;
     const date = format(weekDays[dayIndex], 'yyyy-MM-dd');
+    const duration = draggingTask.estimated_minutes || 60;
+    if (wouldOverlap(date, dragOverSlot.minutes, duration)) {
+      toast.error('Cannot schedule here — overlaps another task');
+      setDraggingTask(null); setDragOverSlot(null);
+      return;
+    }
     createBlock.mutate({
       task_id: draggingTask.id, date, start_time: minutesToTime(dragOverSlot.minutes),
-      duration_minutes: draggingTask.estimated_minutes || 60, source: 'manual', locked: false, notes: null,
+      duration_minutes: duration, source: 'manual', locked: false, notes: null,
     }, { onSuccess: () => toast.success(`Scheduled "${draggingTask.title}"`) });
     setDraggingTask(null); setDragOverSlot(null);
-  }, [dragOverSlot, draggingTask, weekDays, createBlock, stopAutoScroll]);
+  }, [dragOverSlot, draggingTask, weekDays, createBlock, stopAutoScroll, wouldOverlap]);
 
   const handleBlockDragStart = useCallback((e: React.DragEvent, block: PlannedBlock) => {
     e.dataTransfer.setData('application/block-id', block.id);
@@ -335,9 +353,17 @@ export default function PlanPage() {
     if (!blockId || !dragOverSlot) return;
     e.preventDefault();
     stopAutoScroll();
-    updateBlock.mutate({ id: blockId, date: format(weekDays[dayIndex], 'yyyy-MM-dd'), start_time: minutesToTime(dragOverSlot.minutes) });
+    const date = format(weekDays[dayIndex], 'yyyy-MM-dd');
+    const block = blocks.find(b => b.id === blockId);
+    const duration = block?.duration_minutes ?? 60;
+    if (wouldOverlap(date, dragOverSlot.minutes, duration, blockId)) {
+      toast.error('Cannot move here — overlaps another task');
+      setDragOverSlot(null);
+      return;
+    }
+    updateBlock.mutate({ id: blockId, date, start_time: minutesToTime(dragOverSlot.minutes) });
     setDragOverSlot(null);
-  }, [dragOverSlot, weekDays, updateBlock, stopAutoScroll]);
+  }, [dragOverSlot, weekDays, updateBlock, stopAutoScroll, wouldOverlap, blocks]);
 
   const handleResizeStart = useCallback((e: React.MouseEvent, blockId: string, currentDuration: number) => {
     e.stopPropagation();
@@ -350,12 +376,21 @@ export default function PlanPage() {
     if (!resizing) return;
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - resizing.startY;
-      // Convert pixel delta to minutes (HOUR_HEIGHT px = 60 min)
-      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15; // snap to 15min
+      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15;
       setResizeDelta(deltaMinutes);
     };
     const handleMouseUp = () => {
       const newDuration = Math.max(15, resizing.startDuration + resizeDelta);
+      const block = blocks.find(b => b.id === resizing.blockId);
+      if (block) {
+        const startMin = timeToMinutes(block.start_time);
+        if (wouldOverlap(block.date, startMin, newDuration, block.id)) {
+          toast.error('Cannot resize — would overlap another task');
+          setResizing(null);
+          setResizeDelta(0);
+          return;
+        }
+      }
       updateBlock.mutate({ id: resizing.blockId, duration_minutes: newDuration });
       setResizing(null);
       setResizeDelta(0);
@@ -363,7 +398,8 @@ export default function PlanPage() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [resizing, resizeDelta, updateBlock]);
+  }, [resizing, resizeDelta, updateBlock, blocks, wouldOverlap]);
+
 
   const getBlocksForDay = useCallback((dayStr: string) => blocks.filter(b => b.date === dayStr), [blocks]);
   const getEventsForDay = useCallback((day: Date) => {
@@ -568,10 +604,16 @@ export default function PlanPage() {
                               </div>
                             );
                           })}
-                          {dragOverSlot?.day === dayIndex && draggingTask && (
-                            <div className="absolute left-0.5 right-0.5 rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 z-30 pointer-events-none"
-                              style={{ top: minutesToTop(dragOverSlot.minutes), height: minutesToHeight(draggingTask.estimated_minutes || 60) }} />
-                          )}
+                          {dragOverSlot?.day === dayIndex && draggingTask && (() => {
+                            const dayStr = format(weekDays[dayIndex], 'yyyy-MM-dd');
+                            const duration = draggingTask.estimated_minutes || 60;
+                            const overlaps = wouldOverlap(dayStr, dragOverSlot.minutes, duration);
+                            return (
+                              <div className={cn("absolute left-0.5 right-0.5 rounded-lg border-2 border-dashed z-30 pointer-events-none",
+                                overlaps ? "border-destructive/60 bg-destructive/10" : "border-primary/50 bg-primary/5")}
+                                style={{ top: minutesToTop(dragOverSlot.minutes), height: minutesToHeight(duration) }} />
+                            );
+                          })()}
                         </div>
                       );
                     })}
