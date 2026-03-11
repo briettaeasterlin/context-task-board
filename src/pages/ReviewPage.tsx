@@ -18,7 +18,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Copy, Check, Plus, Zap } from 'lucide-react';
+import { Sparkles, Copy, Check, Plus, Zap, Upload } from 'lucide-react';
+import { AIImportPanel } from '@/components/import/AIImportPanel';
 import { toast } from 'sonner';
 import { differenceInDays, format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -193,6 +194,7 @@ export default function ReviewPage() {
             <TabsTrigger value="stuck" className="text-sm rounded-lg">🚧 What's Stuck</TabsTrigger>
             <TabsTrigger value="projects" className="text-sm rounded-lg">📁 Projects</TabsTrigger>
             <TabsTrigger value="kanban" className="text-sm rounded-lg">🗂️ Kanban</TabsTrigger>
+            <TabsTrigger value="import" className="text-sm rounded-lg"><Upload className="h-3.5 w-3.5 mr-1" /> Import</TabsTrigger>
             <TabsTrigger value="vector" className="text-sm rounded-lg">📡 NextMove Sync</TabsTrigger>
           </TabsList>
 
@@ -337,6 +339,17 @@ export default function ReviewPage() {
                 onToggleSelect={toggleSelect} onTaskClick={setDetailTask}
                 onStatusChange={(id, status) => handleUpdate(id, { status })} />
             </div>
+          </TabsContent>
+
+          {/* Import */}
+          <TabsContent value="import">
+            <Card className="p-6 rounded-xl shadow-card">
+              <AIImportPanel
+                compact
+                source="review-import"
+                onImportComplete={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}
+              />
+            </Card>
           </TabsContent>
 
           {/* Vector Sync */}

@@ -1,198 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTasks } from '@/hooks/useTasks';
-import { useProjects } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Copy, Check, AlertCircle, Inbox, Brain, RefreshCw, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { ArrowRight, ArrowLeft, Inbox, Brain, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TaskArea, TaskStatus } from '@/types/task';
+import { AIImportPanel } from '@/components/import/AIImportPanel';
 
-const AI_PROMPT = `I need help organizing everything I'm currently working on.
-
-Please ask me about my active projects, responsibilities, and priorities. Then output the results in this exact JSON format:
-
-{
-  "projects": [
-    {
-      "name": "Project Name",
-      "area": "Work|Personal|Business|Home|Family",
-      "summary": "One sentence description"
-    }
-  ],
-  "tasks": [
-    {
-      "title": "Task title",
-      "project": "Project Name",
-      "status": "Next|Waiting|Backlog",
-      "context": "Any helpful detail",
-      "blocked_by": "Person name if waiting on someone, otherwise omit"
-    }
-  ]
-}
-
-Ask me questions one area at a time. Start with work, then personal, then anything else I mention. When we are done, output the final JSON.`;
-
-const AREA_MAP: Record<string, TaskArea> = {
-  work: 'Client',
-  client: 'Client',
-  business: 'Business',
-  personal: 'Personal',
-  home: 'Home',
-  family: 'Family',
-};
-
-const STATUS_MAP: Record<string, TaskStatus> = {
-  next: 'Next',
-  waiting: 'Waiting',
-  backlog: 'Backlog',
-  someday: 'Someday',
-  today: 'Today',
-};
-
-interface ParsedProject {
-  name: string;
-  area: TaskArea;
-  summary: string | null;
-}
-
-interface ParsedTask {
-  title: string;
-  project: string | null;
-  status: TaskStatus;
-  context: string | null;
-  blocked_by: string | null;
-}
-
-interface ParseResult {
-  projects: ParsedProject[];
-  tasks: ParsedTask[];
-}
-
-function parseImportJSON(raw: string): ParseResult {
-  // Try to extract JSON from markdown code blocks
-  let jsonStr = raw.trim();
-  const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (codeBlockMatch) jsonStr = codeBlockMatch[1].trim();
-
-  const parsed = JSON.parse(jsonStr);
-
-  const projects: ParsedProject[] = (parsed.projects ?? []).map((p: any) => ({
-    name: String(p.name ?? '').trim(),
-    area: AREA_MAP[(String(p.area ?? 'personal')).toLowerCase()] ?? 'Personal',
-    summary: p.summary ? String(p.summary).trim() : null,
-  })).filter((p: ParsedProject) => p.name.length > 0);
-
-  const tasks: ParsedTask[] = (parsed.tasks ?? []).map((t: any) => ({
-    title: String(t.title ?? '').trim(),
-    project: t.project ? String(t.project).trim() : null,
-    status: STATUS_MAP[(String(t.status ?? 'backlog')).toLowerCase()] ?? 'Backlog',
-    context: t.context ? String(t.context).trim() : null,
-    blocked_by: t.blocked_by ? String(t.blocked_by).trim() : null,
-  })).filter((t: ParsedTask) => t.title.length > 0);
-
-  return { projects, tasks };
-}
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { createProject } = useProjects();
-  const { createManyTasks } = useTasks();
-
   const [step, setStep] = useState(1);
-  const [jsonInput, setJsonInput] = useState('');
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [parseError, setParseError] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [importing, setImporting] = useState(false);
-
-  const handleCopyPrompt = useCallback(() => {
-    navigator.clipboard.writeText(AI_PROMPT);
-    setCopied(true);
-    toast.success('Prompt copied!');
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
-
-  const handleJsonChange = useCallback((value: string) => {
-    setJsonInput(value);
-    setParseError('');
-    setParseResult(null);
-
-    if (!value.trim()) return;
-
-    try {
-      const result = parseImportJSON(value);
-      if (result.projects.length === 0 && result.tasks.length === 0) {
-        setParseError('No projects or tasks found in the JSON. Make sure the output includes "projects" and "tasks" arrays.');
-        return;
-      }
-      setParseResult(result);
-    } catch {
-      setParseError("This doesn't look like valid JSON. Make sure you copied the full output from your AI tool.");
-    }
-  }, []);
-
-  const handleImport = useCallback(async () => {
-    if (!parseResult) return;
-    setImporting(true);
-
-    try {
-      // Create projects first, collect name→id map
-      const projectIdMap = new Map<string, string>();
-
-      // Collect all referenced project names from tasks that aren't in the projects array
-      const explicitNames = new Set(parseResult.projects.map(p => p.name.toLowerCase()));
-      const implicitProjects: ParsedProject[] = [];
-      for (const t of parseResult.tasks) {
-        if (t.project && !explicitNames.has(t.project.toLowerCase())) {
-          explicitNames.add(t.project.toLowerCase());
-          implicitProjects.push({ name: t.project, area: 'Personal', summary: null });
-        }
-      }
-
-      const allProjects = [...parseResult.projects, ...implicitProjects];
-
-      for (const proj of allProjects) {
-        const created = await createProject.mutateAsync({
-          name: proj.name,
-          area: proj.area,
-          summary: proj.summary,
-          scope_notes: null,
-        });
-        projectIdMap.set(proj.name.toLowerCase(), created.id);
-      }
-
-      // Create tasks
-      if (parseResult.tasks.length > 0) {
-        const taskInserts = parseResult.tasks.map(t => ({
-          title: t.title,
-          area: (t.project ? allProjects.find(p => p.name.toLowerCase() === t.project?.toLowerCase())?.area : undefined) ?? 'Personal' as TaskArea,
-          status: t.status,
-          context: t.context,
-          notes: null,
-          tags: [] as string[],
-          project_id: t.project ? projectIdMap.get(t.project.toLowerCase()) ?? null : null,
-          milestone_id: null,
-          blocked_by: t.blocked_by,
-          source: 'onboarding' as string,
-          due_date: null,
-          target_window: null,
-        }));
-
-        await createManyTasks.mutateAsync(taskInserts);
-      }
-
-      toast.success(`Imported ${allProjects.length} projects and ${parseResult.tasks.length} tasks`);
-      setStep(2);
-    } catch (err: any) {
-      toast.error(err.message || 'Import failed');
-    } finally {
-      setImporting(false);
-    }
-  }, [parseResult, createProject, createManyTasks]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -217,72 +35,16 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            {/* Copyable prompt */}
-            <Card className="p-4 rounded-2xl shadow-card bg-muted/30 relative">
-              <pre className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed font-mono max-h-48 overflow-y-auto">
-                {AI_PROMPT}
-              </pre>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-3 right-3 h-7 text-[10px] gap-1 rounded-lg"
-                onClick={handleCopyPrompt}
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                {copied ? 'Copied' : 'Copy Prompt'}
-              </Button>
-            </Card>
+            <AIImportPanel source="onboarding" onImportComplete={() => setStep(2)} compact />
 
-            {/* JSON paste area */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Paste the JSON result here</label>
-              <Textarea
-                placeholder='{"projects": [...], "tasks": [...]}'
-                value={jsonInput}
-                onChange={e => handleJsonChange(e.target.value)}
-                rows={8}
-                className="rounded-xl font-mono text-xs"
-              />
-
-              {parseError && (
-                <div className="flex items-start gap-2 text-sm text-destructive p-3 rounded-xl bg-destructive/5">
-                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{parseError}</span>
-                </div>
-              )}
-
-              {parseResult && (
-                <Card className="p-4 rounded-xl bg-primary/5 border-primary/20 space-y-2">
-                  <p className="text-sm font-medium flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-primary" />
-                    Found {parseResult.projects.length} project{parseResult.projects.length !== 1 ? 's' : ''} and {parseResult.tasks.length} task{parseResult.tasks.length !== 1 ? 's' : ''}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {parseResult.projects.map(p => (
-                      <Badge key={p.name} variant="outline" className="text-[10px] rounded-full">{p.name}</Badge>
-                    ))}
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground"
-                onClick={() => setStep(2)}
-              >
-                Skip — I'll add things manually
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={!parseResult || importing}
-                className="flex-1 rounded-xl font-display"
-              >
-                {importing ? 'Importing...' : 'Continue'} <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => setStep(2)}
+            >
+              Skip — I'll add things manually
+            </Button>
           </div>
         )}
 
