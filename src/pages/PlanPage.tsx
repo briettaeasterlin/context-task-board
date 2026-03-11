@@ -100,10 +100,11 @@ export default function PlanPage() {
   // Workload & auto-schedule
   const workload = useWorkload(tasks, blocks);
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { weekSuggestions: autoSuggestions } = useAutoSchedule(
+  const { weekSuggestions: autoSuggestions, executionPlan } = useAutoSchedule(
     tasks, blocks, events, todayStr, workload.calendarUtilization
   );
   const [autoScheduling, setAutoScheduling] = useState(false);
+  const [showExecutionPlan, setShowExecutionPlan] = useState(true);
 
   const handleAutoSchedule = useCallback(async () => {
     if (autoSuggestions.length === 0) {
@@ -135,6 +136,38 @@ export default function PlanPage() {
       setAutoScheduling(false);
     }
   }, [autoSuggestions, createBlock]);
+
+  const handleExecutionPlanConfirm = useCallback(async () => {
+    if (!executionPlan) return;
+    setAutoScheduling(true);
+    try {
+      const allPlanTasks: ExecutionPlanTask[] = [
+        ...(executionPlan.warmupTask ? [executionPlan.warmupTask] : []),
+        ...(executionPlan.frogTask ? [executionPlan.frogTask] : []),
+        ...executionPlan.supportingTasks,
+      ];
+      for (const item of allPlanTasks) {
+        const startH = Math.floor(item.startMinutes / 60);
+        const startM = item.startMinutes % 60;
+        const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
+        await createBlock.mutateAsync({
+          task_id: item.task.id,
+          date: item.date,
+          start_time: startTime,
+          duration_minutes: item.durationMinutes,
+          source: 'auto',
+          locked: false,
+          notes: item.reason,
+        });
+      }
+      toast.success(`Execution plan scheduled: ${allPlanTasks.length} tasks`);
+      setShowExecutionPlan(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to schedule execution plan');
+    } finally {
+      setAutoScheduling(false);
+    }
+  }, [executionPlan, createBlock]);
 
   // Check for gcal-connected redirect param
   useEffect(() => {
