@@ -81,7 +81,7 @@ async function authenticate(
     if (!keyRecord.permissions.includes("vector:ingest")) {
       return new Response(
         JSON.stringify({ error: "Insufficient permissions" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
