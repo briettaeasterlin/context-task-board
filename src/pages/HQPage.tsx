@@ -54,6 +54,7 @@ export default function HQPage() {
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
 
   const stats = useMemo(() => ({
+    today: tasks.filter(t => t.status === 'Today').length,
     focus: tasks.filter(t => t.status === 'Next').length,
     waiting: tasks.filter(t => t.status === 'Waiting').length,
     backlog: tasks.filter(t => t.status === 'Backlog').length,
