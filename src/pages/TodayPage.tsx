@@ -235,7 +235,7 @@ export default function TodayPage() {
         {/* Next Tasks - Focus */}
         <section>
           <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-            <span>🎯</span> Focus
+            <span>🎯</span> Today's Moves
           </h2>
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
