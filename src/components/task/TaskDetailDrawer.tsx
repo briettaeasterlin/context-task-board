@@ -46,6 +46,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         target_window: task.target_window ?? '',
         impact_score: (task as any).impact_score?.toString() ?? '',
         estimated_minutes: task.estimated_minutes?.toString() ?? '',
+        strategic_phase: (task as any).strategic_phase ?? '',
       });
     }
   }, [task]);
