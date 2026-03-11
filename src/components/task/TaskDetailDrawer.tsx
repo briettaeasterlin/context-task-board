@@ -72,6 +72,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       due_date: form.due_date || null,
       target_window: form.target_window || null,
       estimated_minutes: estMins,
+      strategic_phase: form.strategic_phase || null,
       ...(impactVal !== null ? { impact_score: impactVal } : {}),
     } as any);
     onClose();
