@@ -334,9 +334,10 @@ export default function PlanPage() {
     const blockId = e.dataTransfer.getData('application/block-id');
     if (!blockId || !dragOverSlot) return;
     e.preventDefault();
+    stopAutoScroll();
     updateBlock.mutate({ id: blockId, date: format(weekDays[dayIndex], 'yyyy-MM-dd'), start_time: minutesToTime(dragOverSlot.minutes) });
     setDragOverSlot(null);
-  }, [dragOverSlot, weekDays, updateBlock]);
+  }, [dragOverSlot, weekDays, updateBlock, stopAutoScroll]);
 
   const handleResizeStart = useCallback((e: React.MouseEvent, blockId: string, currentDuration: number) => {
     e.stopPropagation();
