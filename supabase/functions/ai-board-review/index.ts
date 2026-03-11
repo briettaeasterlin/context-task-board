@@ -1,9 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const RATE_LIMIT_PER_MINUTE = 20;
+const FUNCTION_NAME = 'ai-board-review';
+
+async function checkRateLimit(adminClient: any, userId: string): Promise<boolean> {
+  const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+  const { count } = await adminClient
+    .from('user_rate_limit_log')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('function_name', FUNCTION_NAME)
+    .gte('requested_at', oneMinuteAgo);
+  if ((count ?? 0) >= RATE_LIMIT_PER_MINUTE) return false;
+  await adminClient.from('user_rate_limit_log').insert({ user_id: userId, function_name: FUNCTION_NAME });
+  return true;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -16,7 +33,6 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -27,6 +43,17 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // --- Rate limit check ---
+    const adminClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const allowed = await checkRateLimit(adminClient, user.id);
+    if (!allowed) {
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded. Please try again in a moment.',
+        retry_after_seconds: 60,
+        limit: `${RATE_LIMIT_PER_MINUTE} requests per minute`,
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const { tasks, projects } = await req.json();
