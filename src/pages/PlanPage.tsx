@@ -337,18 +337,26 @@ export default function PlanPage() {
                 <Input placeholder="Filter..." value={search} onChange={e => setSearch(e.target.value)} className="mb-2 h-7 text-xs rounded-lg" />
                 <ScrollArea className="flex-1">
                   <div className="space-y-1.5 pr-2">
-                    {filteredTasks.map(task => (
+                    {filteredTasks.map((task, index) => (
                       <Card key={task.id} draggable onDragStart={e => handleDragStart(e, task)}
-                        className="p-2 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors rounded-xl shadow-card">
+                        className="p-2 cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors rounded-xl shadow-card group relative">
                         <div className="flex items-start gap-1.5">
                           <GripVertical className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setDetailTask(task)}>
                             <p className="text-xs font-medium truncate">{task.title}</p>
                             <div className="flex items-center gap-1 mt-0.5">
+                              <Badge variant="outline" className="text-[9px] h-4 px-1 rounded-full font-mono">#{index + 1}</Badge>
                               {task.project_id && <span className="text-[10px] text-primary truncate">{projectMap.get(task.project_id)?.name}</span>}
                               {task.estimated_minutes && <Badge variant="outline" className="text-[9px] h-4 px-1 rounded-full"><Clock className="h-2.5 w-2.5 mr-0.5" />{task.estimated_minutes}m</Badge>}
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteTask.mutate(task.id, { onSuccess: () => toast.success('Task deleted') }); }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex-shrink-0"
+                            title="Delete task"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                       </Card>
                     ))}
