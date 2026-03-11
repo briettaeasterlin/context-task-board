@@ -57,6 +57,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
 
   const save = () => {
     const impactVal = form.impact_score ? parseInt(form.impact_score, 10) : null;
+    const estMins = form.estimated_minutes ? parseInt(form.estimated_minutes, 10) : null;
     onUpdate(task.id, {
       title: form.title,
       context: form.context || null,
@@ -68,6 +69,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       milestone_id: form.milestone_id || null,
       due_date: form.due_date || null,
       target_window: form.target_window || null,
+      estimated_minutes: estMins,
       ...(impactVal !== null ? { impact_score: impactVal } : {}),
     } as any);
     onClose();
