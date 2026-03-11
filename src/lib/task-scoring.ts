@@ -119,7 +119,7 @@ export function generateDailyPlan(
   availableMinutes: number,
   allTasks: Task[]
 ): ScoredTask[] {
-  const nextTasks = tasks.filter(t => t.status === 'Next');
+  const nextTasks = tasks.filter(t => t.status === 'Today' || t.status === 'Next');
   const scored = scoreTasks(nextTasks, allTasks);
   const plan: ScoredTask[] = [];
   let remaining = availableMinutes;
