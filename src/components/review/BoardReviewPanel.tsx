@@ -340,7 +340,7 @@ function Header({ onClose, changeCount }: { onClose: () => void; changeCount?: n
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={onClose}><ArrowLeft className="h-4 w-4" /></Button>
         <Zap className="h-4 w-4 text-primary" />
-        <h2 className="font-sans text-sm font-semibold">Weekly Board Review</h2>
+        <h2 className="font-display text-sm font-semibold">HQ Review</h2>
       </div>
       {changeCount !== undefined && changeCount > 0 && (
         <Badge variant="secondary" className="text-xs">{changeCount} applied</Badge>
