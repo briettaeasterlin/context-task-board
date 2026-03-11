@@ -69,6 +69,12 @@
     --status-closing: 280 45% 55%;
     --status-done: 160 60% 52%;
 
+    /* Work category colors */
+    --cat-pipeline: 217 100% 61%;
+    --cat-client: 222 42% 29%;
+    --cat-business: 38 55% 52%;
+    --cat-personal: 265 35% 58%;
+
     /* Shadows */
     --shadow-soft: 0 2px 12px -2px hsl(220 15% 50% / 0.06);
     --shadow-card: 0 1px 3px 0 hsl(220 15% 50% / 0.04), 0 4px 16px -4px hsl(220 15% 50% / 0.08);
