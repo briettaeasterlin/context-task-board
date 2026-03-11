@@ -78,6 +78,7 @@ export default function HQPage() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
+            { label: 'Today', value: stats.today, color: 'text-status-today' },
             { label: 'In Focus', value: stats.focus, color: 'text-accent' },
             { label: 'Completed (7d)', value: stats.doneThisWeek, color: 'text-success' },
             { label: 'Waiting', value: stats.waiting, color: 'text-status-waiting' },
