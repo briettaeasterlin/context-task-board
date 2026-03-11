@@ -27,6 +27,7 @@ export function useHabits() {
       const { data, error } = await supabase
         .from('habit_intentions')
         .select('*')
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
       return data as HabitIntention[];
