@@ -14,7 +14,7 @@ export interface VectorPayload {
   tasks_created?: Array<{
     title: string;
     project: string;
-    status: 'Backlog' | 'Next' | 'Waiting' | 'Done' | 'Someday';
+    status: 'Today' | 'Next' | 'Waiting' | 'Backlog' | 'Closing' | 'Done';
     area?: 'Client' | 'Business' | 'Home' | 'Family' | 'Personal';
     context?: string;
     notes?: string;

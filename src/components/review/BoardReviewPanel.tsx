@@ -271,10 +271,10 @@ export function BoardReviewPanel({ tasks, projects, onUpdate, onDelete, onClose 
               {!applied.has(`stale-${item.taskId}`) && (
                 <div className="flex gap-1.5 shrink-0">
                   <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => {
-                    onUpdate(item.taskId, { status: 'Someday' });
+                    onUpdate(item.taskId, { status: 'Backlog' });
                     markApplied(`stale-${item.taskId}`);
-                    toast.success(`${item.taskTitle} → Someday`);
-                  }}>→ Someday</Button>
+                    toast.success(`${item.taskTitle} → Backlog`);
+                  }}>→ Backlog</Button>
                   <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => {
                     onDelete(item.taskId);
                     markApplied(`stale-${item.taskId}`);
