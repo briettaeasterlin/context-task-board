@@ -143,6 +143,10 @@ export function autoSchedule(
       const availableDuration = slot.durationMinutes - consumed;
 
       if (taskDuration <= availableDuration) {
+        // Enforce work cutoff: work tasks can't start or run past 4:30 PM
+        if (isWorkTask(task) && (availableStart + taskDuration) > workCutoffMinutes) {
+          continue;
+        }
         suggestions.push({
           task,
           startMinutes: availableStart,
