@@ -376,12 +376,21 @@ export default function PlanPage() {
     if (!resizing) return;
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - resizing.startY;
-      // Convert pixel delta to minutes (HOUR_HEIGHT px = 60 min)
-      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15; // snap to 15min
+      const deltaMinutes = Math.round((deltaY / HOUR_HEIGHT) * 60 / 15) * 15;
       setResizeDelta(deltaMinutes);
     };
     const handleMouseUp = () => {
       const newDuration = Math.max(15, resizing.startDuration + resizeDelta);
+      const block = blocks.find(b => b.id === resizing.blockId);
+      if (block) {
+        const startMin = timeToMinutes(block.start_time);
+        if (wouldOverlap(block.date, startMin, newDuration, block.id)) {
+          toast.error('Cannot resize — would overlap another task');
+          setResizing(null);
+          setResizeDelta(0);
+          return;
+        }
+      }
       updateBlock.mutate({ id: resizing.blockId, duration_minutes: newDuration });
       setResizing(null);
       setResizeDelta(0);
@@ -389,7 +398,7 @@ export default function PlanPage() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [resizing, resizeDelta, updateBlock]);
+  }, [resizing, resizeDelta, updateBlock, blocks, wouldOverlap]);
 
 
   const getBlocksForDay = useCallback((dayStr: string) => blocks.filter(b => b.date === dayStr), [blocks]);
