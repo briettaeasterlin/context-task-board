@@ -74,7 +74,7 @@ async function authenticate(
     if (keyRecord.expires_at && new Date(keyRecord.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ error: "API key expired" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
