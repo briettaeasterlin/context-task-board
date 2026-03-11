@@ -29,7 +29,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground font-sans text-sm">Loading...</div>;
-  if (user) return <Navigate to="/hq" replace />;
+  if (user) return <Navigate to="/today" replace />;
   return <>{children}</>;
 }
 
