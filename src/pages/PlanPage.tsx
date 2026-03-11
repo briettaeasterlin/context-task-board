@@ -353,9 +353,17 @@ export default function PlanPage() {
     if (!blockId || !dragOverSlot) return;
     e.preventDefault();
     stopAutoScroll();
-    updateBlock.mutate({ id: blockId, date: format(weekDays[dayIndex], 'yyyy-MM-dd'), start_time: minutesToTime(dragOverSlot.minutes) });
+    const date = format(weekDays[dayIndex], 'yyyy-MM-dd');
+    const block = blocks.find(b => b.id === blockId);
+    const duration = block?.duration_minutes ?? 60;
+    if (wouldOverlap(date, dragOverSlot.minutes, duration, blockId)) {
+      toast.error('Cannot move here — overlaps another task');
+      setDragOverSlot(null);
+      return;
+    }
+    updateBlock.mutate({ id: blockId, date, start_time: minutesToTime(dragOverSlot.minutes) });
     setDragOverSlot(null);
-  }, [dragOverSlot, weekDays, updateBlock, stopAutoScroll]);
+  }, [dragOverSlot, weekDays, updateBlock, stopAutoScroll, wouldOverlap, blocks]);
 
   const handleResizeStart = useCallback((e: React.MouseEvent, blockId: string, currentDuration: number) => {
     e.stopPropagation();
