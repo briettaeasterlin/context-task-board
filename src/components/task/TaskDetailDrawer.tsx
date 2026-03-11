@@ -128,6 +128,16 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
             </div>
           )}
           <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Strategic Phase</Label>
+            <Select value={form.strategic_phase || 'auto'} onValueChange={v => setForm(f => ({ ...f, strategic_phase: v === 'auto' ? '' : v }))}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Auto-detect" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">🤖 Auto-detect</SelectItem>
+                {STRATEGIC_PHASES.map(p => <SelectItem key={p} value={p}>{STRATEGIC_PHASE_LABELS[p]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Context</Label>
             <Textarea value={form.context} onChange={e => setForm(f => ({ ...f, context: e.target.value }))} rows={3} className="text-sm" placeholder="Clarifying details..." />
           </div>
