@@ -105,7 +105,7 @@ export default function OnboardingPage() {
         });
       }
 
-      toast.success('Welcome to VectorHQ! 🎯');
+      toast.success('Welcome to NextMove! 🎯');
       navigate('/today');
     } catch (e: any) {
       toast.error(e.message || 'Setup failed');
