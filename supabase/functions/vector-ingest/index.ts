@@ -1,10 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://context-task-board.lovable.app",
+  "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+  "http://localhost:5173",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 const SUPPORTED_VERSIONS = ["1.0", "1.1"];
 const RATE_LIMIT_PER_MINUTE = 30;
@@ -58,21 +67,21 @@ async function authenticate(
     if (keyError || !keyRecord) {
       return new Response(
         JSON.stringify({ error: "Invalid API key" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (keyRecord.expires_at && new Date(keyRecord.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ error: "API key expired" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!keyRecord.permissions.includes("vector:ingest")) {
       return new Response(
         JSON.stringify({ error: "Insufficient permissions" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -82,7 +91,7 @@ async function authenticate(
       if (!keyRecord.allowed_ips.includes(clientIp)) {
         return new Response(
           JSON.stringify({ error: "IP not allowed" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 403, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
@@ -98,7 +107,7 @@ async function authenticate(
 
   return new Response(
     JSON.stringify({ error: "Unauthorized — provide Bearer token or X-API-Key" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    { status: 401, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
   );
 }
 
@@ -134,14 +143,18 @@ function computePayloadHash(payload: any): Promise<string> {
   return sha256(normalized);
 }
 
+let _corsHeaders: Record<string, string> = {};
+
 function jsonResponse(body: any, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ..._corsHeaders, "Content-Type": "application/json" },
   });
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  _corsHeaders = corsHeaders;
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
