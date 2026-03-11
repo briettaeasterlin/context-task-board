@@ -175,7 +175,7 @@ export function StatusReviewPanel({ tasks, projects, onUpdate, onDelete, onClose
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}><ArrowLeft className="h-4 w-4" /></Button>
-          <h2 className="font-display text-sm font-semibold">VectorHQ AI Review</h2>
+          <h2 className="font-display text-sm font-semibold">NextMove AI Review</h2>
         </div>
         <Card className="p-6 text-center">
           <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
@@ -191,7 +191,7 @@ export function StatusReviewPanel({ tasks, projects, onUpdate, onDelete, onClose
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}><ArrowLeft className="h-4 w-4" /></Button>
-          <h2 className="font-display text-sm font-semibold">VectorHQ AI Review</h2>
+          <h2 className="font-display text-sm font-semibold">NextMove AI Review</h2>
         </div>
         <Card className="p-12 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
@@ -216,7 +216,7 @@ export function StatusReviewPanel({ tasks, projects, onUpdate, onDelete, onClose
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}><ArrowLeft className="h-4 w-4" /></Button>
           <Sparkles className="h-4 w-4 text-primary" />
-          <h2 className="font-display text-sm font-semibold">VectorHQ AI Review</h2>
+          <h2 className="font-display text-sm font-semibold">NextMove AI Review</h2>
         </div>
         <div className="flex items-center gap-2">
           {['tasks', 'projects', 'focus'].map((s, i) => (

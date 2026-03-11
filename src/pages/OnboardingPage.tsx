@@ -105,7 +105,7 @@ export default function OnboardingPage() {
         });
       }
 
-      toast.success('Welcome to VectorHQ! 🎯');
+      toast.success('Welcome to NextMove! 🎯');
       navigate('/today');
     } catch (e: any) {
       toast.error(e.message || 'Setup failed');
@@ -287,7 +287,7 @@ export default function OnboardingPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back
               </Button>
               <Button onClick={handleComplete} disabled={focusIds.size === 0} className="flex-1 rounded-xl font-display font-semibold">
-                Launch VectorHQ 🚀
+                Launch NextMove 🚀
               </Button>
             </div>
           </Card>

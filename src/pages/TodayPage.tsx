@@ -120,7 +120,7 @@ export default function TodayPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
   const handleMarkDone = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Task complete. Momentum builds momentum.') });
+    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Task complete — NextMove will find your next move.') });
   }, [updateTask]);
 
   const formatDueLabel = (dateStr: string) => {
@@ -235,7 +235,7 @@ export default function TodayPage() {
         {/* Next Tasks - Focus */}
         <section>
           <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-            <span>🎯</span> Focus
+            <span>🎯</span> Today's Moves
           </h2>
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>

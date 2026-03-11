@@ -61,7 +61,7 @@ export default function HQPage() {
 
   const handleMarkDone = useCallback((id: string) => {
     updateTask.mutate({ id, status: 'Done' }, {
-      onSuccess: () => toast.success('Task complete. Momentum builds momentum.'),
+      onSuccess: () => toast.success('Task complete — NextMove will find your next move.'),
     });
   }, [updateTask]);
 
@@ -160,13 +160,13 @@ export default function HQPage() {
 
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => navigate('/review')} className="rounded-xl font-display" size="sm">
-            <Zap className="h-3.5 w-3.5 mr-1.5" /> Run HQ Review
+            <Zap className="h-3.5 w-3.5 mr-1.5" /> Weekly Review
           </Button>
           <Button variant="outline" onClick={() => navigate('/plan')} className="rounded-xl font-display" size="sm">
-            🗓️ Plan My Week
+            🗓️ Plan My Day
           </Button>
           <Button variant="outline" onClick={() => navigate('/today')} className="rounded-xl font-display" size="sm">
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Suggest Next Tasks
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Today's Moves
           </Button>
         </div>
 
@@ -174,7 +174,7 @@ export default function HQPage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-              🎯 Focus Tasks
+              🎯 Today's Moves
             </h2>
             <Button variant="ghost" size="sm" onClick={() => navigate('/today')} className="text-xs text-muted-foreground">
               View all <ArrowRight className="h-3 w-3 ml-1" />
@@ -184,8 +184,8 @@ export default function HQPage() {
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
           ) : focusTasks.length === 0 ? (
             <Card className="p-8 text-center rounded-2xl shadow-card">
-              <p className="text-muted-foreground mb-2">No tasks in focus yet.</p>
-              <p className="text-sm text-muted-foreground">Add your first task and start building momentum.</p>
+              <p className="text-muted-foreground mb-2">No tasks yet.</p>
+              <p className="text-sm text-muted-foreground">Add your first project and NextMove will start organizing your work.</p>
             </Card>
           ) : (
             <div className="space-y-2">

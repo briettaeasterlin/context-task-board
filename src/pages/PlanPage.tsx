@@ -160,7 +160,7 @@ export default function PlanPage() {
           notes: item.reason,
         });
       }
-      toast.success(`Execution plan scheduled: ${allPlanTasks.length} tasks`);
+      toast.success(`NextMove created today's plan: ${allPlanTasks.length} tasks`);
       setShowExecutionPlan(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to schedule execution plan');
@@ -380,7 +380,7 @@ export default function PlanPage() {
                       disabled={autoScheduling || autoSuggestions.length === 0}
                     >
                       <Wand2 className={cn("h-3 w-3", autoScheduling && "animate-spin")} />
-                      {autoScheduling ? 'Scheduling...' : `Auto-schedule ${autoSuggestions.length} tasks`}
+                      {autoScheduling ? 'Planning...' : `Plan My Day (${autoSuggestions.length} tasks)`}
                     </Button>
                     {settings?.gcal_connected ? (
                       <>

@@ -5,12 +5,10 @@ import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_ITEMS = [
-  { path: '/hq', label: 'HQ', emoji: '🏠' },
   { path: '/today', label: 'Today', emoji: '🎯' },
   { path: '/projects', label: 'Projects', emoji: '📁' },
-  { path: '/review', label: 'Review', emoji: '🔁' },
   { path: '/plan', label: 'Calendar', emoji: '🗓️' },
-  { path: '/workload', label: 'Workload', emoji: '📊' },
+  { path: '/review', label: 'Review', emoji: '🔁' },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -23,9 +21,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-6">
-              <Link to="/hq" className="flex items-center gap-1.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
+              <Link to="/today" className="flex items-center gap-1.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
                 <span className="text-base text-accent">▸</span>
-                <span>VectorHQ</span>
+                <span>NextMove</span>
               </Link>
               <nav className="flex items-center gap-0.5">
                 {NAV_ITEMS.map(item => {

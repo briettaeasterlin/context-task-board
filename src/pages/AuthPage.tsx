@@ -37,9 +37,9 @@ export default function AuthPage() {
         <CardHeader className="text-center pb-2">
           <Link to="/" className="inline-flex items-center justify-center gap-1.5 font-display text-2xl font-bold tracking-tight mb-2">
             <span className="text-accent">▸</span>
-            <span>VectorHQ</span>
+            <span>NextMove</span>
           </Link>
-          <CardDescription className="text-sm">Your personal execution headquarters.</CardDescription>
+          <CardDescription className="text-sm">Always know your next move.</CardDescription>
         </CardHeader>
         <CardContent>
           {signUpSuccess ? (

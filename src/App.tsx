@@ -29,14 +29,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground font-sans text-sm">Loading...</div>;
-  if (user) return <Navigate to="/hq" replace />;
+  if (user) return <Navigate to="/today" replace />;
   return <>{children}</>;
 }
 
 function PublicOrRedirect({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground font-sans text-sm">Loading...</div>;
-  if (user) return <Navigate to="/hq" replace />;
+  if (user) return <Navigate to="/today" replace />;
   return <>{children}</>;
 }
 
@@ -60,7 +60,7 @@ const App = () => (
             <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
             <Route path="/workload" element={<ProtectedRoute><WorkloadPage /></ProtectedRoute>} />
             {/* Legacy redirects */}
-            <Route path="/dashboard" element={<Navigate to="/hq" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/today" replace />} />
             <Route path="/kanban" element={<Navigate to="/review" replace />} />
             <Route path="/inbox" element={<Navigate to="/plan" replace />} />
             <Route path="/waiting" element={<Navigate to="/review" replace />} />
