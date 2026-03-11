@@ -97,10 +97,10 @@ Deno.serve(async (req) => {
       }
 
       // Get the return URL from the request body
-      let returnUrl = "";
+      let returnUrl = "/";
       try {
         const body = await req.json();
-        returnUrl = body.returnUrl || "";
+        returnUrl = isValidReturnUrl(body.returnUrl || "");
       } catch { /* no body */ }
 
       const userId = data.claims.sub;
