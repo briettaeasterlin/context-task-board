@@ -310,8 +310,13 @@ export default function PlanPage() {
     }
   }, []);
 
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null; }
+  }, []);
+
   const handleDrop = useCallback((e: React.DragEvent, dayIndex: number) => {
     e.preventDefault();
+    stopAutoScroll();
     if (!dragOverSlot || !draggingTask) return;
     const date = format(weekDays[dayIndex], 'yyyy-MM-dd');
     createBlock.mutate({
@@ -319,7 +324,7 @@ export default function PlanPage() {
       duration_minutes: draggingTask.estimated_minutes || 60, source: 'manual', locked: false, notes: null,
     }, { onSuccess: () => toast.success(`Scheduled "${draggingTask.title}"`) });
     setDraggingTask(null); setDragOverSlot(null);
-  }, [dragOverSlot, draggingTask, weekDays, createBlock]);
+  }, [dragOverSlot, draggingTask, weekDays, createBlock, stopAutoScroll]);
 
   const handleBlockDragStart = useCallback((e: React.DragEvent, block: PlannedBlock) => {
     e.dataTransfer.setData('application/block-id', block.id);
