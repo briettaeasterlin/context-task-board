@@ -89,7 +89,8 @@ export function useApiKeys() {
       const { error } = await supabase
         .from('api_keys')
         .update({ is_active } as any)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['api_keys'] }),
