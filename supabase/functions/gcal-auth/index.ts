@@ -20,9 +20,11 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 
-const ALLOWED_ORIGINS = [
+const ALLOWED_REDIRECT_ORIGINS = [
   "https://context-task-board.lovable.app",
   "https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app",
+  "https://6cb26484-5f83-41ed-b635-41425bad5c23.lovableproject.com",
+  "http://localhost:5173",
 ];
 
 function isValidReturnUrl(raw: string): string {
