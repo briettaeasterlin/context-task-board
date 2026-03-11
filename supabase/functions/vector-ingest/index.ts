@@ -107,7 +107,7 @@ async function authenticate(
 
   return new Response(
     JSON.stringify({ error: "Unauthorized — provide Bearer token or X-API-Key" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    { status: 401, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
   );
 }
 
