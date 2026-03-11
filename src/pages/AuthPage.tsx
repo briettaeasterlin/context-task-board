@@ -41,6 +41,14 @@ export default function AuthPage() {
     if (error) setError(error.message);
   };
 
+  const handleAppleSignIn = async () => {
+    setError('');
+    const { error } = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+    if (error) setError(error.message);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm rounded-2xl shadow-elevated">
