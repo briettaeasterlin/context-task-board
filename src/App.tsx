@@ -60,7 +60,7 @@ const App = () => (
             <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
             <Route path="/workload" element={<ProtectedRoute><WorkloadPage /></ProtectedRoute>} />
             {/* Legacy redirects */}
-            <Route path="/dashboard" element={<Navigate to="/hq" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/today" replace />} />
             <Route path="/kanban" element={<Navigate to="/review" replace />} />
             <Route path="/inbox" element={<Navigate to="/plan" replace />} />
             <Route path="/waiting" element={<Navigate to="/review" replace />} />
