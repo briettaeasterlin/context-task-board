@@ -143,10 +143,12 @@ function computePayloadHash(payload: any): Promise<string> {
   return sha256(normalized);
 }
 
+let _corsHeaders: Record<string, string> = {};
+
 function jsonResponse(body: any, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ..._corsHeaders, "Content-Type": "application/json" },
   });
 }
 
