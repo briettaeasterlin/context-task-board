@@ -365,6 +365,18 @@ export default function PlanPage() {
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [resizing, resizeDelta, updateBlock]);
 
+  // Overlap detection: check if placing a block overlaps existing blocks
+  const wouldOverlap = useCallback((dayStr: string, startMin: number, duration: number, excludeBlockId?: string) => {
+    const endMin = startMin + duration;
+    return blocks.some(b => {
+      if (b.date !== dayStr) return false;
+      if (excludeBlockId && b.id === excludeBlockId) return false;
+      const bStart = timeToMinutes(b.start_time);
+      const bEnd = bStart + b.duration_minutes;
+      return startMin < bEnd && endMin > bStart;
+    });
+  }, [blocks]);
+
   const getBlocksForDay = useCallback((dayStr: string) => blocks.filter(b => b.date === dayStr), [blocks]);
   const getEventsForDay = useCallback((day: Date) => {
     const dayStr = format(day, 'yyyy-MM-dd');
