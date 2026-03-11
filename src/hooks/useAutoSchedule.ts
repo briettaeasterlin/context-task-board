@@ -68,6 +68,8 @@ export function autoSchedule(
     dayStartHour?: number;
     dayEndHour?: number;
     calendarUtilization?: number;
+    /** Hard cutoff for work tasks (minutes from midnight). Default 16:30 = 990 */
+    workCutoffMinutes?: number;
   } = {}
 ): ScheduleSuggestion[] {
   const {
@@ -75,7 +77,12 @@ export function autoSchedule(
     dayStartHour = 8,
     dayEndHour = 18,
     calendarUtilization,
+    workCutoffMinutes = 16 * 60 + 30, // 4:30 PM
   } = options;
+
+  // Skip weekends entirely
+  const targetDay = new Date(targetDate + 'T12:00:00').getDay(); // 0=Sun, 6=Sat
+  if (targetDay === 0 || targetDay === 6) return [];
 
   // Build occupied blocks from existing planned blocks and calendar events
   const dayBlocks = existingBlocks.filter(b => b.date === targetDate);
@@ -103,6 +110,9 @@ export function autoSchedule(
   }
 
   const freeSlots = findFreeSlots(occupied, dayStartHour, dayEndHour);
+
+  // Work tasks (Client/Business) can't be scheduled past the cutoff
+  const isWorkTask = (t: Task) => t.area === 'Client' || t.area === 'Business';
 
   // Get schedulable tasks (Today or Next, not already scheduled today)
   const scheduledIds = new Set(dayBlocks.map(b => b.task_id).filter(Boolean));
@@ -133,6 +143,10 @@ export function autoSchedule(
       const availableDuration = slot.durationMinutes - consumed;
 
       if (taskDuration <= availableDuration) {
+        // Enforce work cutoff: work tasks can't start or run past 4:30 PM
+        if (isWorkTask(task) && (availableStart + taskDuration) > workCutoffMinutes) {
+          continue;
+        }
         suggestions.push({
           task,
           startMinutes: availableStart,
