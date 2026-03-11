@@ -6,6 +6,7 @@ import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import type { Task, TaskArea, TaskStatus, TaskUpdate, Project } from '@/types/task';
 import { ProjectCard } from '@/components/project/ProjectCard';
+import { DuplicateDetector } from '@/components/project/DuplicateDetector';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { FilterBar } from '@/components/task/FilterBar';
@@ -309,6 +310,9 @@ export default function ReviewPage() {
           {/* Projects */}
           <TabsContent value="projects">
             <div className="space-y-4">
+              {/* Duplicate Detection & Merge */}
+              <DuplicateDetector />
+
               <div className="flex items-center justify-between">
                 <h2 className="font-sans text-lg font-semibold flex items-center gap-2"><span>📁</span> All Projects</h2>
                 <Button size="sm" className="text-xs rounded-lg" onClick={() => setCreateOpen(true)}>
