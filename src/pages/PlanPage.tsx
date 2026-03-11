@@ -60,7 +60,7 @@ function getRitualMessage(mode: 'tomorrow' | 'week'): string {
 export default function PlanPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { tasks, createTask, createManyTasks, updateTask } = useTasks();
+  const { tasks, createTask, createManyTasks, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const { clarifyQuestions, updateClarifyQuestion } = useClarifyQuestions();
