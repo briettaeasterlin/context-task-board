@@ -319,12 +319,18 @@ export default function PlanPage() {
     stopAutoScroll();
     if (!dragOverSlot || !draggingTask) return;
     const date = format(weekDays[dayIndex], 'yyyy-MM-dd');
+    const duration = draggingTask.estimated_minutes || 60;
+    if (wouldOverlap(date, dragOverSlot.minutes, duration)) {
+      toast.error('Cannot schedule here — overlaps another task');
+      setDraggingTask(null); setDragOverSlot(null);
+      return;
+    }
     createBlock.mutate({
       task_id: draggingTask.id, date, start_time: minutesToTime(dragOverSlot.minutes),
-      duration_minutes: draggingTask.estimated_minutes || 60, source: 'manual', locked: false, notes: null,
+      duration_minutes: duration, source: 'manual', locked: false, notes: null,
     }, { onSuccess: () => toast.success(`Scheduled "${draggingTask.title}"`) });
     setDraggingTask(null); setDragOverSlot(null);
-  }, [dragOverSlot, draggingTask, weekDays, createBlock, stopAutoScroll]);
+  }, [dragOverSlot, draggingTask, weekDays, createBlock, stopAutoScroll, wouldOverlap]);
 
   const handleBlockDragStart = useCallback((e: React.DragEvent, block: PlannedBlock) => {
     e.dataTransfer.setData('application/block-id', block.id);
