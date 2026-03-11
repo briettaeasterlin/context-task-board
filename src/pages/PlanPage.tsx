@@ -25,7 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, GripVertical, Clock, ChevronLeft, ChevronRight, RefreshCw, Link2, Unlink, Lock, Unlock, Trash2, Wand2 } from 'lucide-react';
+import { Plus, GripVertical, Clock, ChevronLeft, ChevronRight, RefreshCw, Link2, Unlink, Lock, Unlock, Trash2, Wand2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfWeek, addDays, isToday, isSunday, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
