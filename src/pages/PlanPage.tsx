@@ -95,6 +95,43 @@ export default function PlanPage() {
     new Date(weekEndStr + 'T23:59:59').toISOString()
   );
 
+  // Workload & auto-schedule
+  const workload = useWorkload(tasks, blocks);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const { suggestions: autoSuggestions } = useAutoSchedule(
+    tasks, blocks, events, todayStr, workload.calendarUtilization
+  );
+  const [autoScheduling, setAutoScheduling] = useState(false);
+
+  const handleAutoSchedule = useCallback(async () => {
+    if (autoSuggestions.length === 0) {
+      toast.info('No tasks to auto-schedule — all slots filled or no eligible tasks');
+      return;
+    }
+    setAutoScheduling(true);
+    try {
+      for (const suggestion of autoSuggestions) {
+        const startH = Math.floor(suggestion.startMinutes / 60);
+        const startM = suggestion.startMinutes % 60;
+        const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
+        await createBlock.mutateAsync({
+          task_id: suggestion.task.id,
+          date: todayStr,
+          start_time: startTime,
+          duration_minutes: suggestion.durationMinutes,
+          source: 'auto',
+          locked: false,
+          notes: null,
+        });
+      }
+      toast.success(`Auto-scheduled ${autoSuggestions.length} tasks for today`);
+    } catch (err: any) {
+      toast.error(err.message || 'Auto-schedule failed');
+    } finally {
+      setAutoScheduling(false);
+    }
+  }, [autoSuggestions, todayStr, createBlock]);
+
   // Check for gcal-connected redirect param
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
