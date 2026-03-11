@@ -15,6 +15,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
+import WorkloadPage from "./pages/WorkloadPage";
 
 const queryClient = new QueryClient();
 
