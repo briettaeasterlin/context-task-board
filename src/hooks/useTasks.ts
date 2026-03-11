@@ -1,24 +1,57 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import type { Task, TaskInsert, TaskUpdate } from '@/types/task';
+import { useMemo, useCallback } from 'react';
+
+const PAGE_SIZE = 100;
 
 export function useTasks(projectId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const tasksQuery = useQuery({
+  const tasksQuery = useInfiniteQuery({
     queryKey: ['tasks', user?.id, projectId],
-    queryFn: async (): Promise<Task[]> => {
+    queryFn: async ({ pageParam }): Promise<Task[]> => {
       if (!user) return [];
-      let query = supabase.from('tasks').select('*').eq('user_id', user.id).is('deleted_at', null).order('created_at', { ascending: false });
+      let query = supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+
       if (projectId) query = query.eq('project_id', projectId);
+
+      // Cursor-based pagination: fetch tasks created before the last item's created_at
+      if (pageParam) {
+        query = query.lt('created_at', pageParam);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as unknown as Task[];
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return lastPage[lastPage.length - 1]?.created_at ?? undefined;
+    },
     enabled: !!user,
   });
+
+  // Flatten all pages into a single array for consumers
+  const tasks = useMemo(
+    () => tasksQuery.data?.pages.flat() ?? [],
+    [tasksQuery.data]
+  );
+
+  const loadMore = useCallback(() => {
+    if (tasksQuery.hasNextPage && !tasksQuery.isFetchingNextPage) {
+      tasksQuery.fetchNextPage();
+    }
+  }, [tasksQuery]);
 
   const createTask = useMutation({
     mutationFn: async (task: Omit<TaskInsert, 'user_id'>) => {
@@ -68,7 +101,6 @@ export function useTasks(projectId?: string) {
 
   const reorderTasks = useMutation({
     mutationFn: async (updates: { id: string; sort_order: number }[]) => {
-      // Update each task's sort_order
       const promises = updates.map(({ id, sort_order }) =>
         supabase.from('tasks').update({ sort_order } as any).eq('id', id)
       );
@@ -80,8 +112,11 @@ export function useTasks(projectId?: string) {
   });
 
   return {
-    tasks: tasksQuery.data ?? [],
+    tasks,
     isLoading: tasksQuery.isLoading,
+    hasMoreTasks: !!tasksQuery.hasNextPage,
+    isLoadingMore: tasksQuery.isFetchingNextPage,
+    loadMore,
     createTask,
     createManyTasks,
     updateTask,

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTasks } from '@/hooks/useTasks';
+import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/useProjects';
 import { useMilestones } from '@/hooks/useProjects';
 import { AppShell } from '@/components/layout/AppShell';
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export default function TaskListPage({ filterStatus }: Props) {
-  const { tasks, updateTask, bulkUpdateTasks, deleteTask } = useTasks();
+  const { tasks, updateTask, bulkUpdateTasks, deleteTask, hasMoreTasks, isLoadingMore, loadMore } = useTasks();
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const [search, setSearch] = useState('');
@@ -52,6 +53,13 @@ export default function TaskListPage({ filterStatus }: Props) {
         <TaskTable tasks={filtered} projects={projects} allTasks={tasks} selectedIds={selectedIds} onToggleSelect={toggleSelect}
           onSelectAll={() => setSelectedIds(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)))}
           onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} showScoring />
+        {hasMoreTasks && (
+          <div className="flex justify-center pt-4">
+            <Button variant="outline" size="sm" onClick={loadMore} disabled={isLoadingMore}>
+              {isLoadingMore ? 'Loading…' : 'Load more tasks'}
+            </Button>
+          </div>
+        )}
       </div>
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={id => deleteTask.mutate(id)} projects={projects} milestones={milestones} />

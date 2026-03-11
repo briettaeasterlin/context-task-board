@@ -28,7 +28,8 @@ export function useHabits() {
         .from('habit_intentions')
         .select('*')
         .eq('user_id', user!.id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(100);
       if (error) throw error;
       return data as HabitIntention[];
     },
