@@ -138,11 +138,18 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
               <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} className="text-sm" />
             </div>
           )}
-          {/* Scoring */}
           <div className="flex gap-3 items-end">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Est. Duration</Label>
-              <Badge variant="outline" className="text-xs font-mono">{estDuration}</Badge>
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Est. Minutes</Label>
+              <Input
+                type="number"
+                min="5"
+                step="5"
+                value={form.estimated_minutes}
+                onChange={e => setForm(f => ({ ...f, estimated_minutes: e.target.value }))}
+                className="text-sm h-9"
+                placeholder={`Auto: ${DURATION_MINUTES[estDuration]}m`}
+              />
             </div>
             <div className="flex-1 space-y-1.5">
               <Label className="text-xs text-muted-foreground">Impact (1-5)</Label>
@@ -153,7 +160,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
                     {[1, 2, 3, 4, 5].map(v => <SelectItem key={v} value={v.toString()}>{v} — {['', 'Maintenance', 'Minor', 'Useful', 'High', 'Major'][v]}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {!form.impact_score && <span className="text-[10px] text-muted-foreground italic">auto-suggested</span>}
+                {!form.impact_score && <span className="text-[10px] text-muted-foreground italic">auto</span>}
               </div>
             </div>
           </div>
