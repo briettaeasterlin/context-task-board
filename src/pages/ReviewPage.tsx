@@ -193,7 +193,7 @@ export default function ReviewPage() {
             <TabsTrigger value="stuck" className="text-sm rounded-lg">🚧 What's Stuck</TabsTrigger>
             <TabsTrigger value="projects" className="text-sm rounded-lg">📁 Projects</TabsTrigger>
             <TabsTrigger value="kanban" className="text-sm rounded-lg">🗂️ Kanban</TabsTrigger>
-            <TabsTrigger value="vector" className="text-sm rounded-lg">📡 Vector Sync</TabsTrigger>
+            <TabsTrigger value="vector" className="text-sm rounded-lg">📡 VectorHQ Sync</TabsTrigger>
           </TabsList>
 
           {/* Overview: What happened */}
