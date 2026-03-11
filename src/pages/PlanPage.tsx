@@ -604,9 +604,16 @@ export default function PlanPage() {
                               </div>
                             );
                           })}
-                          {dragOverSlot?.day === dayIndex && draggingTask && (
-                            <div className="absolute left-0.5 right-0.5 rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 z-30 pointer-events-none"
-                              style={{ top: minutesToTop(dragOverSlot.minutes), height: minutesToHeight(draggingTask.estimated_minutes || 60) }} />
+                          {dragOverSlot?.day === dayIndex && draggingTask && (() => {
+                            const dayStr = format(weekDays[dayIndex], 'yyyy-MM-dd');
+                            const duration = draggingTask.estimated_minutes || 60;
+                            const overlaps = wouldOverlap(dayStr, dragOverSlot.minutes, duration);
+                            return (
+                              <div className={cn("absolute left-0.5 right-0.5 rounded-lg border-2 border-dashed z-30 pointer-events-none",
+                                overlaps ? "border-destructive/60 bg-destructive/10" : "border-primary/50 bg-primary/5")}
+                                style={{ top: minutesToTop(dragOverSlot.minutes), height: minutesToHeight(duration) }} />
+                            );
+                          })()}
                           )}
                         </div>
                       );
