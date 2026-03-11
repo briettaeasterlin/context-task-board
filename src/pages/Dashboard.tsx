@@ -38,6 +38,7 @@ export default function Dashboard() {
   const { projects } = useProjects();
   const { milestones } = useMilestones();
   const { clarifyQuestions } = useClarifyQuestions();
+  const { warnings: boardWarnings } = useBoardLimits(tasks);
 
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<TaskArea | 'all'>('all');
