@@ -76,6 +76,8 @@ export default function PlanPage() {
   const [dragOverSlot, setDragOverSlot] = useState<{ day: number; minutes: number } | null>(null);
   const [resizing, setResizing] = useState<{ blockId: string; startY: number; startDuration: number } | null>(null);
   const [resizeDelta, setResizeDelta] = useState(0);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<number | null>(null);
 
   const weekStart = useMemo(() => {
     const now = new Date();
