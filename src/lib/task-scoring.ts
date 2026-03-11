@@ -1,4 +1,5 @@
 import type { Task } from '@/types/task';
+import type { StrategicPhase } from '@/types/task';
 import { differenceInHours, differenceInDays } from 'date-fns';
 
 // ─── Duration Estimation ───
@@ -47,15 +48,26 @@ const STRATEGIC_VALUES: Record<StrategicCategory, number> = {
   side_project: 5,
 };
 
+// Map strategic_phase to StrategicCategory for scoring
+const PHASE_TO_CATEGORY: Record<string, StrategicCategory> = {
+  scoping: 'pipeline_relationship',
+  active_engagement: 'client_delivery',
+  closed_followup: 'pipeline_relationship',
+  internal_ops: 'business_infrastructure',
+};
+
 export function inferStrategicCategory(task: Task): StrategicCategory {
+  // Manual phase override takes precedence
+  if ((task as any).strategic_phase && PHASE_TO_CATEGORY[(task as any).strategic_phase]) {
+    return PHASE_TO_CATEGORY[(task as any).strategic_phase];
+  }
+
   const t = (task.title + ' ' + (task.context ?? '') + ' ' + (task.notes ?? '')).toLowerCase();
   const area = task.area;
 
   if (area === 'Client') return 'client_delivery';
   if (/\b(invoice|billing|payment|revenue|contract|proposal|quote|pricing)\b/.test(t)) return 'revenue_generation';
-  // "pipeline" alone is ambiguous — only match sales/relationship pipeline patterns
   if (/\b(follow.?up|prospect|nurture|lead|outreach|relationship|networking)\b/.test(t)) return 'pipeline_relationship';
-  // Exclude data/product pipeline from sales pipeline category
   if (/\b(deploy|infra|server|domain|auth|security|policy|setup|config|ci|cd|pipeline|etl|data)\b/.test(t)) return 'business_infrastructure';
   if (area === 'Personal' || area === 'Home' || area === 'Family') return 'personal_admin';
   if (area === 'Business') return 'business_infrastructure';

@@ -4,6 +4,16 @@ export type TaskArea = typeof AREAS[number];
 export const STATUSES = ['Today', 'Next', 'Waiting', 'Backlog', 'Closing', 'Done'] as const;
 export type TaskStatus = typeof STATUSES[number];
 
+export const STRATEGIC_PHASES = ['scoping', 'active_engagement', 'closed_followup', 'internal_ops'] as const;
+export type StrategicPhase = typeof STRATEGIC_PHASES[number];
+
+export const STRATEGIC_PHASE_LABELS: Record<StrategicPhase, string> = {
+  scoping: '🔍 Scoping / Negotiation',
+  active_engagement: '🔥 Active Engagement',
+  closed_followup: '✅ Closed / Follow-up',
+  internal_ops: '⚙️ Internal / Ops',
+};
+
 export const UPDATE_SOURCES = ['chatgpt', 'meeting', 'email', 'call', 'doc'] as const;
 export type UpdateSource = typeof UPDATE_SOURCES[number];
 
@@ -28,6 +38,7 @@ export interface Task {
   sort_order: number;
   estimated_minutes: number | null;
   context_tag: string | null;
+  strategic_phase: StrategicPhase | null;
   created_at: string;
   updated_at: string;
 }
@@ -80,7 +91,7 @@ export interface ClarifyQuestion {
   updated_at: string;
 }
 
-export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'sort_order' | 'estimated_minutes' | 'context_tag'> & { sort_order?: number; estimated_minutes?: number | null; context_tag?: string | null };
+export type TaskInsert = Omit<Task, 'id' | 'created_at' | 'updated_at' | 'sort_order' | 'estimated_minutes' | 'context_tag' | 'strategic_phase'> & { sort_order?: number; estimated_minutes?: number | null; context_tag?: string | null; strategic_phase?: StrategicPhase | null };
 export type TaskUpdate = Partial<Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
 
 export function parseTaskLine(line: string, defaultArea: TaskArea = 'Personal', defaultStatus: TaskStatus = 'Backlog'): Omit<TaskInsert, 'user_id'> {

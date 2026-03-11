@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AREAS, STATUSES, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone } from '@/types/task';
+import { AREAS, STATUSES, STRATEGIC_PHASES, STRATEGIC_PHASE_LABELS, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone, type StrategicPhase } from '@/types/task';
 import { Trash2 } from 'lucide-react';
 import { estimateDuration, suggestImpactScore, DURATION_MINUTES } from '@/lib/task-scoring';
 
@@ -28,6 +28,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     due_date: '', target_window: '',
     impact_score: '' as string,
     estimated_minutes: '' as string,
+    strategic_phase: '' as string,
   });
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         target_window: task.target_window ?? '',
         impact_score: (task as any).impact_score?.toString() ?? '',
         estimated_minutes: task.estimated_minutes?.toString() ?? '',
+        strategic_phase: (task as any).strategic_phase ?? '',
       });
     }
   }, [task]);
@@ -70,6 +72,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       due_date: form.due_date || null,
       target_window: form.target_window || null,
       estimated_minutes: estMins,
+      strategic_phase: form.strategic_phase || null,
       ...(impactVal !== null ? { impact_score: impactVal } : {}),
     } as any);
     onClose();
@@ -124,6 +127,16 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
               </Select>
             </div>
           )}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Strategic Phase</Label>
+            <Select value={form.strategic_phase || 'auto'} onValueChange={v => setForm(f => ({ ...f, strategic_phase: v === 'auto' ? '' : v }))}>
+              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Auto-detect" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">🤖 Auto-detect</SelectItem>
+                {STRATEGIC_PHASES.map(p => <SelectItem key={p} value={p}>{STRATEGIC_PHASE_LABELS[p]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Context</Label>
             <Textarea value={form.context} onChange={e => setForm(f => ({ ...f, context: e.target.value }))} rows={3} className="text-sm" placeholder="Clarifying details..." />

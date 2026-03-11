@@ -357,6 +357,7 @@ export type Database = {
           id: string
           name: string
           scope_notes: string | null
+          strategic_phase: Database["public"]["Enums"]["strategic_phase"] | null
           summary: string | null
           updated_at: string
           user_id: string
@@ -368,6 +369,9 @@ export type Database = {
           id?: string
           name: string
           scope_notes?: string | null
+          strategic_phase?:
+            | Database["public"]["Enums"]["strategic_phase"]
+            | null
           summary?: string | null
           updated_at?: string
           user_id: string
@@ -379,6 +383,9 @@ export type Database = {
           id?: string
           name?: string
           scope_notes?: string | null
+          strategic_phase?:
+            | Database["public"]["Enums"]["strategic_phase"]
+            | null
           summary?: string | null
           updated_at?: string
           user_id?: string
@@ -430,6 +437,7 @@ export type Database = {
           sort_order: number | null
           source: string | null
           status: Database["public"]["Enums"]["task_status"]
+          strategic_phase: Database["public"]["Enums"]["strategic_phase"] | null
           tags: string[] | null
           target_window: string | null
           title: string
@@ -454,6 +462,9 @@ export type Database = {
           sort_order?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          strategic_phase?:
+            | Database["public"]["Enums"]["strategic_phase"]
+            | null
           tags?: string[] | null
           target_window?: string | null
           title: string
@@ -478,6 +489,9 @@ export type Database = {
           sort_order?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          strategic_phase?:
+            | Database["public"]["Enums"]["strategic_phase"]
+            | null
           tags?: string[] | null
           target_window?: string | null
           title?: string
@@ -622,6 +636,11 @@ export type Database = {
       clarify_status: "open" | "answered" | "dismissed"
       completion_rule: "manual" | "tasks_based"
       habit_cadence: "Daily" | "Weekly" | "Often" | "Seasonal"
+      strategic_phase:
+        | "scoping"
+        | "active_engagement"
+        | "closed_followup"
+        | "internal_ops"
       task_area: "Client" | "Business" | "Home" | "Family" | "Personal"
       task_status:
         | "Today"
@@ -762,6 +781,12 @@ export const Constants = {
       clarify_status: ["open", "answered", "dismissed"],
       completion_rule: ["manual", "tasks_based"],
       habit_cadence: ["Daily", "Weekly", "Often", "Seasonal"],
+      strategic_phase: [
+        "scoping",
+        "active_engagement",
+        "closed_followup",
+        "internal_ops",
+      ],
       task_area: ["Client", "Business", "Home", "Family", "Personal"],
       task_status: [
         "Today",
