@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects, useMilestones } from '@/hooks/useProjects';
@@ -76,6 +76,8 @@ export default function PlanPage() {
   const [dragOverSlot, setDragOverSlot] = useState<{ day: number; minutes: number } | null>(null);
   const [resizing, setResizing] = useState<{ blockId: string; startY: number; startDuration: number } | null>(null);
   const [resizeDelta, setResizeDelta] = useState(0);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<number | null>(null);
 
   const weekStart = useMemo(() => {
     const now = new Date();
@@ -278,12 +280,43 @@ export default function PlanPage() {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const slotOffset = Math.floor(y / (HOUR_HEIGHT / 2)) * SLOT_MINUTES;
-    const minutes = hour * 60 + slotOffset;
+    let minutes = hour * 60 + slotOffset;
+    // Cap at 10PM (22:00)
+    minutes = Math.min(minutes, DAY_END_HOUR * 60 - SLOT_MINUTES);
     setDragOverSlot({ day: dayIndex, minutes });
+
+    // Auto-scroll when dragging near edges of the scroll area
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+    if (!viewport) return;
+    const vpRect = viewport.getBoundingClientRect();
+    const EDGE_ZONE = 60;
+    const SCROLL_SPEED = 8;
+
+    if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null; }
+
+    const distFromTop = e.clientY - vpRect.top;
+    const distFromBottom = vpRect.bottom - e.clientY;
+
+    if (distFromTop < EDGE_ZONE || distFromBottom < EDGE_ZONE) {
+      const scroll = () => {
+        if (distFromTop < EDGE_ZONE) {
+          viewport.scrollTop -= SCROLL_SPEED;
+        } else {
+          viewport.scrollTop += SCROLL_SPEED;
+        }
+        autoScrollRef.current = requestAnimationFrame(scroll);
+      };
+      autoScrollRef.current = requestAnimationFrame(scroll);
+    }
+  }, []);
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null; }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent, dayIndex: number) => {
     e.preventDefault();
+    stopAutoScroll();
     if (!dragOverSlot || !draggingTask) return;
     const date = format(weekDays[dayIndex], 'yyyy-MM-dd');
     createBlock.mutate({
@@ -291,7 +324,7 @@ export default function PlanPage() {
       duration_minutes: draggingTask.estimated_minutes || 60, source: 'manual', locked: false, notes: null,
     }, { onSuccess: () => toast.success(`Scheduled "${draggingTask.title}"`) });
     setDraggingTask(null); setDragOverSlot(null);
-  }, [dragOverSlot, draggingTask, weekDays, createBlock]);
+  }, [dragOverSlot, draggingTask, weekDays, createBlock, stopAutoScroll]);
 
   const handleBlockDragStart = useCallback((e: React.DragEvent, block: PlannedBlock) => {
     e.dataTransfer.setData('application/block-id', block.id);
@@ -301,9 +334,10 @@ export default function PlanPage() {
     const blockId = e.dataTransfer.getData('application/block-id');
     if (!blockId || !dragOverSlot) return;
     e.preventDefault();
+    stopAutoScroll();
     updateBlock.mutate({ id: blockId, date: format(weekDays[dayIndex], 'yyyy-MM-dd'), start_time: minutesToTime(dragOverSlot.minutes) });
     setDragOverSlot(null);
-  }, [dragOverSlot, weekDays, updateBlock]);
+  }, [dragOverSlot, weekDays, updateBlock, stopAutoScroll]);
 
   const handleResizeStart = useCallback((e: React.MouseEvent, blockId: string, currentDuration: number) => {
     e.stopPropagation();
@@ -463,7 +497,7 @@ export default function PlanPage() {
                 </div>
 
                 {/* Time grid */}
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1" ref={scrollAreaRef}>
                   <div className="flex relative">
                     <div className="w-12 flex-shrink-0">
                       {HOURS.map(hour => (
