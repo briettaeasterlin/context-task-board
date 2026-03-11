@@ -67,7 +67,7 @@ async function authenticate(
     if (keyError || !keyRecord) {
       return new Response(
         JSON.stringify({ error: "Invalid API key" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ..._corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
