@@ -27,6 +27,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     project_id: '', milestone_id: '',
     due_date: '', target_window: '',
     impact_score: '' as string,
+    estimated_minutes: '' as string,
   });
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         due_date: task.due_date ?? '',
         target_window: task.target_window ?? '',
         impact_score: (task as any).impact_score?.toString() ?? '',
+        estimated_minutes: task.estimated_minutes?.toString() ?? '',
       });
     }
   }, [task]);
@@ -55,6 +57,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
 
   const save = () => {
     const impactVal = form.impact_score ? parseInt(form.impact_score, 10) : null;
+    const estMins = form.estimated_minutes ? parseInt(form.estimated_minutes, 10) : null;
     onUpdate(task.id, {
       title: form.title,
       context: form.context || null,
@@ -66,6 +69,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       milestone_id: form.milestone_id || null,
       due_date: form.due_date || null,
       target_window: form.target_window || null,
+      estimated_minutes: estMins,
       ...(impactVal !== null ? { impact_score: impactVal } : {}),
     } as any);
     onClose();
@@ -134,11 +138,18 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
               <Input value={form.blocked_by} onChange={e => setForm(f => ({ ...f, blocked_by: e.target.value }))} className="text-sm" />
             </div>
           )}
-          {/* Scoring */}
           <div className="flex gap-3 items-end">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Est. Duration</Label>
-              <Badge variant="outline" className="text-xs font-mono">{estDuration}</Badge>
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Est. Minutes</Label>
+              <Input
+                type="number"
+                min="5"
+                step="5"
+                value={form.estimated_minutes}
+                onChange={e => setForm(f => ({ ...f, estimated_minutes: e.target.value }))}
+                className="text-sm h-9"
+                placeholder={`Auto: ${DURATION_MINUTES[estDuration]}m`}
+              />
             </div>
             <div className="flex-1 space-y-1.5">
               <Label className="text-xs text-muted-foreground">Impact (1-5)</Label>
@@ -149,7 +160,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
                     {[1, 2, 3, 4, 5].map(v => <SelectItem key={v} value={v.toString()}>{v} — {['', 'Maintenance', 'Minor', 'Useful', 'High', 'Major'][v]}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {!form.impact_score && <span className="text-[10px] text-muted-foreground italic">auto-suggested</span>}
+                {!form.impact_score && <span className="text-[10px] text-muted-foreground italic">auto</span>}
               </div>
             </div>
           </div>

@@ -4,6 +4,8 @@ import { useTasks } from '@/hooks/useTasks';
 import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
 import { usePlannedBlocks, useCalendarEvents, usePlannerSettings } from '@/hooks/usePlanner';
+import { useAutoSchedule } from '@/hooks/useAutoSchedule';
+import { useWorkload } from '@/hooks/useWorkload';
 import type { Task, TaskArea, TaskStatus, TaskInsert } from '@/types/task';
 import type { PlannedBlock } from '@/hooks/usePlanner';
 import { QuickAdd } from '@/components/task/QuickAdd';
@@ -20,7 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, GripVertical, Clock, ChevronLeft, ChevronRight, RefreshCw, Link2, Unlink, Lock, Unlock, Trash2 } from 'lucide-react';
+import { Plus, GripVertical, Clock, ChevronLeft, ChevronRight, RefreshCw, Link2, Unlink, Lock, Unlock, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfWeek, addDays, isToday, isSunday, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -92,6 +94,43 @@ export default function PlanPage() {
     new Date(weekStartStr).toISOString(),
     new Date(weekEndStr + 'T23:59:59').toISOString()
   );
+
+  // Workload & auto-schedule
+  const workload = useWorkload(tasks, blocks);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const { suggestions: autoSuggestions } = useAutoSchedule(
+    tasks, blocks, events, todayStr, workload.calendarUtilization
+  );
+  const [autoScheduling, setAutoScheduling] = useState(false);
+
+  const handleAutoSchedule = useCallback(async () => {
+    if (autoSuggestions.length === 0) {
+      toast.info('No tasks to auto-schedule — all slots filled or no eligible tasks');
+      return;
+    }
+    setAutoScheduling(true);
+    try {
+      for (const suggestion of autoSuggestions) {
+        const startH = Math.floor(suggestion.startMinutes / 60);
+        const startM = suggestion.startMinutes % 60;
+        const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
+        await createBlock.mutateAsync({
+          task_id: suggestion.task.id,
+          date: todayStr,
+          start_time: startTime,
+          duration_minutes: suggestion.durationMinutes,
+          source: 'auto',
+          locked: false,
+          notes: null,
+        });
+      }
+      toast.success(`Auto-scheduled ${autoSuggestions.length} tasks for today`);
+    } catch (err: any) {
+      toast.error(err.message || 'Auto-schedule failed');
+    } finally {
+      setAutoScheduling(false);
+    }
+  }, [autoSuggestions, todayStr, createBlock]);
 
   // Check for gcal-connected redirect param
   useEffect(() => {
@@ -296,6 +335,16 @@ export default function PlanPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-6 text-[10px] gap-1 rounded-lg"
+                      onClick={handleAutoSchedule}
+                      disabled={autoScheduling || autoSuggestions.length === 0}
+                    >
+                      <Wand2 className={cn("h-3 w-3", autoScheduling && "animate-spin")} />
+                      {autoScheduling ? 'Scheduling...' : `Auto-schedule ${autoSuggestions.length} tasks`}
+                    </Button>
                     {settings?.gcal_connected ? (
                       <>
                         <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1 rounded-lg" onClick={handleSyncGcal} disabled={syncing}>
