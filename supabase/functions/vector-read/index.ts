@@ -23,10 +23,12 @@ async function sha256(message: string): Promise<string> {
     .join("");
 }
 
+let _corsHeaders: Record<string, string> = {};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ..._corsHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -94,6 +96,8 @@ async function authenticate(
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  _corsHeaders = corsHeaders;
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
