@@ -5,6 +5,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useMilestones } from '@/hooks/useProjects';
 import { useSeedData } from '@/hooks/useSeedData';
 import { useClarifyQuestions } from '@/hooks/useClarifyQuestions';
+import { useBoardLimits } from '@/hooks/useBoardLimits';
 import type { Task, TaskArea, TaskStatus, TaskUpdate, TaskInsert, Project } from '@/types/task';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { TaskTable } from '@/components/task/TaskTable';
