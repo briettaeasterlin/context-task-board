@@ -9,15 +9,21 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, CheckCircle2, TrendingUp, Plus, Zap } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, CheckCircle2, TrendingUp, Plus, Zap, ChevronDown, ChevronUp, Send, Clock } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { scoreTasks, buildScoringContext, type ScoredTask } from '@/lib/task-scoring';
+import { scoreTasks, buildScoringContext, DURATION_MINUTES, estimateDuration, type ScoredTask } from '@/lib/task-scoring';
+import { STATUSES, type TaskStatus } from '@/types/task';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
+import { useMilestones } from '@/hooks/useProjects';
 
 export default function WorkloadPage() {
-  const { tasks, createTask } = useTasks();
+  const { tasks, createTask, updateTask } = useTasks();
   const { projects } = useProjects();
+  const { milestones } = useMilestones();
 
   const now = new Date();
   const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -26,6 +32,10 @@ export default function WorkloadPage() {
 
   const workload = useWorkload(tasks, blocks);
   const nearingCompletion = useProjectCompletion(tasks, projects);
+
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState<Record<string, string>>({});
+  const [detailTask, setDetailTask] = useState<ScoredTask | null>(null);
 
   const formatHours = (mins: number) => {
     const h = Math.floor(mins / 60);
@@ -257,43 +267,193 @@ export default function WorkloadPage() {
           </section>
         )}
 
-        {/* Top Priority Tasks */}
+        {/* Top Priority Tasks — Interactive */}
         <section>
           <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
             Highest Priority
           </h2>
           <div className="space-y-2">
-            {topTasks.map((t, i) => (
-              <Card key={t.id} className="p-4 rounded-2xl shadow-card flex items-center gap-3">
-                <span className="text-lg font-display font-bold text-muted-foreground w-6 text-center">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{t.title}</p>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                    {t.deadlineWeight > 0 && (
-                      <Badge variant="destructive" className="text-[9px] h-4 rounded-full">🔥 +{t.deadlineWeight}</Badge>
-                    )}
-                    {t.projectCompletionWeight > 0 && (
-                      <Badge variant="secondary" className="text-[9px] h-4 rounded-full">🏁 +{t.projectCompletionWeight}</Badge>
-                    )}
-                    <Badge variant="outline" className="text-[9px] h-4 rounded-full">
-                      {t.strategicCategory.replace('_', ' ')} +{t.strategicValue}
-                    </Badge>
-                    {t.pipelineBoost > 0 && (
-                      <Badge className="text-[9px] h-4 rounded-full bg-accent text-accent-foreground">📈 +{t.pipelineBoost}</Badge>
-                    )}
-                    <span className="text-[10px] text-muted-foreground">Age +{t.taskAgeScore}</span>
+            {topTasks.map((t, i) => {
+              const isExpanded = expandedTaskId === t.id;
+              const project = t.project_id ? projects.find(p => p.id === t.project_id) : null;
+              const estMins = t.estimated_minutes ?? DURATION_MINUTES[t.estimatedDuration];
+
+              return (
+                <Card key={t.id} className="rounded-2xl shadow-card overflow-hidden">
+                  {/* Main row */}
+                  <div
+                    className="p-4 flex items-center gap-3 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setExpandedTaskId(isExpanded ? null : t.id)}
+                  >
+                    <span className="text-lg font-display font-bold text-muted-foreground w-6 text-center shrink-0">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{t.title}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {project && (
+                          <Badge variant="secondary" className="text-[9px] h-4 rounded-full">📁 {project.name}</Badge>
+                        )}
+                        {t.deadlineWeight > 0 && (
+                          <Badge variant="destructive" className="text-[9px] h-4 rounded-full">🔥 +{t.deadlineWeight}</Badge>
+                        )}
+                        {t.projectCompletionWeight > 0 && (
+                          <Badge variant="secondary" className="text-[9px] h-4 rounded-full">🏁 +{t.projectCompletionWeight}</Badge>
+                        )}
+                        <Badge variant="outline" className="text-[9px] h-4 rounded-full">
+                          {t.strategicCategory.replace(/_/g, ' ')} +{t.strategicValue}
+                        </Badge>
+                        {t.pipelineBoost > 0 && (
+                          <Badge className="text-[9px] h-4 rounded-full bg-accent text-accent-foreground">📈 +{t.pipelineBoost}</Badge>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">Age +{t.taskAgeScore}</span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 flex items-center gap-2">
+                      <div>
+                        <span className="text-lg font-display font-bold text-primary">{t.priorityScore}</span>
+                        <p className="text-[10px] text-muted-foreground">score</p>
+                      </div>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    </div>
                   </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-lg font-display font-bold text-primary">{t.priorityScore}</span>
-                  <p className="text-[10px] text-muted-foreground">score</p>
-                </div>
-              </Card>
-            ))}
+
+                  {/* Expanded detail panel */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 pt-0 border-t space-y-3">
+                      {/* Status & time row */}
+                      <div className="flex items-center gap-3 pt-3 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">Status:</span>
+                          <Select
+                            value={t.status}
+                            onValueChange={(v) => {
+                              updateTask.mutate({ id: t.id, status: v as TaskStatus }, {
+                                onSuccess: () => toast.success(`Moved to ${v}`),
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="h-7 text-xs w-[110px] rounded-lg">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>{estMins}m est.</span>
+                        </div>
+                        {t.due_date && (
+                          <Badge variant="outline" className="text-[10px] rounded-full">
+                            📅 {format(new Date(t.due_date), 'MMM d')}
+                          </Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs rounded-lg ml-auto"
+                          onClick={(e) => { e.stopPropagation(); setDetailTask(t); }}
+                        >
+                          Full details →
+                        </Button>
+                      </div>
+
+                      {/* Context & notes */}
+                      {(t.context || t.notes) && (
+                        <div className="text-xs text-muted-foreground space-y-1 bg-muted/20 rounded-xl p-3">
+                          {t.context && <p><span className="font-medium text-foreground">Context:</span> {t.context}</p>}
+                          {t.notes && <p><span className="font-medium text-foreground">Notes:</span> {t.notes}</p>}
+                        </div>
+                      )}
+
+                      {/* Add progress note */}
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={noteText[t.id] ?? ''}
+                          onChange={e => setNoteText(prev => ({ ...prev, [t.id]: e.target.value }))}
+                          placeholder="Add a progress note..."
+                          className="text-xs min-h-[60px] rounded-xl flex-1"
+                          rows={2}
+                        />
+                        <Button
+                          size="sm"
+                          className="h-auto px-3 rounded-xl self-end"
+                          disabled={!noteText[t.id]?.trim()}
+                          onClick={() => {
+                            const existing = t.notes ?? '';
+                            const timestamp = format(new Date(), 'MMM d, h:mm a');
+                            const newNote = `[${timestamp}] ${noteText[t.id]!.trim()}`;
+                            const updated = existing ? `${newNote}\n${existing}` : newNote;
+                            updateTask.mutate({ id: t.id, notes: updated }, {
+                              onSuccess: () => {
+                                toast.success('Note added');
+                                setNoteText(prev => ({ ...prev, [t.id]: '' }));
+                              },
+                            });
+                          }}
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+
+                      {/* Quick actions */}
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7 rounded-lg"
+                          onClick={() => {
+                            updateTask.mutate({ id: t.id, status: 'Today' as TaskStatus }, {
+                              onSuccess: () => toast.success('Moved to Today'),
+                            });
+                          }}
+                        >
+                          📌 Move to Today
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7 rounded-lg"
+                          onClick={() => {
+                            updateTask.mutate({ id: t.id, status: 'Done' as TaskStatus }, {
+                              onSuccess: () => toast.success('Marked as done!'),
+                            });
+                          }}
+                        >
+                          ✓ Mark Done
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7 rounded-lg"
+                          onClick={() => {
+                            updateTask.mutate({ id: t.id, status: 'Waiting' as TaskStatus }, {
+                              onSuccess: () => toast.success('Moved to Waiting'),
+                            });
+                          }}
+                        >
+                          ⏳ Waiting
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         </section>
       </div>
+
+      <TaskDetailDrawer
+        task={detailTask}
+        open={!!detailTask}
+        onClose={() => setDetailTask(null)}
+        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates })}
+        onDelete={() => {}}
+        projects={projects}
+        milestones={milestones}
+      />
     </AppShell>
   );
 }
