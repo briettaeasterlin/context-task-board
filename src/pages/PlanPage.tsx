@@ -477,6 +477,9 @@ export default function PlanPage() {
                                 </div>
                                 {project && <p className="text-[9px] text-primary truncate">{project.name}</p>}
                                 <p className="text-[9px] text-muted-foreground">{block.duration_minutes}m</p>
+                                {block.notes && block.source === 'auto' && (
+                                  <p className="text-[9px] text-muted-foreground/70 truncate italic">{block.notes}</p>
+                                )}
                               </div>
                             );
                           })}
