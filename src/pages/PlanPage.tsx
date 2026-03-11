@@ -472,16 +472,17 @@ export default function PlanPage() {
                             const project = task?.project_id ? projectMap.get(task.project_id) : null;
                             return (
                               <div key={block.id} draggable={!block.locked} onDragStart={e => handleBlockDragStart(e, block)}
-                                className={cn("absolute left-0.5 right-0.5 rounded-lg border px-1.5 py-0.5 overflow-hidden z-20 cursor-grab active:cursor-grabbing group",
-                                  "bg-primary/10 border-primary/30 hover:border-primary/60 transition-colors", block.locked && "cursor-default opacity-80")}
+                                onClick={() => { if (task) setDetailTask(task); }}
+                                className={cn("absolute left-0.5 right-0.5 rounded-lg border px-1.5 py-0.5 overflow-hidden z-20 cursor-pointer group",
+                                  "bg-primary/10 border-primary/30 hover:border-primary/60 transition-colors", block.locked && "opacity-80")}
                                 style={{ top: minutesToTop(startMins), height: Math.max(minutesToHeight(block.duration_minutes), 24) }}>
                                 <div className="flex items-start justify-between gap-0.5">
                                   <p className="text-[10px] font-medium truncate flex-1">{task?.title ?? 'Untitled'}</p>
                                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => updateBlock.mutate({ id: block.id, locked: !block.locked })} className="text-muted-foreground hover:text-foreground">
+                                    <button onClick={(e) => { e.stopPropagation(); updateBlock.mutate({ id: block.id, locked: !block.locked }); }} className="text-muted-foreground hover:text-foreground">
                                       {block.locked ? <Lock className="h-2.5 w-2.5" /> : <Unlock className="h-2.5 w-2.5" />}
                                     </button>
-                                    <button onClick={() => deleteBlock.mutate(block.id)} className="text-muted-foreground hover:text-destructive">
+                                    <button onClick={(e) => { e.stopPropagation(); deleteBlock.mutate(block.id); }} className="text-muted-foreground hover:text-destructive">
                                       <Trash2 className="h-2.5 w-2.5" />
                                     </button>
                                   </div>
