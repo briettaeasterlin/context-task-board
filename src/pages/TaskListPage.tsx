@@ -53,6 +53,13 @@ export default function TaskListPage({ filterStatus }: Props) {
         <TaskTable tasks={filtered} projects={projects} allTasks={tasks} selectedIds={selectedIds} onToggleSelect={toggleSelect}
           onSelectAll={() => setSelectedIds(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(t => t.id)))}
           onTaskClick={setDetailTask} onInlineUpdate={handleUpdate} showScoring />
+        {hasMoreTasks && (
+          <div className="flex justify-center pt-4">
+            <Button variant="outline" size="sm" onClick={loadMore} disabled={isLoadingMore}>
+              {isLoadingMore ? 'Loading…' : 'Load more tasks'}
+            </Button>
+          </div>
+        )}
       </div>
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={id => deleteTask.mutate(id)} projects={projects} milestones={milestones} />
