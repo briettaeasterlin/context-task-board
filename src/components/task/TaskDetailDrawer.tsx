@@ -28,6 +28,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
     due_date: '', target_window: '',
     impact_score: '' as string,
     estimated_minutes: '' as string,
+    strategic_phase: '' as string,
   });
 
   useEffect(() => {
