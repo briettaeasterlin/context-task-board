@@ -1,6 +1,6 @@
-# Vector — AI-Powered Execution Planning
+# NextMove — Always Know Your Next Move
 
-A personal task management system designed for deep work and strategic clarity. Vector uses AI to extract tasks from unstructured input, run weekly board reviews, and keep your focus tight.
+A personal task management system designed for deep work and strategic clarity. NextMove uses AI to extract tasks from unstructured input, run weekly board reviews, and keep your focus tight.
 
 **Live app**: [context-task-board.lovable.app](https://context-task-board.lovable.app)
 
