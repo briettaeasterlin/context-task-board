@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Task, Project, Milestone } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Layers, ExternalLink } from 'lucide-react';
 import { isPast, isToday, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
