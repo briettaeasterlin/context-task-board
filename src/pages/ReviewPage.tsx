@@ -63,7 +63,7 @@ export default function ReviewPage() {
     const ids = Array.from(selectedIds);
     bulkUpdateTasks.mutate({ ids, updates }, { onSuccess: () => { toast.success(`${ids.length} updated`); setSelectedIds(new Set()); } });
   }, [selectedIds, bulkUpdateTasks]);
-  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
+  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Removed from route') }); }, [deleteTask]);
   const toggleSelect = useCallback((id: string) => { setSelectedIds(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }, []);
 
   // Section 1: What happened
