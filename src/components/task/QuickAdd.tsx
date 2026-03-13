@@ -414,6 +414,7 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
           )}
         </div>
       </form>
+      <p className="text-[10px] text-muted-foreground font-mono ml-1 -mt-1">Try: "Add a task" or "Plan tomorrow's route"</p>
 
       {result && (
         <ExtractionReviewModal
