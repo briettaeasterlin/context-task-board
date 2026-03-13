@@ -10,7 +10,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, CalendarDays } from 'lucide-react';
+import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
