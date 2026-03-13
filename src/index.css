@@ -49,6 +49,9 @@
 
     --radius: 0.75rem;
 
+    /* Wayfinding divider */
+    --divider: 160 10% 89%;
+
     --sidebar-background: 150 11% 97%;
     --sidebar-foreground: 187 12% 28%;
     --sidebar-primary: 187 32% 20%;
@@ -124,6 +127,8 @@
     --input: 187 16% 16%;
     --ring: 174 47% 47%;
 
+    --divider: 187 14% 14%;
+
     --surface: 187 25% 10%;
     --surface-hover: 187 20% 13%;
     --surface-active: 187 16% 16%;
@@ -181,27 +186,73 @@
   }
 }
 
-/* Wayfinding divider — transit line accent */
+/* === WAYFINDING STRUCTURAL ELEMENTS === */
+
+/* Transit path divider between sections */
 .wayfinding-divider {
-  height: 2px;
-  background: linear-gradient(90deg, hsl(var(--accent) / 0.3), hsl(var(--mint)) 50%, hsl(var(--accent) / 0.3));
+  height: 1px;
+  background: hsl(var(--divider));
+  position: relative;
 }
 
-/* Transit node indicator */
-.transit-node {
-  width: 8px;
-  height: 8px;
+.wayfinding-divider::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  border: 2px solid hsl(var(--accent));
-  background: hsl(var(--background));
+  border: 1.5px solid hsl(var(--accent) / 0.4);
+  background: hsl(var(--card));
+}
+
+/* Transit node indicator — open circle */
+.transit-node {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--primary) / 0.4);
+  background: hsl(var(--card));
   flex-shrink: 0;
 }
 
 .transit-node.active {
+  border-color: hsl(var(--accent));
   background: hsl(var(--accent));
 }
 
-/* Habit celebration */
+.transit-node.filled {
+  border-color: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* === DIRECTIONAL MOTION === */
+
+/* Task completion — slide right then fade */
+@keyframes slide-right-fade {
+  0% { opacity: 1; transform: translateX(0); }
+  60% { opacity: 0.6; transform: translateX(12px); }
+  100% { opacity: 0; transform: translateX(24px); }
+}
+
+.animate-slide-right-fade {
+  animation: slide-right-fade 0.3s ease-out forwards;
+}
+
+/* Subtle directional hover for buttons */
+@layer utilities {
+  .hover-forward {
+    @apply transition-all duration-150;
+  }
+  .hover-forward:hover {
+    transform: translateX(1px);
+  }
+}
+
+/* === EXISTING ANIMATIONS === */
+
 @keyframes habit-celebrate {
   0% { opacity: 0; transform: translateY(4px) scale(0.95); }
   20% { opacity: 1; transform: translateY(0) scale(1); }
@@ -223,12 +274,12 @@
 
 @keyframes done-pop {
   0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.06); }
   100% { transform: scale(1); }
 }
 
 .animate-done-pop {
-  animation: done-pop 0.25s ease-out;
+  animation: done-pop 0.2s ease-out;
 }
 
 @keyframes shimmer {
@@ -245,10 +296,10 @@
 /* Mint glow for task completion */
 @keyframes mint-glow {
   0% { box-shadow: 0 0 0 0 hsl(var(--mint) / 0.4); }
-  50% { box-shadow: 0 0 12px 4px hsl(var(--mint) / 0.2); }
+  50% { box-shadow: 0 0 8px 3px hsl(var(--mint) / 0.15); }
   100% { box-shadow: 0 0 0 0 hsl(var(--mint) / 0); }
 }
 
 .animate-mint-glow {
-  animation: mint-glow 0.6s ease-out;
+  animation: mint-glow 0.5s ease-out;
 }
