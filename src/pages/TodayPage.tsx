@@ -10,7 +10,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
+import { CalendarClock, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
@@ -27,11 +27,11 @@ interface TimelineItem {
   task?: Task;
 }
 
-function getGreeting(): { text: string; emoji: string } {
+function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return { text: 'Good morning', emoji: '☀️' };
-  if (hour < 17) return { text: 'Good afternoon', emoji: '🌤️' };
-  return { text: 'Good evening', emoji: '🌙' };
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export default function TodayPage() {
@@ -53,7 +53,6 @@ export default function TodayPage() {
 
   const greeting = getGreeting();
 
-  // Build timeline
   const timeline = useMemo(() => {
     const items: TimelineItem[] = [];
     for (const ev of events) {
@@ -120,7 +119,7 @@ export default function TodayPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
   const handleMarkDone = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Task complete — NextMove will find your next move.') });
+    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Route cleared. Next move ready.') });
   }, [updateTask]);
 
   const formatDueLabel = (dateStr: string) => {
@@ -141,15 +140,15 @@ export default function TodayPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Greeting */}
-        <div className="pt-2">
-           <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-             {greeting.text}, Brietta
-           </h1>
-           <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
-             {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
-           </p>
+        <div className="pt-1">
+          <h1 className="text-2xl font-display font-bold">
+            {greeting}, Brietta
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
+            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
+          </p>
         </div>
 
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
@@ -157,110 +156,125 @@ export default function TodayPage() {
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
-        {/* Today's Timeline */}
+        {/* Transit Path Timeline */}
         {timeline.length > 0 && (
           <section>
-           <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
-              <CalendarClock className="h-4 w-4 text-accent" /> Timeline
-            </h2>
-            <div className="space-y-2">
-              {timeline.map((item) => {
-                const isPastItem = item.startMinutes + item.durationMinutes < nowMinutes;
-                const isCurrent = item.startMinutes <= nowMinutes && item.startMinutes + item.durationMinutes > nowMinutes;
+            <SectionHeader icon={<CalendarClock className="h-4 w-4" />} label="Timeline" />
+            <div className="relative ml-3">
+              {/* Transit path line */}
+              <div className="absolute left-[3px] top-3 bottom-3 w-px bg-mint" />
 
-                return (
-                  <Card
-                    key={`${item.type}-${item.id}`}
-                    className={cn(
-                      "p-3 flex items-center gap-3 transition-all duration-200 rounded-xl shadow-card",
-                      item.type === 'block' && "cursor-pointer hover:shadow-elevated hover:-translate-y-0.5",
-                      isPastItem && "opacity-40",
-                      isCurrent && "border-primary/50 bg-accent/40 shadow-elevated"
-                    )}
-                    onClick={() => item.task && setDetailTask(item.task)}
-                  >
-                    <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground w-20 flex-shrink-0">
-                      <Clock className="h-3.5 w-3.5" />
-                      {formatTime(item.startMinutes)}
-                    </div>
-                    <div className={cn(
-                      "w-1 h-7 rounded-full flex-shrink-0",
-                      item.type === 'event' ? "bg-muted-foreground/30" : "bg-primary/60"
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">{item.durationMinutes}m</span>
-                        {item.projectName && <span className="text-xs text-primary">{item.projectName}</span>}
-                        {item.type === 'event' && <Badge variant="outline" className="text-[10px] h-5 rounded-full">Calendar</Badge>}
-                      </div>
-                    </div>
-                    {isCurrent && (
-                      <Badge variant="default" className="text-[10px] h-5 bg-primary rounded-full">Now</Badge>
-                    )}
-                    {item.type === 'block' && item.task && (
-                      <Button
-                        variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg"
-                        onClick={e => { e.stopPropagation(); handleMarkDone(item.task!.id); }}
+              <div className="space-y-0">
+                {timeline.map((item, idx) => {
+                  const isPastItem = item.startMinutes + item.durationMinutes < nowMinutes;
+                  const isCurrent = item.startMinutes <= nowMinutes && item.startMinutes + item.durationMinutes > nowMinutes;
+
+                  return (
+                    <div
+                      key={`${item.type}-${item.id}`}
+                      className="relative flex items-start gap-4 py-2 group"
+                    >
+                      {/* Transit node */}
+                      <div className={cn(
+                        'relative z-10 mt-3 w-[7px] h-[7px] rounded-full border-2 flex-shrink-0 transition-all duration-150',
+                        isCurrent
+                          ? 'border-accent bg-accent shadow-[0_0_6px_hsl(var(--accent)/0.4)]'
+                          : isPastItem
+                            ? 'border-muted-foreground/30 bg-muted-foreground/30'
+                            : 'border-primary bg-background'
+                      )} />
+
+                      {/* Timeline card */}
+                      <Card
+                        className={cn(
+                          "flex-1 p-3 flex items-center gap-3 transition-all duration-150 rounded-xl",
+                          item.type === 'block' && "cursor-pointer hover:shadow-card hover:translate-x-px",
+                          isPastItem && "opacity-40",
+                          isCurrent && "border-accent/40 bg-mint/30 shadow-card"
+                        )}
+                        onClick={() => item.task && setDetailTask(item.task)}
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Done
-                      </Button>
-                    )}
-                  </Card>
-                );
-              })}
+                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground w-20 flex-shrink-0">
+                          <Clock className="h-3 w-3" />
+                          {formatTime(item.startMinutes)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{item.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-muted-foreground font-mono">{item.durationMinutes}m</span>
+                            {item.projectName && <span className="text-xs text-accent font-medium">{item.projectName}</span>}
+                            {item.type === 'event' && <Badge variant="outline" className="text-[10px] h-5 rounded-full font-mono">Cal</Badge>}
+                          </div>
+                        </div>
+                        {isCurrent && (
+                          <Badge className="text-[10px] h-5 bg-accent text-accent-foreground rounded-full font-mono">Now</Badge>
+                        )}
+                        {item.type === 'block' && item.task && (
+                          <Button
+                            variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg hover:translate-x-px transition-all duration-150"
+                            onClick={e => { e.stopPropagation(); handleMarkDone(item.task!.id); }}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Done
+                          </Button>
+                        )}
+                      </Card>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </section>
         )}
 
+        {/* Wayfinding divider */}
+        <div className="wayfinding-divider" />
+
         {/* Urgent Deadlines */}
         {urgentOnlyIds.length > 0 && (
           <section>
-            <h2 className="font-display text-base font-semibold text-destructive flex items-center gap-2 mb-3 uppercase tracking-wide">
-              <AlertCircle className="h-4 w-4" /> Imminent Deadlines
-            </h2>
+            <SectionHeader icon={<AlertCircle className="h-4 w-4" />} label="Imminent Deadlines" variant="destructive" />
             <div className="space-y-2">
               {urgentOnlyIds.map(t => (
-                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 rounded-xl shadow-card border-destructive/20" onClick={() => setDetailTask(t)}>
+                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-card hover:translate-x-px transition-all duration-150 rounded-xl border-destructive/20" onClick={() => setDetailTask(t)}>
+                  <span className="transit-node border-destructive bg-destructive" style={{ width: 6, height: 6, borderWidth: 0 }} />
                   <span className="text-sm flex-1 font-medium">{t.title}</span>
                   <Badge variant="destructive" className="text-[10px] font-mono rounded-full">{formatDueLabel(t.due_date!)}</Badge>
-                  {t.project_id && <span className="text-xs text-primary">{projectMap.get(t.project_id)?.name}</span>}
+                  {t.project_id && <span className="text-xs text-accent font-medium">{projectMap.get(t.project_id)?.name}</span>}
                 </Card>
               ))}
             </div>
           </section>
         )}
 
-        {/* Next Tasks - Focus */}
+        {/* Today's Moves */}
         <section>
-          <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
-            <Navigation className="h-4 w-4 text-accent" /> Today's Moves
-          </h2>
+          <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Moves" />
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
+            <p className="text-sm text-muted-foreground text-center py-8 font-mono">Loading route...</p>
           ) : (
             <FocusCardStack nextTasks={nextTasks} allTasks={tasks} projects={projects} milestones={milestones}
               onMarkDone={handleMarkDone} onSelect={setDetailTask} formatDueLabel={formatDueLabel} />
           )}
         </section>
 
-        {/* Upcoming Deadlines */}
+        {/* Coming Up */}
         {upcomingDeadlines.length > 0 && (
           <section>
-            <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
-              <CalendarDays className="h-4 w-4 text-accent" /> Coming Up
-            </h2>
+            <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Coming Up" />
             <div className="space-y-2">
               {upcomingDeadlines.map(t => (
-                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 rounded-xl shadow-card" onClick={() => setDetailTask(t)}>
+                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-card hover:translate-x-px transition-all duration-150 rounded-xl" onClick={() => setDetailTask(t)}>
+                  <span className="transit-node" />
                   <span className="text-sm flex-1 text-muted-foreground">{t.title}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono rounded-full">📅 {format(new Date(t.due_date!), 'EEE, MMM d')}</Badge>
-                  {t.project_id && <span className="text-xs text-primary">{projectMap.get(t.project_id)?.name}</span>}
+                  <Badge variant="outline" className="text-[10px] font-mono rounded-full">{format(new Date(t.due_date!), 'EEE, MMM d')}</Badge>
+                  {t.project_id && <span className="text-xs text-accent font-medium">{projectMap.get(t.project_id)?.name}</span>}
                 </Card>
               ))}
             </div>
           </section>
         )}
+
+        <div className="wayfinding-divider" />
 
         <HabitSection />
       </div>
@@ -268,5 +282,25 @@ export default function TodayPage() {
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
     </AppShell>
+  );
+}
+
+/* Reusable section header with transit node */
+function SectionHeader({ icon, label, variant }: { icon: React.ReactNode; label: string; variant?: 'destructive' }) {
+  return (
+    <h2 className={cn(
+      "font-display text-xs font-semibold flex items-center gap-2.5 mb-3 uppercase tracking-[0.12em]",
+      variant === 'destructive' ? 'text-destructive' : 'text-muted-foreground'
+    )}>
+      <span className={cn(
+        'flex items-center justify-center w-6 h-6 rounded-full border-2',
+        variant === 'destructive'
+          ? 'border-destructive/40 text-destructive'
+          : 'border-accent/40 text-accent'
+      )}>
+        {icon}
+      </span>
+      {label}
+    </h2>
   );
 }
