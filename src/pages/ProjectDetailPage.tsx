@@ -283,22 +283,195 @@ export default function ProjectDetailPage() {
     toast.success('Snapshot copied to clipboard');
   };
 
-  const handlePasteUpdate = useCallback(async () => {
+  const handlePasteExtract = useCallback(async () => {
     if (!pasteContent.trim() || !user || !id) return;
-    const { error } = await supabase.from('updates').insert({
-      user_id: user.id,
-      project_id: id,
-      content: pasteContent.trim(),
-      source: 'doc' as any,
-    } as any);
-    if (error) { toast.error('Failed to save update'); return; }
-    queryClient.invalidateQueries({ queryKey: ['updates'] });
-    toast.success('Update added — check the Updates tab to review');
-    setPasteContent('');
-    setPasteOpen(false);
-  }, [pasteContent, user, id, queryClient]);
+    setPasteLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-extract', {
+        body: {
+          rawText: pasteContent,
+          projectId: id,
+          projectName: project?.name || null,
+          source: 'paste_update',
+          defaults: { area: project?.area || 'Personal' },
+          existingProjects: projects.map(p => ({ id: p.id, name: p.name, area: p.area })),
+          existingTaskTitles: tasks.slice(0, 200).map(t => ({ title: t.title, status: t.status, area: t.area })),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-  if (!project) return <AppShell><p className="text-muted-foreground text-sm py-8 text-center">Project not found.</p></AppShell>;
+      setPasteResult({
+        summary: data.summary ?? null,
+        extractedTasks: (data.extractedTasks || []).map((t: any) => ({
+          title: t.title,
+          area: t.area || project?.area || 'Personal',
+          status: t.status || 'Backlog',
+          context: t.context || null,
+          blockedBy: t.blockedBy || null,
+          dueDate: t.dueDate || null,
+          targetWindow: t.targetWindow || null,
+          projectId: t.projectId || id,
+          milestoneId: t.milestoneId || null,
+          selected: true,
+        })),
+        taskUpdates: (data.taskUpdates || []).map((u: any) => ({
+          description: u.description,
+          matchHint: u.matchHint || null,
+          newStatus: u.newStatus || null,
+          blockedBy: u.blockedBy || null,
+          selected: true,
+        })),
+        contextNotes: (data.contextNotes || []).map((c: any) => ({
+          content: c.content,
+          targetHint: c.targetHint || null,
+          selected: true,
+        })),
+        extractedClarifyQuestions: (data.extractedClarifyQuestions || []).map((q: any) => ({
+          question: q.question,
+          reason: q.reason || null,
+          suggestedOptions: q.suggestedOptions || null,
+          selected: true,
+        })),
+        directives: (data.directives || []).map((d: any) => ({
+          type: d.type,
+          label: d.label,
+          projectName: d.projectName || null,
+          projectArea: d.projectArea || null,
+          projectSummary: d.projectSummary || null,
+          taskMatchHints: d.taskMatchHints || [],
+          projectMatchHint: d.projectMatchHint || null,
+          newArea: d.newArea || null,
+          newStatus: d.newStatus || null,
+          milestones: d.milestones || [],
+          keepNextHints: d.keepNextHints || [],
+          demoteToBacklog: d.demoteToBacklog ?? false,
+          selected: true,
+        })),
+      });
+      setPasteOpen(false);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to extract');
+    }
+    setPasteLoading(false);
+  }, [pasteContent, user, id, project, projects, tasks]);
+
+  const handlePasteConfirm = useCallback(async () => {
+    if (!pasteResult || !user || !id) return;
+    setPasteSaving(true);
+    try {
+      const selectedTasks = pasteResult.extractedTasks.filter(t => t.selected);
+      const selectedUpdates = pasteResult.taskUpdates.filter(u => u.selected);
+      const selectedContext = pasteResult.contextNotes.filter(c => c.selected);
+      const selectedQuestions = pasteResult.extractedClarifyQuestions.filter(q => q.selected);
+      const selectedDirectives = pasteResult.directives.filter(d => d.selected);
+
+      // Log raw input as an Update record
+      await supabase.from('updates').insert({
+        user_id: user.id,
+        project_id: id,
+        source: 'doc' as any,
+        content: pasteContent,
+        extracted_summary: pasteResult.summary,
+        extracted_tasks: selectedTasks,
+      } as any);
+
+      // Execute directives
+      const createdProjectIds: Record<string, string> = {};
+      for (const d of selectedDirectives) {
+        if (d.type === 'create_project' && d.projectName) {
+          const { data: newProj } = await supabase.from('projects').insert({
+            user_id: user.id, name: d.projectName, area: d.projectArea || 'Personal', summary: d.projectSummary || null,
+          } as any).select().single();
+          if (newProj) createdProjectIds[d.projectName.toLowerCase()] = (newProj as any).id;
+        }
+        if (d.type === 'reclassify' && d.taskMatchHints.length > 0) {
+          for (const hint of d.taskMatchHints) {
+            const { data: matched } = await supabase.from('tasks').select('id').eq('user_id', user.id).ilike('title', `%${hint}%`).limit(3);
+            if (matched) {
+              const updates: any = {};
+              if (d.newArea) updates.area = d.newArea;
+              if (d.newStatus) updates.status = d.newStatus;
+              if (Object.keys(updates).length > 0) {
+                for (const m of matched) await supabase.from('tasks').update(updates).eq('id', m.id);
+              }
+            }
+          }
+        }
+        if (d.type === 'create_milestones' && d.milestones.length > 0) {
+          let targetProjId = id;
+          if (d.projectMatchHint) {
+            const hint = d.projectMatchHint.toLowerCase();
+            const match = projects.find(p => p.name.toLowerCase().includes(hint));
+            if (match) targetProjId = match.id;
+          }
+          const msRows = d.milestones.map((ms, idx) => ({
+            user_id: user.id, project_id: targetProjId, name: ms.name, description: ms.description || null, order_index: idx,
+          }));
+          await supabase.from('milestones').insert(msRows as any[]);
+        }
+      }
+
+      // Create new tasks
+      if (selectedTasks.length > 0) {
+        const rows = selectedTasks.map(t => ({
+          user_id: user.id, title: t.title, area: t.area, status: t.status,
+          context: t.context, blocked_by: t.blockedBy, due_date: t.dueDate,
+          target_window: t.targetWindow, project_id: t.projectId || id,
+          milestone_id: t.milestoneId, notes: null, tags: [], source: 'paste_update',
+        }));
+        await supabase.from('tasks').insert(rows as any[]);
+      }
+
+      // Apply task updates (status changes)
+      for (const u of selectedUpdates) {
+        if (u.matchHint && u.newStatus) {
+          const { data: matched } = await supabase.from('tasks').select('id')
+            .eq('user_id', user.id).ilike('title', `%${u.matchHint}%`).limit(1);
+          if (matched && matched.length > 0) {
+            const updates: any = { status: u.newStatus };
+            if (u.blockedBy) updates.blocked_by = u.blockedBy;
+            await supabase.from('tasks').update(updates).eq('id', matched[0].id);
+          }
+        }
+      }
+
+      // Append context notes to scope_notes
+      if (selectedContext.length > 0) {
+        const { data: proj } = await supabase.from('projects').select('scope_notes').eq('id', id).single();
+        const existing = proj?.scope_notes || '';
+        const appended = selectedContext.map(c => c.content).join('\n');
+        await supabase.from('projects').update({
+          scope_notes: existing ? `${existing}\n\n${appended}` : appended,
+        }).eq('id', id);
+      }
+
+      // Create clarify questions
+      if (selectedQuestions.length > 0) {
+        const qRows = selectedQuestions.map(q => ({
+          user_id: user.id, project_id: id, question: q.question, reason: q.reason,
+          suggested_options: q.suggestedOptions, status: 'open',
+        }));
+        await supabase.from('clarify_questions').insert(qRows as any[]);
+      }
+
+      const counts = [
+        selectedDirectives.length && `${selectedDirectives.length} directives`,
+        selectedTasks.length && `${selectedTasks.length} tasks`,
+        selectedUpdates.length && `${selectedUpdates.length} updates`,
+        selectedContext.length && `${selectedContext.length} notes`,
+        selectedQuestions.length && `${selectedQuestions.length} questions`,
+      ].filter(Boolean).join(', ');
+      toast.success(`Applied: ${counts}`);
+
+      queryClient.invalidateQueries();
+      setPasteResult(null);
+      setPasteContent('');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save');
+    }
+    setPasteSaving(false);
+  }, [pasteResult, pasteContent, user, id, projects, queryClient]);
 
   return (
     <AppShell>
