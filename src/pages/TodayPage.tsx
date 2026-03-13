@@ -144,13 +144,12 @@ export default function TodayPage() {
       <div className="space-y-6">
         {/* Greeting */}
         <div className="pt-2">
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
-            <span>{greeting.emoji}</span>
-            {greeting.text}, Brietta
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
-          </p>
+           <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+             {greeting.text}, Brietta
+           </h1>
+           <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
+             {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
+           </p>
         </div>
 
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
