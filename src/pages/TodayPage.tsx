@@ -277,6 +277,10 @@ export default function TodayPage() {
 
         <div className="wayfinding-divider" />
 
+        <RouteProgress tasks={tasks} />
+
+        <div className="wayfinding-divider" />
+
         <HabitSection />
       </div>
 
