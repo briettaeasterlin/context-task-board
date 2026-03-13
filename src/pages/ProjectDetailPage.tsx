@@ -570,6 +570,30 @@ export default function ProjectDetailPage() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Paste Update Modal ── */}
+      <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Paste Update</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Paste output from ChatGPT, Claude, or any external tool. This will be saved as a project update you can review and act on.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={pasteContent}
+            onChange={e => setPasteContent(e.target.value)}
+            placeholder="Paste status update, task list, meeting notes, or AI output here..."
+            className="rounded-xl min-h-[200px] text-sm font-mono"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasteOpen(false)} className="rounded-xl">Cancel</Button>
+            <Button onClick={handlePasteUpdate} disabled={!pasteContent.trim()} className="rounded-xl">
+              <ClipboardPaste className="h-3.5 w-3.5 mr-1.5" /> Save Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
     </AppShell>
