@@ -317,8 +317,14 @@ export default function ProjectDetailPage() {
                 <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
               </div>
             </div>
+            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={copySnapshot}>
+              <Copy className="h-3 w-3 mr-1" /> Copy
+            </Button>
             <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={exportSnapshot}>
-              <FileText className="h-3 w-3 mr-1" /> Snapshot
+              <FileText className="h-3 w-3 mr-1" /> Export
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={() => setPasteOpen(true)}>
+              <ClipboardPaste className="h-3 w-3 mr-1" /> Paste Update
             </Button>
 
             {/* Route Controls Menu */}
