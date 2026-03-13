@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarClock, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
+import { RouteProgress } from '@/components/today/RouteProgress';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
