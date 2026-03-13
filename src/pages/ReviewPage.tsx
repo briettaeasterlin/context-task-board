@@ -156,7 +156,7 @@ export default function ReviewPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
-            <span>🔁</span> Review
+            <span>🔁</span> Route Review
           </h1>
           <p className="text-sm text-muted-foreground mt-1 italic">{getRitualMessage()}</p>
         </div>
