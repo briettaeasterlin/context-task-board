@@ -249,7 +249,7 @@ export default function TodayPage() {
 
         {/* Today's Moves */}
         <section>
-          <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Moves" />
+          <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Route" />
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8 font-mono">Loading route...</p>
           ) : (
