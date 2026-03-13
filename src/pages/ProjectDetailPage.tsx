@@ -753,7 +753,7 @@ export default function ProjectDetailPage() {
           <DialogHeader>
             <DialogTitle className="font-display">Paste Update</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Paste output from ChatGPT, Claude, or any external tool. This will be saved as a project update you can review and act on.
+              Paste output from ChatGPT, Claude, or any external tool. AI will parse it to extract tasks, status changes, and notes.
             </DialogDescription>
           </DialogHeader>
           <Textarea
@@ -764,12 +764,26 @@ export default function ProjectDetailPage() {
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setPasteOpen(false)} className="rounded-xl">Cancel</Button>
-            <Button onClick={handlePasteUpdate} disabled={!pasteContent.trim()} className="rounded-xl">
-              <ClipboardPaste className="h-3.5 w-3.5 mr-1.5" /> Save Update
+            <Button onClick={handlePasteExtract} disabled={pasteLoading || !pasteContent.trim()} className="rounded-xl">
+              {pasteLoading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+              {pasteLoading ? 'Analyzing...' : 'Extract & Review'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {pasteResult && (
+        <ExtractionReviewModal
+          open={!!pasteResult}
+          onClose={() => setPasteResult(null)}
+          result={pasteResult}
+          onResultChange={setPasteResult}
+          projects={projects}
+          milestones={milestones}
+          saving={pasteSaving}
+          onConfirm={handlePasteConfirm}
+        />
+      )}
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
