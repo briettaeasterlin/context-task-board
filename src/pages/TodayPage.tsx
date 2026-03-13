@@ -148,7 +148,7 @@ export default function TodayPage() {
             {greeting}, Brietta
           </h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
-            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
+            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} stops on today's route
           </p>
         </div>
 
