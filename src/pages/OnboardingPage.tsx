@@ -1,23 +1,97 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, ArrowLeft, Inbox, Brain, RefreshCw, Sparkles } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowRight, ArrowLeft, Check, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AIImportPanel } from '@/components/import/AIImportPanel';
-
+import { useProjects } from '@/hooks/useProjects';
+import { useTasks } from '@/hooks/useTasks';
+import { toast } from 'sonner';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
+  const { projects } = useProjects();
+  const { tasks, updateTask } = useTasks();
+
+  // Step 2: active project selection
+  const [activeProjectIds, setActiveProjectIds] = useState<Set<string>>(new Set());
+
+  // Step 3: selected tasks for today's route
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+
+  // When moving to step 2 after import, pre-select projects
+  const handleImportComplete = useCallback(() => {
+    setTimeout(() => {
+      queryClient.invalidateQueries();
+      setStep(2);
+    }, 500);
+  }, [queryClient]);
+
+  // When entering step 2, auto-select all projects (up to 6)
+  const handleEnterStep2 = useCallback(() => {
+    const ids = new Set(projects.slice(0, 6).map(p => p.id));
+    setActiveProjectIds(ids);
+    setStep(2);
+  }, [projects]);
+
+  // When entering step 3, suggest tasks from active projects
+  const suggestedTasks = useMemo(() => {
+    return tasks
+      .filter(t => t.status === 'Next' || t.status === 'Today' || t.status === 'Backlog')
+      .filter(t => !t.project_id || activeProjectIds.has(t.project_id))
+      .sort((a, b) => {
+        // Prioritize Next, then Today, then Backlog
+        const statusOrder: Record<string, number> = { Next: 0, Today: 1, Backlog: 2 };
+        return (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
+      })
+      .slice(0, 8);
+  }, [tasks, activeProjectIds]);
+
+  const handleEnterStep3 = useCallback(() => {
+    const ids = new Set(suggestedTasks.slice(0, 5).map(t => t.id));
+    setSelectedTaskIds(ids);
+    setStep(3);
+  }, [suggestedTasks]);
+
+  const handleConfirmRoute = useCallback(async () => {
+    // Mark selected tasks as "Next" (today's route)
+    for (const id of selectedTaskIds) {
+      updateTask.mutate({ id, status: 'Next' });
+    }
+    toast.success('Route plotted. You\'re ready.');
+    setStep(4);
+  }, [selectedTaskIds, updateTask]);
+
+  const toggleProject = (id: string) => {
+    setActiveProjectIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleTask = (id: string) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-xl">
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map(s => (
+          {[1, 2, 3, 4].map(s => (
             <div key={s} className={cn(
               "w-3 h-3 rounded-full transition-colors",
               s <= step ? "bg-accent" : "bg-muted"
@@ -29,13 +103,13 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">Bring your work into NextMove</h2>
+              <h2 className="font-display text-2xl font-bold">What are you currently working on?</h2>
               <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Paste this prompt into ChatGPT, Claude, or any AI tool you use. It will organize your current work into a format NextMove can read.
+                Paste a task list, project ideas, or notes. Or copy this prompt into ChatGPT or Claude and paste back the result.
               </p>
             </div>
 
-            <AIImportPanel source="onboarding" onImportComplete={() => setStep(2)} compact />
+            <AIImportPanel source="onboarding" onImportComplete={handleImportComplete} compact />
 
             <Button
               variant="ghost"
@@ -48,88 +122,130 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── STEP 2: How NextMove Works ── */}
+        {/* ── STEP 2: Identify Active Projects ── */}
         {step === 2 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">How NextMove keeps you on track</h2>
+              <h2 className="font-display text-2xl font-bold">Which initiatives are currently active?</h2>
+              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                Select the projects you're actively working on. Unselected projects move to the background.
+              </p>
             </div>
 
-            <div className="space-y-4">
-              <Card className="p-5 rounded-2xl shadow-card">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0 mt-0.5">
-                    <Inbox className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-semibold mb-2">Statuses</h3>
-                    <p className="text-xs text-muted-foreground mb-2">Every task has a status that tells NextMove what to do with it.</p>
-                    <div className="space-y-1 text-xs">
-                      <div><Badge variant="outline" className="text-[10px] rounded-full mr-1.5">Next</Badge>You are actively working on this.</div>
-                      <div><Badge variant="outline" className="text-[10px] rounded-full mr-1.5">Waiting</Badge>Blocked on someone else.</div>
-                      <div><Badge variant="outline" className="text-[10px] rounded-full mr-1.5">Backlog</Badge>Known work, not started yet.</div>
-                      <div><Badge variant="outline" className="text-[10px] rounded-full mr-1.5">Someday</Badge>Ideas for later.</div>
-                      <div><Badge variant="outline" className="text-[10px] rounded-full mr-1.5">Done</Badge>Completed.</div>
+            {projects.length === 0 ? (
+              <Card className="p-6 rounded-2xl shadow-card text-center">
+                <p className="text-sm text-muted-foreground">No projects imported yet. Continue to set up your first route.</p>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {projects.map(p => (
+                  <Card
+                    key={p.id}
+                    className={cn(
+                      "p-4 rounded-xl cursor-pointer transition-all duration-150 hover:translate-x-px",
+                      activeProjectIds.has(p.id)
+                        ? "border-accent/40 bg-mint/10 shadow-card"
+                        : "shadow-card"
+                    )}
+                    onClick={() => toggleProject(p.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={activeProjectIds.has(p.id)}
+                        onCheckedChange={() => toggleProject(p.id)}
+                        className="shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{p.name}</p>
+                        {p.summary && <p className="text-xs text-muted-foreground truncate mt-0.5">{p.summary}</p>}
+                      </div>
+                      <Badge variant="outline" className="text-[10px] rounded-full">{p.area}</Badge>
                     </div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-5 rounded-2xl shadow-card">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-semibold mb-1">Today's Moves</h3>
-                    <p className="text-xs text-muted-foreground">Each day, NextMove looks at your Next tasks and suggests what to focus on. Open the Today view to see your plan.</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-5 rounded-2xl shadow-card">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0 mt-0.5">
-                    <RefreshCw className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-semibold mb-1">Weekly Review</h3>
-                    <p className="text-xs text-muted-foreground">Once a week, NextMove surfaces stale tasks, overdue items, and projects that need attention. Use Review to stay current.</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-5 rounded-2xl shadow-card">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0 mt-0.5">
-                    <Brain className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-semibold mb-1">Keeping it in sync</h3>
-                    <p className="text-xs text-muted-foreground">Update NextMove when things change. Mark tasks done, add new ones, or paste an update from your AI tool. NextMove stays accurate when you keep it current.</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back
               </Button>
-              <Button onClick={() => setStep(3)} className="flex-1 rounded-xl font-display">
+              <Button onClick={handleEnterStep3} className="flex-1 rounded-xl font-display">
                 Continue <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: You're Ready ── */}
+        {/* ── STEP 3: Plot Today's Route ── */}
         {step === 3 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">You're all set</h2>
+              <h2 className="font-display text-2xl font-bold">Here's your first route.</h2>
+              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                NextMove suggests these tasks to start with. Confirm, edit, or remove.
+              </p>
+            </div>
+
+            {suggestedTasks.length === 0 ? (
+              <Card className="p-6 rounded-2xl shadow-card text-center">
+                <p className="text-sm text-muted-foreground">No tasks to suggest yet. You can add them after setup.</p>
+              </Card>
+            ) : (
+              <Card className="p-5 rounded-2xl shadow-card">
+                <div className="flex items-center gap-2 mb-4">
+                  <Navigation className="h-4 w-4 text-accent" />
+                  <span className="font-display text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Today's Route</span>
+                </div>
+                <div className="relative ml-2">
+                  <div className="absolute left-[3px] top-1 bottom-1 w-px bg-mint" />
+                  <div className="space-y-2.5">
+                    {suggestedTasks.map((task, idx) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center gap-3 relative cursor-pointer"
+                        onClick={() => toggleTask(task.id)}
+                      >
+                        <span className={cn(
+                          'relative z-10 w-[7px] h-[7px] rounded-full border-2 flex-shrink-0',
+                          selectedTaskIds.has(task.id)
+                            ? 'border-accent bg-accent'
+                            : 'border-primary/40 bg-background'
+                        )} />
+                        <span className={cn(
+                          "text-sm flex-1 truncate",
+                          selectedTaskIds.has(task.id) ? 'text-foreground' : 'text-muted-foreground'
+                        )}>{task.title}</span>
+                        <Checkbox
+                          checked={selectedTaskIds.has(task.id)}
+                          onCheckedChange={() => toggleTask(task.id)}
+                          className="shrink-0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep(2)} className="rounded-xl">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back
+              </Button>
+              <Button onClick={handleConfirmRoute} className="flex-1 rounded-xl font-display">
+                Confirm route <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 4: Start Moving ── */}
+        {step === 4 && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-bold">Your route is ready.</h2>
               <p className="text-sm text-muted-foreground mt-2">
-                NextMove is organizing your work. Here's what to do now.
+                NextMove has organized your work. Here's where to go.
               </p>
             </div>
 
@@ -138,9 +254,11 @@ export default function OnboardingPage() {
                 className="p-6 rounded-2xl shadow-card hover:shadow-elevated hover:-translate-y-0.5 transition-all cursor-pointer text-center"
                 onClick={() => navigate('/today')}
               >
-                <span className="text-3xl mb-3 block">🎯</span>
-                <h3 className="font-display font-semibold mb-1">See Today's Moves</h3>
-                <p className="text-xs text-muted-foreground mb-3">See what NextMove suggests for today.</p>
+                <span className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-accent bg-accent/10 mx-auto mb-3">
+                  <Navigation className="h-5 w-5 text-accent" />
+                </span>
+                <h3 className="font-display font-semibold mb-1">Start your route</h3>
+                <p className="text-xs text-muted-foreground mb-3">See today's stops and begin moving.</p>
                 <Button size="sm" className="rounded-xl font-display text-xs">
                   Go to Today <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
@@ -148,13 +266,15 @@ export default function OnboardingPage() {
 
               <Card
                 className="p-6 rounded-2xl shadow-card hover:shadow-elevated hover:-translate-y-0.5 transition-all cursor-pointer text-center"
-                onClick={() => navigate('/review')}
+                onClick={() => navigate('/projects')}
               >
-                <span className="text-3xl mb-3 block">🔁</span>
-                <h3 className="font-display font-semibold mb-1">Run your first Review</h3>
-                <p className="text-xs text-muted-foreground mb-3">Let NextMove analyze your projects.</p>
+                <span className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-primary/30 bg-muted mx-auto mb-3">
+                  <Check className="h-5 w-5 text-primary" />
+                </span>
+                <h3 className="font-display font-semibold mb-1">Explore NextMove</h3>
+                <p className="text-xs text-muted-foreground mb-3">Browse your projects and plan ahead.</p>
                 <Button variant="outline" size="sm" className="rounded-xl font-display text-xs">
-                  Start Review <ArrowRight className="h-3 w-3 ml-1" />
+                  View Projects <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </Card>
             </div>

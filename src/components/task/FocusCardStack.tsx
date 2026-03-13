@@ -35,14 +35,15 @@ const AREA_EMOJI: Record<string, string> = {
 
 function guessEmoji(name: string): string {
   const n = name.toLowerCase();
-  if (n.includes('baby') || n.includes('birth') || n.includes('nursery')) return '👶';
-  if (n.includes('career') || n.includes('learning') || n.includes('sprint')) return '🚀';
-  if (n.includes('tax') || n.includes('legal') || n.includes('admin')) return '📝';
-  if (n.includes('home') || n.includes('house') || n.includes('garage')) return '🏠';
-  if (n.includes('client') || n.includes('consulting') || n.includes('portfolio')) return '💼';
+  if (n.includes('launch') || n.includes('release') || n.includes('ship')) return '🚀';
+  if (n.includes('growth') || n.includes('learning') || n.includes('framework')) return '📈';
+  if (n.includes('legal') || n.includes('admin') || n.includes('ops')) return '📝';
+  if (n.includes('home') || n.includes('house') || n.includes('life')) return '🏠';
+  if (n.includes('client') || n.includes('customer') || n.includes('onboarding')) return '💼';
   if (n.includes('report') || n.includes('dashboard') || n.includes('data')) return '📊';
-  if (n.includes('ai') || n.includes('product') || n.includes('bootcamp')) return '🧠';
+  if (n.includes('ai') || n.includes('product') || n.includes('feature')) return '🧠';
   if (n.includes('operation') || n.includes('business') || n.includes('finance')) return '⚙️';
+  if (n.includes('market') || n.includes('analysis') || n.includes('research')) return '🔍';
   return '📌';
 }
 

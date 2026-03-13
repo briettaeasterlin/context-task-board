@@ -14,6 +14,7 @@ import { CalendarClock, Clock, CheckCircle2, CalendarDays, Navigation, AlertCirc
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { RouteProgress } from '@/components/today/RouteProgress';
+import { RouteBrief } from '@/components/today/RouteBrief';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -123,6 +124,11 @@ export default function TodayPage() {
     updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Route cleared. Next move ready.') });
   }, [updateTask]);
 
+  const handleHighlightTask = useCallback((taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) setDetailTask(task);
+  }, [tasks]);
+
   const formatDueLabel = (dateStr: string) => {
     const d = new Date(dateStr);
     if (isPast(d) && !isToday(d)) return `Overdue · ${format(d, 'MMM d')}`;
@@ -145,13 +151,17 @@ export default function TodayPage() {
         {/* Greeting */}
         <div className="pt-1">
           <h1 className="text-2xl font-display font-bold">
-            {greeting}, Brietta
+            {greeting}
           </h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
             {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} stops on today's route
           </p>
         </div>
 
+        {/* Route Brief */}
+        <RouteBrief tasks={tasks} onHighlightTask={handleHighlightTask} />
+
+        {/* Universal Command Field */}
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
@@ -215,7 +225,7 @@ export default function TodayPage() {
                             variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg hover:translate-x-px transition-all duration-150"
                             onClick={e => { e.stopPropagation(); handleMarkDone(item.task!.id); }}
                           >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Done
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Clear
                           </Button>
                         )}
                       </Card>
@@ -247,7 +257,7 @@ export default function TodayPage() {
           </section>
         )}
 
-        {/* Today's Moves */}
+        {/* Today's Route */}
         <section>
           <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Route" />
           {isLoading ? (
@@ -258,7 +268,7 @@ export default function TodayPage() {
           )}
         </section>
 
-        {/* Coming Up */}
+        {/* Upcoming Stops */}
         {upcomingDeadlines.length > 0 && (
           <section>
             <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Upcoming Stops" />

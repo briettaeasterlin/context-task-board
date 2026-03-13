@@ -354,7 +354,7 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
             <Textarea
               value={title}
               onChange={e => handleChange(e.target.value)}
-              placeholder="Paste meeting notes, brain dump, or add a task..."
+              placeholder="Add a task, update a project, reorganize work, or paste notes..."
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 font-mono text-sm min-h-[80px] resize-y"
               rows={4}
             />
@@ -367,7 +367,7 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
                   // Let form submit handle it
                 }
               }}
-              placeholder="Add a task or paste a brain dump..."
+              placeholder="Add a task, update a project, reorganize work, or paste notes..."
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-8 font-mono text-sm"
             />
           )}

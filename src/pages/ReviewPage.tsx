@@ -169,7 +169,7 @@ export default function ReviewPage() {
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={(title, area, status, projectId) => {
             createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
-              onSuccess: () => toast.success('Task added'),
+              onSuccess: () => toast.success('Added to route'),
             });
           }}
           onTasksCreated={() => queryClient.invalidateQueries()}
