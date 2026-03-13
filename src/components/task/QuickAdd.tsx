@@ -350,11 +350,12 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 rounded-md border bg-card p-2">
         <div className="flex items-start gap-2">
           <Plus className="h-4 w-4 text-muted-foreground shrink-0 mt-2" />
+          <Plus className="h-4 w-4 text-muted-foreground shrink-0 mt-2" />
           {isMultiline ? (
             <Textarea
               value={title}
               onChange={e => handleChange(e.target.value)}
-              placeholder="Paste meeting notes, brain dump, or add a task..."
+              placeholder="Add a task, update a project, reorganize work, or paste notes..."
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 font-mono text-sm min-h-[80px] resize-y"
               rows={4}
             />
@@ -367,7 +368,7 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
                   // Let form submit handle it
                 }
               }}
-              placeholder="Add a task or paste a brain dump..."
+              placeholder="Add a task, update a project, reorganize work, or paste notes..."
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-8 font-mono text-sm"
             />
           )}
@@ -413,6 +414,7 @@ export function QuickAdd({ defaultStatus = 'Next', projects = [], milestones = [
           )}
         </div>
       </form>
+      <p className="text-[10px] text-muted-foreground font-mono ml-1 -mt-1">Try: "Add a task" or "Plan tomorrow's route"</p>
 
       {result && (
         <ExtractionReviewModal

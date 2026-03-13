@@ -63,7 +63,7 @@ export default function ReviewPage() {
     const ids = Array.from(selectedIds);
     bulkUpdateTasks.mutate({ ids, updates }, { onSuccess: () => { toast.success(`${ids.length} updated`); setSelectedIds(new Set()); } });
   }, [selectedIds, bulkUpdateTasks]);
-  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
+  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Removed from route') }); }, [deleteTask]);
   const toggleSelect = useCallback((id: string) => { setSelectedIds(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }, []);
 
   // Section 1: What happened
@@ -156,7 +156,7 @@ export default function ReviewPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
-            <span>🔁</span> Review
+            <span>🔁</span> Route Review
           </h1>
           <p className="text-sm text-muted-foreground mt-1 italic">{getRitualMessage()}</p>
         </div>
@@ -169,7 +169,7 @@ export default function ReviewPage() {
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={(title, area, status, projectId) => {
             createTask.mutate({ title, area, status, context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
-              onSuccess: () => toast.success('Task added'),
+              onSuccess: () => toast.success('Added to route'),
             });
           }}
           onTasksCreated={() => queryClient.invalidateQueries()}
@@ -178,10 +178,10 @@ export default function ReviewPage() {
         {/* Quick actions */}
         <div className="flex flex-wrap gap-2">
           <Button variant="default" size="sm" className="text-xs rounded-lg" onClick={() => setBoardReviewMode(true)}>
-            <Zap className="h-3.5 w-3.5 mr-1.5" /> Weekly Review
+            <Zap className="h-3.5 w-3.5 mr-1.5" /> Weekly Route Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={() => setReviewMode(true)}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> NextMove AI Review
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Route Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={copyAllForAI}>
             {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
