@@ -473,6 +473,8 @@ export default function ProjectDetailPage() {
     setPasteSaving(false);
   }, [pasteResult, pasteContent, user, id, projects, queryClient]);
 
+  if (!project) return <AppShell><p className="text-muted-foreground text-sm py-8 text-center">Project not found.</p></AppShell>;
+
   return (
     <AppShell>
       <div className="space-y-4">
