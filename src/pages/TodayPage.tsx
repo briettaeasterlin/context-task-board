@@ -10,7 +10,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, CalendarDays } from 'lucide-react';
+import { CalendarClock, Crosshair, AlertTriangle, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
 import { toast } from 'sonner';
@@ -144,13 +144,12 @@ export default function TodayPage() {
       <div className="space-y-6">
         {/* Greeting */}
         <div className="pt-2">
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
-            <span>{greeting.emoji}</span>
-            {greeting.text}, Brietta
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
-          </p>
+           <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+             {greeting.text}, Brietta
+           </h1>
+           <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
+             {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
+           </p>
         </div>
 
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
@@ -161,8 +160,8 @@ export default function TodayPage() {
         {/* Today's Timeline */}
         {timeline.length > 0 && (
           <section>
-            <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-              <span>📅</span> Today's Timeline
+           <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
+              <CalendarClock className="h-4 w-4 text-accent" /> Timeline
             </h2>
             <div className="space-y-2">
               {timeline.map((item) => {
@@ -217,8 +216,8 @@ export default function TodayPage() {
         {/* Urgent Deadlines */}
         {urgentOnlyIds.length > 0 && (
           <section>
-            <h2 className="font-sans text-lg font-semibold text-destructive flex items-center gap-2 mb-3">
-              <span>🚨</span> Imminent Deadlines
+            <h2 className="font-display text-base font-semibold text-destructive flex items-center gap-2 mb-3 uppercase tracking-wide">
+              <AlertCircle className="h-4 w-4" /> Imminent Deadlines
             </h2>
             <div className="space-y-2">
               {urgentOnlyIds.map(t => (
@@ -234,8 +233,8 @@ export default function TodayPage() {
 
         {/* Next Tasks - Focus */}
         <section>
-          <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-            <span>🎯</span> Today's Moves
+          <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
+            <Navigation className="h-4 w-4 text-accent" /> Today's Moves
           </h2>
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
@@ -248,8 +247,8 @@ export default function TodayPage() {
         {/* Upcoming Deadlines */}
         {upcomingDeadlines.length > 0 && (
           <section>
-            <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-              <span>📆</span> Coming Up (7 days)
+            <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
+              <CalendarDays className="h-4 w-4 text-accent" /> Coming Up
             </h2>
             <div className="space-y-2">
               {upcomingDeadlines.map(t => (

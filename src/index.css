@@ -6,133 +6,142 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 222 30% 18%;
+    /* Canvas — calm neutral background #F6F8F7 */
+    --background: 150 11% 97%;
+    --foreground: 187 32% 20%;
 
+    /* Cards — instrument panels */
     --card: 0 0% 100%;
-    --card-foreground: 222 30% 18%;
+    --card-foreground: 187 32% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 30% 18%;
+    --popover-foreground: 187 32% 20%;
 
-    --primary: 222 42% 29%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary — dark teal #223E42 */
+    --primary: 187 32% 20%;
+    --primary-foreground: 150 11% 97%;
 
-    --secondary: 220 15% 93%;
-    --secondary-foreground: 222 30% 18%;
+    /* Secondary — soft mint tint */
+    --secondary: 162 20% 93%;
+    --secondary-foreground: 187 32% 20%;
 
-    --muted: 220 12% 93%;
-    --muted-foreground: 220 10% 46%;
+    /* Muted — desaturated calm */
+    --muted: 160 8% 92%;
+    --muted-foreground: 187 12% 46%;
 
-    --accent: 217 100% 61%;
+    /* Accent — teal #3FAFA4 */
+    --accent: 174 47% 47%;
     --accent-foreground: 0 0% 100%;
+
+    /* Mint — wayfinding highlight #BFD7D0 */
+    --mint: 162 24% 80%;
+    --mint-foreground: 187 32% 20%;
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 160 60% 52%;
+    --success: 160 60% 42%;
     --success-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 217 100% 61%;
+    --border: 162 14% 88%;
+    --input: 162 14% 88%;
+    --ring: 174 47% 47%;
 
-    --radius: 0.875rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 220 20% 97%;
-    --sidebar-foreground: 220 10% 28%;
-    --sidebar-primary: 222 42% 29%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 95%;
-    --sidebar-accent-foreground: 222 42% 29%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 217 100% 61%;
+    --sidebar-background: 150 11% 97%;
+    --sidebar-foreground: 187 12% 28%;
+    --sidebar-primary: 187 32% 20%;
+    --sidebar-primary-foreground: 150 11% 97%;
+    --sidebar-accent: 162 20% 94%;
+    --sidebar-accent-foreground: 187 32% 20%;
+    --sidebar-border: 162 14% 88%;
+    --sidebar-ring: 174 47% 47%;
 
-    /* VectorHQ custom tokens */
+    /* Surface tokens */
     --surface: 0 0% 100%;
-    --surface-hover: 220 15% 97%;
-    --surface-active: 220 12% 94%;
-    --task-border: 220 15% 90%;
+    --surface-hover: 162 12% 96%;
+    --surface-active: 162 14% 93%;
+    --task-border: 162 14% 88%;
 
-    /* Area colors */
-    --area-client: 217 100% 61%;
-    --area-business: 222 42% 29%;
-    --area-home: 38 55% 52%;
-    --area-family: 340 45% 55%;
-    --area-personal: 265 35% 58%;
+    /* Area colors — muted, functional */
+    --area-client: 174 47% 47%;
+    --area-business: 187 32% 20%;
+    --area-home: 38 45% 48%;
+    --area-family: 340 35% 50%;
+    --area-personal: 265 28% 52%;
 
-    /* Status colors */
-    --status-today: 350 70% 55%;
-    --status-next: 217 100% 61%;
-    --status-waiting: 38 65% 52%;
-    --status-backlog: 220 10% 62%;
-    --status-closing: 280 45% 55%;
-    --status-done: 160 60% 52%;
+    /* Status colors — wayfinding palette */
+    --status-today: 174 47% 42%;
+    --status-next: 187 32% 30%;
+    --status-waiting: 38 45% 48%;
+    --status-backlog: 187 8% 58%;
+    --status-closing: 280 30% 50%;
+    --status-done: 160 50% 42%;
 
-    /* Work category colors */
-    --cat-pipeline: 217 100% 61%;
-    --cat-client: 222 42% 29%;
-    --cat-business: 38 55% 52%;
-    --cat-personal: 265 35% 58%;
-
-    /* Shadows */
-    --shadow-soft: 0 2px 12px -2px hsl(220 15% 50% / 0.06);
-    --shadow-card: 0 1px 3px 0 hsl(220 15% 50% / 0.04), 0 4px 16px -4px hsl(220 15% 50% / 0.08);
-    --shadow-elevated: 0 8px 30px -6px hsl(220 15% 50% / 0.12);
+    /* Shadows — soft elevation for instrument panels */
+    --shadow-soft: 0 1px 8px -2px hsl(187 20% 40% / 0.06);
+    --shadow-card: 0 1px 3px 0 hsl(187 20% 40% / 0.04), 0 4px 16px -4px hsl(187 20% 40% / 0.07);
+    --shadow-elevated: 0 6px 24px -6px hsl(187 20% 40% / 0.10);
+    --shadow-inset: inset 0 1px 2px hsl(187 20% 40% / 0.08);
 
     --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
 
   .dark {
-    --background: 222 25% 8%;
-    --foreground: 220 15% 92%;
+    --background: 187 30% 7%;
+    --foreground: 162 15% 90%;
 
-    --card: 222 22% 11%;
-    --card-foreground: 220 15% 92%;
+    --card: 187 25% 10%;
+    --card-foreground: 162 15% 90%;
 
-    --popover: 222 22% 11%;
-    --popover-foreground: 220 15% 92%;
+    --popover: 187 25% 10%;
+    --popover-foreground: 162 15% 90%;
 
-    --primary: 217 100% 65%;
-    --primary-foreground: 222 25% 8%;
+    --primary: 162 24% 80%;
+    --primary-foreground: 187 30% 7%;
 
-    --secondary: 222 18% 16%;
-    --secondary-foreground: 220 15% 92%;
+    --secondary: 187 20% 14%;
+    --secondary-foreground: 162 15% 90%;
 
-    --muted: 222 14% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 187 16% 14%;
+    --muted-foreground: 162 10% 52%;
 
-    --accent: 217 100% 61%;
+    --accent: 174 47% 47%;
     --accent-foreground: 0 0% 100%;
+
+    --mint: 162 20% 25%;
+    --mint-foreground: 162 24% 80%;
 
     --destructive: 0 55% 40%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 160 50% 45%;
+    --success: 160 50% 40%;
     --success-foreground: 0 0% 100%;
 
-    --border: 222 14% 18%;
-    --input: 222 14% 18%;
-    --ring: 217 100% 65%;
+    --border: 187 16% 16%;
+    --input: 187 16% 16%;
+    --ring: 174 47% 47%;
 
-    --surface: 222 22% 11%;
-    --surface-hover: 222 18% 14%;
-    --surface-active: 222 14% 17%;
-    --task-border: 222 14% 18%;
+    --surface: 187 25% 10%;
+    --surface-hover: 187 20% 13%;
+    --surface-active: 187 16% 16%;
+    --task-border: 187 16% 16%;
 
     --shadow-soft: 0 2px 12px -2px hsl(0 0% 0% / 0.3);
     --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 4px 16px -4px hsl(0 0% 0% / 0.25);
     --shadow-elevated: 0 8px 30px -6px hsl(0 0% 0% / 0.4);
+    --shadow-inset: inset 0 1px 3px hsl(0 0% 0% / 0.3);
 
-    --sidebar-background: 222 25% 8%;
-    --sidebar-foreground: 220 15% 92%;
-    --sidebar-primary: 217 100% 65%;
-    --sidebar-primary-foreground: 222 25% 8%;
-    --sidebar-accent: 222 14% 14%;
-    --sidebar-accent-foreground: 220 15% 92%;
-    --sidebar-border: 222 14% 18%;
-    --sidebar-ring: 217 100% 65%;
+    --sidebar-background: 187 30% 7%;
+    --sidebar-foreground: 162 15% 90%;
+    --sidebar-primary: 162 24% 80%;
+    --sidebar-primary-foreground: 187 30% 7%;
+    --sidebar-accent: 187 16% 13%;
+    --sidebar-accent-foreground: 162 15% 90%;
+    --sidebar-border: 187 16% 16%;
+    --sidebar-ring: 174 47% 47%;
   }
 }
 
@@ -166,6 +175,30 @@
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
   }
+
+  .shadow-inset {
+    box-shadow: var(--shadow-inset);
+  }
+}
+
+/* Wayfinding divider — transit line accent */
+.wayfinding-divider {
+  height: 2px;
+  background: linear-gradient(90deg, hsl(var(--accent) / 0.3), hsl(var(--mint)) 50%, hsl(var(--accent) / 0.3));
+}
+
+/* Transit node indicator */
+.transit-node {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--accent));
+  background: hsl(var(--background));
+  flex-shrink: 0;
+}
+
+.transit-node.active {
+  background: hsl(var(--accent));
 }
 
 /* Habit celebration */
@@ -190,12 +223,12 @@
 
 @keyframes done-pop {
   0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  50% { transform: scale(1.08); }
   100% { transform: scale(1); }
 }
 
 .animate-done-pop {
-  animation: done-pop 0.3s ease-out;
+  animation: done-pop 0.25s ease-out;
 }
 
 @keyframes shimmer {
@@ -207,4 +240,15 @@
   background: linear-gradient(90deg, transparent 25%, hsl(var(--muted)) 50%, transparent 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Mint glow for task completion */
+@keyframes mint-glow {
+  0% { box-shadow: 0 0 0 0 hsl(var(--mint) / 0.4); }
+  50% { box-shadow: 0 0 12px 4px hsl(var(--mint) / 0.2); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--mint) / 0); }
+}
+
+.animate-mint-glow {
+  animation: mint-glow 0.6s ease-out;
 }
