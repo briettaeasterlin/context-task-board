@@ -178,10 +178,10 @@ export default function ReviewPage() {
         {/* Quick actions */}
         <div className="flex flex-wrap gap-2">
           <Button variant="default" size="sm" className="text-xs rounded-lg" onClick={() => setBoardReviewMode(true)}>
-            <Zap className="h-3.5 w-3.5 mr-1.5" /> Weekly Review
+            <Zap className="h-3.5 w-3.5 mr-1.5" /> Weekly Route Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={() => setReviewMode(true)}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> NextMove AI Review
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Route Review
           </Button>
           <Button variant="outline" size="sm" className="text-xs rounded-lg" onClick={copyAllForAI}>
             {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
