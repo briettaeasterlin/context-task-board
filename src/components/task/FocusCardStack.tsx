@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Task, Project, Milestone } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Layers, ExternalLink } from 'lucide-react';
 import { isPast, isToday, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +49,7 @@ function guessEmoji(name: string): string {
 }
 
 export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMarkDone, onSelect, formatDueLabel }: Props) {
+  const routerNavigate = useNavigate();
   const [activeIndexes, setActiveIndexes] = useState<Record<string, number>>({});
 
   const groups: ProjectGroup[] = useMemo(() => {
@@ -125,11 +127,17 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
             {/* Project header */}
             <div className="px-5 pt-4 pb-3 border-b border-border/40">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={cn("flex items-center gap-2.5 min-w-0", group.project && "cursor-pointer group/header")}
+                  onClick={() => group.project && routerNavigate(`/projects/${group.project.id}`)}
+                >
                   <span className="text-base">{emoji}</span>
-                  <h3 className="font-sans text-sm font-semibold truncate">
+                  <h3 className="font-sans text-sm font-semibold truncate group-hover/header:text-primary transition-colors">
                     {groupName}
                   </h3>
+                  {group.project && (
+                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover/header:opacity-100 transition-opacity shrink-0" />
+                  )}
                   {group.tasks.length > 1 && (
                     <Badge variant="secondary" className="text-[10px] font-mono shrink-0 rounded-full">
                       <Layers className="h-2.5 w-2.5 mr-0.5" />
