@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarClock, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
 import { HabitSection } from '@/components/habit/HabitSection';
 import { FocusCardStack } from '@/components/task/FocusCardStack';
+import { RouteProgress } from '@/components/today/RouteProgress';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -112,12 +113,12 @@ export default function TodayPage() {
 
   const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
     createTask.mutate({ title, area, status: 'Next', context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
-      onSuccess: () => toast.success('Task added'),
+      onSuccess: () => toast.success('Added to route'),
     });
   }, [createTask]);
 
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
-  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Task deleted') }); }, [deleteTask]);
+  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Removed from route') }); }, [deleteTask]);
   const handleMarkDone = useCallback((id: string) => {
     updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Route cleared. Next move ready.') });
   }, [updateTask]);
@@ -147,7 +148,7 @@ export default function TodayPage() {
             {greeting}, Brietta
           </h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
-            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} tasks in focus
+            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} stops on today's route
           </p>
         </div>
 
@@ -248,7 +249,7 @@ export default function TodayPage() {
 
         {/* Today's Moves */}
         <section>
-          <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Moves" />
+          <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Route" />
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8 font-mono">Loading route...</p>
           ) : (
@@ -260,7 +261,7 @@ export default function TodayPage() {
         {/* Coming Up */}
         {upcomingDeadlines.length > 0 && (
           <section>
-            <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Coming Up" />
+            <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Upcoming Stops" />
             <div className="space-y-2">
               {upcomingDeadlines.map(t => (
                 <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-card hover:translate-x-px transition-all duration-150 rounded-xl" onClick={() => setDetailTask(t)}>
@@ -273,6 +274,10 @@ export default function TodayPage() {
             </div>
           </section>
         )}
+
+        <div className="wayfinding-divider" />
+
+        <RouteProgress tasks={tasks} />
 
         <div className="wayfinding-divider" />
 
