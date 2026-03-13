@@ -127,11 +127,17 @@ export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMa
             {/* Project header */}
             <div className="px-5 pt-4 pb-3 border-b border-border/40">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={cn("flex items-center gap-2.5 min-w-0", group.project && "cursor-pointer group/header")}
+                  onClick={() => group.project && routerNavigate(`/projects/${group.project.id}`)}
+                >
                   <span className="text-base">{emoji}</span>
-                  <h3 className="font-sans text-sm font-semibold truncate">
+                  <h3 className="font-sans text-sm font-semibold truncate group-hover/header:text-primary transition-colors">
                     {groupName}
                   </h3>
+                  {group.project && (
+                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover/header:opacity-100 transition-opacity shrink-0" />
+                  )}
                   {group.tasks.length > 1 && (
                     <Badge variant="secondary" className="text-[10px] font-mono shrink-0 rounded-full">
                       <Layers className="h-2.5 w-2.5 mr-0.5" />
