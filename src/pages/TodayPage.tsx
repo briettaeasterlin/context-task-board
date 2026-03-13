@@ -216,8 +216,8 @@ export default function TodayPage() {
         {/* Urgent Deadlines */}
         {urgentOnlyIds.length > 0 && (
           <section>
-            <h2 className="font-sans text-lg font-semibold text-destructive flex items-center gap-2 mb-3">
-              <span>🚨</span> Imminent Deadlines
+            <h2 className="font-display text-base font-semibold text-destructive flex items-center gap-2 mb-3 uppercase tracking-wide">
+              <AlertCircle className="h-4 w-4" /> Imminent Deadlines
             </h2>
             <div className="space-y-2">
               {urgentOnlyIds.map(t => (
