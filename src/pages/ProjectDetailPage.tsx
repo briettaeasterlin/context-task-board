@@ -62,6 +62,9 @@ export default function ProjectDetailPage() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteContent, setPasteContent] = useState('');
+  const [pasteLoading, setPasteLoading] = useState(false);
+  const [pasteSaving, setPasteSaving] = useState(false);
+  const [pasteResult, setPasteResult] = useState<ExtractionResult | null>(null);
 
   const total = tasks.length;
   const done = tasks.filter(t => t.status === 'Done').length;
