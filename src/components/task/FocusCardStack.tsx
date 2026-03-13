@@ -49,6 +49,7 @@ function guessEmoji(name: string): string {
 }
 
 export function FocusCardStack({ nextTasks, allTasks, projects, milestones, onMarkDone, onSelect, formatDueLabel }: Props) {
+  const navigate = useNavigate();
   const [activeIndexes, setActiveIndexes] = useState<Record<string, number>>({});
 
   const groups: ProjectGroup[] = useMemo(() => {
