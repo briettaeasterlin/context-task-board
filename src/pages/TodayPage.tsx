@@ -247,8 +247,8 @@ export default function TodayPage() {
         {/* Upcoming Deadlines */}
         {upcomingDeadlines.length > 0 && (
           <section>
-            <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-              <span>📆</span> Coming Up (7 days)
+            <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
+              <CalendarDays className="h-4 w-4 text-accent" /> Coming Up
             </h2>
             <div className="space-y-2">
               {upcomingDeadlines.map(t => (
