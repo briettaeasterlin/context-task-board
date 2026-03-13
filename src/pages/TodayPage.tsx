@@ -160,8 +160,8 @@ export default function TodayPage() {
         {/* Today's Timeline */}
         {timeline.length > 0 && (
           <section>
-            <h2 className="font-sans text-lg font-semibold flex items-center gap-2 mb-3">
-              <span>📅</span> Today's Timeline
+           <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3 text-foreground uppercase tracking-wide">
+              <CalendarClock className="h-4 w-4 text-accent" /> Timeline
             </h2>
             <div className="space-y-2">
               {timeline.map((item) => {
