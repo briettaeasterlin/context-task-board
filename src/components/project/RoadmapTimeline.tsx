@@ -1,13 +1,17 @@
 import type { Milestone, Task } from '@/types/task';
 import { cn } from '@/lib/utils';
-import { Check, Circle, ArrowRight } from 'lucide-react';
+import { Check, Circle, ArrowRight, Plus, Merge, Archive } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   milestones: Milestone[];
   tasks: Task[];
+  onAddMilestone?: (name: string) => void;
+  onMerge?: () => void;
+  onArchive?: () => void;
 }
 
-export function RoadmapTimeline({ milestones, tasks }: Props) {
+export function RoadmapTimeline({ milestones, tasks, onAddMilestone, onMerge, onArchive }: Props) {
   const sorted = [...milestones].sort((a, b) => a.order_index - b.order_index);
   const firstIncompleteIdx = sorted.findIndex(m => !m.is_complete);
 
@@ -76,7 +80,46 @@ export function RoadmapTimeline({ milestones, tasks }: Props) {
           </div>
         );
       })}
-      {sorted.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No milestones yet.</p>}
+      {sorted.length === 0 && (
+        <div className="text-center py-8 space-y-4">
+          <p className="text-sm text-muted-foreground">This route has no milestones yet.</p>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {onAddMilestone && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs rounded-xl hover:translate-x-px transition-all duration-150"
+                onClick={() => {
+                  const name = prompt('Milestone name:');
+                  if (name?.trim()) onAddMilestone(name.trim());
+                }}
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add milestone
+              </Button>
+            )}
+            {onMerge && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs rounded-xl hover:translate-x-px transition-all duration-150"
+                onClick={onMerge}
+              >
+                <Merge className="h-3 w-3 mr-1" /> Merge route
+              </Button>
+            )}
+            {onArchive && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs rounded-xl hover:translate-x-px transition-all duration-150"
+                onClick={onArchive}
+              >
+                <Archive className="h-3 w-3 mr-1" /> Archive project
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
