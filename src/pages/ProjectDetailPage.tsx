@@ -24,7 +24,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { supabase } from '@/integrations/supabase/client';
 import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
 import { AREAS } from '@/types/task';
-import { ArrowLeft, FileText, CheckCircle2, MoreHorizontal, Pencil, Merge, MoveRight, Archive, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle2, MoreHorizontal, Pencil, Merge, MoveRight, Archive, Trash2, Plus, ClipboardPaste, Copy } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { scoreTasks } from '@/lib/task-scoring';
@@ -58,6 +59,8 @@ export default function ProjectDetailPage() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteContent, setPasteContent] = useState('');
 
   const total = tasks.length;
   const done = tasks.filter(t => t.status === 'Done').length;
@@ -182,25 +185,114 @@ export default function ProjectDetailPage() {
     updateClarifyQuestion.mutate({ id: qId, status: 'dismissed' as any });
   }, [updateClarifyQuestion]);
 
-  const exportSnapshot = () => {
-    if (!project) return;
-    const doneRecent = tasks.filter(t => t.status === 'Done');
-    const nextT = tasks.filter(t => t.status === 'Next');
-    const waitingT = tasks.filter(t => t.status === 'Waiting');
+  const buildSnapshotText = () => {
+    if (!project) return '';
+    const byStatus = (s: string) => tasks.filter(t => t.status === s);
+    const todayT = byStatus('Today');
+    const nextT = byStatus('Next');
+    const waitingT = byStatus('Waiting');
+    const backlogT = byStatus('Backlog');
+    const closingT = byStatus('Closing');
+    const somedayT = byStatus('Someday');
+    const doneT = byStatus('Done');
     const openQ = clarifyQuestions.filter(q => q.status === 'open');
 
-    let text = `${project.name} — Weekly Snapshot\n${'='.repeat(40)}\n\n`;
-    if (doneRecent.length) { text += `✅ Done\n${doneRecent.map(t => `  - ${t.title}`).join('\n')}\n\n`; }
-    if (nextT.length) { text += `▶ In Progress (Next)\n${nextT.map(t => `  - ${t.title}`).join('\n')}\n\n`; }
-    if (waitingT.length) { text += `⏳ Blocked (Waiting)\n${waitingT.map(t => `  - ${t.title}${t.blocked_by ? ` — waiting on ${t.blocked_by}` : ''}`).join('\n')}\n\n`; }
-    if (openQ.length) { text += `❓ Open Questions\n${openQ.map(q => `  - ${q.question}`).join('\n')}\n\n`; }
+    let text = `${project.name} — Full Project Snapshot\n${'='.repeat(50)}\n\n`;
 
+    // Project metadata
+    text += `Area: ${project.area}\n`;
+    if ((project as any).strategic_phase) text += `Phase: ${(project as any).strategic_phase}\n`;
+    text += `Progress: ${progress}% (${done}/${total} tasks done)\n`;
+    if (project.summary) text += `Summary: ${project.summary}\n`;
+    if (project.scope_notes) text += `\nScope Notes:\n${project.scope_notes}\n`;
+    text += '\n';
+
+    // Milestones
+    if (milestones.length > 0) {
+      text += `📍 Milestones\n${'-'.repeat(30)}\n`;
+      milestones.forEach((ms, i) => {
+        const msTasks = tasks.filter(t => t.milestone_id === ms.id);
+        const msDone = msTasks.filter(t => t.status === 'Done').length;
+        text += `  ${ms.is_complete ? '✅' : '○'} ${ms.name}${ms.description ? ` — ${ms.description}` : ''} (${msDone}/${msTasks.length} tasks)\n`;
+      });
+      text += '\n';
+    }
+
+    // Tasks by status
+    const statusSections: [string, string, Task[]][] = [
+      ['🔴', 'Today', todayT],
+      ['▶', 'Next', nextT],
+      ['⏳', 'Waiting', waitingT],
+      ['📋', 'Backlog', backlogT],
+      ['🔄', 'Closing', closingT],
+      ['💤', 'Someday', somedayT],
+      ['✅', 'Done', doneT],
+    ];
+
+    for (const [icon, label, items] of statusSections) {
+      if (items.length === 0) continue;
+      text += `${icon} ${label} (${items.length})\n${'-'.repeat(30)}\n`;
+      items.forEach(t => {
+        let line = `  - ${t.title}`;
+        const meta: string[] = [];
+        if (t.due_date) meta.push(`due: ${t.due_date}`);
+        if (t.blocked_by) meta.push(`blocked: ${t.blocked_by}`);
+        if (t.estimated_minutes) meta.push(`${t.estimated_minutes}m`);
+        if (t.context) meta.push(t.context);
+        if (t.target_window) meta.push(`window: ${t.target_window}`);
+        if (meta.length) line += ` [${meta.join(' | ')}]`;
+        if (t.notes) line += `\n    Notes: ${t.notes.slice(0, 120)}`;
+        text += line + '\n';
+      });
+      text += '\n';
+    }
+
+    // Open questions
+    if (openQ.length > 0) {
+      text += `❓ Open Questions (${openQ.length})\n${'-'.repeat(30)}\n`;
+      openQ.forEach(q => {
+        text += `  - ${q.question}`;
+        if (q.reason) text += ` (${q.reason})`;
+        text += '\n';
+      });
+      text += '\n';
+    }
+
+    text += `\nExported: ${new Date().toISOString()}\n`;
+    return text;
+  };
+
+  const exportSnapshot = () => {
+    const text = buildSnapshotText();
+    if (!text) return;
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `${project.name}-snapshot.txt`; a.click();
+    a.href = url; a.download = `${project!.name}-snapshot.txt`; a.click();
     URL.revokeObjectURL(url);
   };
+
+  const copySnapshot = () => {
+    const text = buildSnapshotText();
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success('Snapshot copied to clipboard');
+  };
+
+  const handlePasteUpdate = useCallback(async () => {
+    if (!pasteContent.trim() || !user || !id) return;
+    const { error } = await supabase.from('updates').insert({
+      user_id: user.id,
+      project_id: id,
+      content: pasteContent.trim(),
+      source: 'doc' as any,
+    } as any);
+    if (error) { toast.error('Failed to save update'); return; }
+    queryClient.invalidateQueries({ queryKey: ['updates'] });
+    toast.success('Update added — check the Updates tab to review');
+    setPasteContent('');
+    setPasteOpen(false);
+  }, [pasteContent, user, id, queryClient]);
 
   if (!project) return <AppShell><p className="text-muted-foreground text-sm py-8 text-center">Project not found.</p></AppShell>;
 
@@ -225,8 +317,14 @@ export default function ProjectDetailPage() {
                 <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
               </div>
             </div>
+            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={copySnapshot}>
+              <Copy className="h-3 w-3 mr-1" /> Copy
+            </Button>
             <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={exportSnapshot}>
-              <FileText className="h-3 w-3 mr-1" /> Snapshot
+              <FileText className="h-3 w-3 mr-1" /> Export
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={() => setPasteOpen(true)}>
+              <ClipboardPaste className="h-3 w-3 mr-1" /> Paste Update
             </Button>
 
             {/* Route Controls Menu */}
@@ -467,6 +565,30 @@ export default function ProjectDetailPage() {
             <Button variant="outline" onClick={() => setDeleteOpen(false)} className="rounded-xl">Cancel</Button>
             <Button variant="destructive" onClick={handlePermanentDelete} disabled={deleteConfirm !== 'DELETE'} className="rounded-xl">
               Delete project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Paste Update Modal ── */}
+      <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Paste Update</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Paste output from ChatGPT, Claude, or any external tool. This will be saved as a project update you can review and act on.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={pasteContent}
+            onChange={e => setPasteContent(e.target.value)}
+            placeholder="Paste status update, task list, meeting notes, or AI output here..."
+            className="rounded-xl min-h-[200px] text-sm font-mono"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasteOpen(false)} className="rounded-xl">Cancel</Button>
+            <Button onClick={handlePasteUpdate} disabled={!pasteContent.trim()} className="rounded-xl">
+              <ClipboardPaste className="h-3.5 w-3.5 mr-1.5" /> Save Update
             </Button>
           </DialogFooter>
         </DialogContent>
