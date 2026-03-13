@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logoSrc from '@/assets/nextmove-logo-dark.svg';
 
 const NAV_ITEMS = [
   { path: '/today', label: 'Today', emoji: '🎯' },
