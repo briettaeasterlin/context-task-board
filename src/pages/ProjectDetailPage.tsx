@@ -24,8 +24,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { supabase } from '@/integrations/supabase/client';
 import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
 import { AREAS } from '@/types/task';
-import { ArrowLeft, FileText, CheckCircle2, MoreHorizontal, Pencil, Merge, MoveRight, Archive, Trash2, Plus, ClipboardPaste, Copy } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle2, MoreHorizontal, Pencil, Merge, MoveRight, Archive, Trash2, Plus, ClipboardPaste, Copy, Loader2, Sparkles } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { ExtractionReviewModal, type ExtractionResult } from '@/components/task/ExtractionReviewModal';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { scoreTasks } from '@/lib/task-scoring';
