@@ -261,7 +261,7 @@ export default function TodayPage() {
         {/* Coming Up */}
         {upcomingDeadlines.length > 0 && (
           <section>
-            <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Coming Up" />
+            <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Upcoming Stops" />
             <div className="space-y-2">
               {upcomingDeadlines.map(t => (
                 <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-card hover:translate-x-px transition-all duration-150 rounded-xl" onClick={() => setDetailTask(t)}>
