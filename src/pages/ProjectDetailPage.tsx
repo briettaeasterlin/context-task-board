@@ -201,7 +201,7 @@ export default function ProjectDetailPage() {
 
     // Project metadata
     text += `Area: ${project.area}\n`;
-    if (project.strategic_phase) text += `Phase: ${project.strategic_phase}\n`;
+    if ((project as any).strategic_phase) text += `Phase: ${(project as any).strategic_phase}\n`;
     text += `Progress: ${progress}% (${done}/${total} tasks done)\n`;
     if (project.summary) text += `Summary: ${project.summary}\n`;
     if (project.scope_notes) text += `\nScope Notes:\n${project.scope_notes}\n`;
