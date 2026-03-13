@@ -22,8 +22,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-6">
-              <Link to="/today" className="flex items-center gap-1.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
-                <span className="text-base text-accent">▸</span>
+              <Link to="/today" className="flex items-center gap-2 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
+                <img src={logoSrc} alt="NextMove" className="h-7 w-7" />
                 <span>NextMove</span>
               </Link>
               <nav className="flex items-center gap-0.5">
