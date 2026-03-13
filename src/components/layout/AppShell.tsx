@@ -61,9 +61,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             )} />
                           </span>
                           <span className="hidden sm:inline">{item.label}</span>
-                          {isActive && (
-                            <span className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-accent" />
-                          )}
                         </Link>
                       </div>
                     );
