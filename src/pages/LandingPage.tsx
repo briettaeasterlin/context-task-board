@@ -280,7 +280,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t py-8">
         <div className="container max-w-5xl mx-auto px-6 flex items-center justify-between text-sm text-muted-foreground">
-          <span className="font-display font-semibold">▸ NextMove</span>
+          <a href="https://getnextmove.io" className="font-display font-semibold hover:text-foreground transition-colors">▸ NextMove</a>
           <span>Always know the next move.</span>
         </div>
       </footer>
