@@ -124,6 +124,12 @@ Deno.serve(async (req) => {
     const sinceParam = url.searchParams.get("since") || null;
     const includes = new Set(includeParam.split(",").map((s) => s.trim()).filter(Boolean));
 
+    // New pagination & size controls
+    const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "0") || 0, 0), 1000) || (scope === "project" ? 1000 : 50);
+    const offset = Math.max(parseInt(url.searchParams.get("offset") || "0") || 0, 0);
+    const compact = url.searchParams.get("compact") === "true";
+    const summaryOnly = url.searchParams.get("summary_only") === "true";
+
     // Validate scope
     if (!["active", "full", "project"].includes(scope)) {
       return json({ error: "Invalid scope — use active, full, or project" }, 400);
@@ -153,7 +159,7 @@ Deno.serve(async (req) => {
       filterProjectId = found.id;
     }
 
-    // Fetch tasks
+    // Fetch tasks — always fetch all for accurate counts, then paginate in-memory
     let tasksQuery = supabase
       .from("tasks")
       .select("id, title, status, area, project_id, milestone_id, context, notes, tags, blocked_by, due_date, target_window, estimated_minutes, created_at, updated_at, source")
@@ -174,7 +180,7 @@ Deno.serve(async (req) => {
     const { data: tasks } = await tasksQuery;
     const taskList = tasks ?? [];
 
-    // Build status counts
+    // Build status counts (from full set, before pagination)
     const byStatus: Record<string, number> = {};
     for (const t of taskList) {
       byStatus[t.status] = (byStatus[t.status] || 0) + 1;
@@ -215,10 +221,80 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Group tasks by project
+    // If summary_only, return early with just the summary
+    if (summaryOnly) {
+      const projectSummaries = projectList.map((p: any) => {
+        const projTasks = taskList.filter((t: any) => t.project_id === p.id);
+        const projByStatus: Record<string, number> = {};
+        for (const t of projTasks) {
+          projByStatus[t.status] = (projByStatus[t.status] || 0) + 1;
+        }
+        return {
+          project_id: p.id,
+          project_name: p.name,
+          area: p.area,
+          task_count: projTasks.length,
+          by_status: projByStatus,
+        };
+      });
+      return json({
+        generated_at: now.toISOString(),
+        scope,
+        summary_only: true,
+        user_id: userId,
+        summary: {
+          total_tasks: taskList.length,
+          by_status: byStatus,
+          total_projects: projectList.length,
+          stale_waiting_count: staleWaiting.length,
+          overdue_count: overdue.length,
+        },
+        projects: projectSummaries,
+        alerts,
+      });
+    }
+
+    // Apply pagination
+    const paginatedTasks = taskList.slice(offset, offset + limit);
+
+    // Format task based on compact mode
+    function formatTask(t: any, isCompact: boolean) {
+      const proj = t.project_id ? projectMap.get(t.project_id) : null;
+      if (isCompact) {
+        return {
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          blocked_by: t.blocked_by,
+          due_date: t.due_date,
+          project_name: proj?.name || null,
+        };
+      }
+      return {
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        area: t.area,
+        context: t.context,
+        notes: t.notes,
+        tags: t.tags,
+        blocked_by: t.blocked_by,
+        due_date: t.due_date,
+        target_window: t.target_window,
+        estimated_minutes: t.estimated_minutes,
+        milestone_id: t.milestone_id,
+        updated_at: t.updated_at,
+      };
+    }
+
+    // For scope=project, keep the grouped structure with full detail
+    const useCompact = compact && scope !== "project";
+
+    // Group paginated tasks by project
     const projectsWithTasks: any[] = [];
     const tasksByProject = new Map<string | null, any[]>();
-    for (const t of taskList) {
+    const tasksToGroup = useCompact ? paginatedTasks : paginatedTasks;
+    for (const t of tasksToGroup) {
       const key = t.project_id || null;
       if (!tasksByProject.has(key)) tasksByProject.set(key, []);
       tasksByProject.get(key)!.push(t);
@@ -230,36 +306,35 @@ Deno.serve(async (req) => {
       for (const t of projTasks) {
         projByStatus[t.status] = (projByStatus[t.status] || 0) + 1;
       }
-      projectsWithTasks.push({
+      const entry: any = {
         project_id: projId,
         project_name: proj?.name || "(No Project)",
-        area: proj?.area || null,
-        summary: proj?.summary || null,
-        scope_notes: proj?.scope_notes || null,
         by_status: projByStatus,
-        tasks: projTasks.map((t: any) => ({
-          id: t.id,
-          title: t.title,
-          status: t.status,
-          area: t.area,
-          context: t.context,
-          notes: t.notes,
-          tags: t.tags,
-          blocked_by: t.blocked_by,
-          due_date: t.due_date,
-          target_window: t.target_window,
-          estimated_minutes: t.estimated_minutes,
-          milestone_id: t.milestone_id,
-          updated_at: t.updated_at,
-        })),
-      });
+        tasks: projTasks.map((t: any) => formatTask(t, useCompact)),
+      };
+      if (!useCompact) {
+        entry.area = proj?.area || null;
+        entry.summary = proj?.summary || null;
+        entry.scope_notes = proj?.scope_notes || null;
+      }
+      projectsWithTasks.push(entry);
     }
 
     // Build response
+    const hasMore = offset + limit < taskList.length;
     const response: any = {
       generated_at: now.toISOString(),
       scope,
+      compact: useCompact,
       user_id: userId,
+      pagination: {
+        total: taskList.length,
+        limit,
+        offset,
+        returned: paginatedTasks.length,
+        has_more: hasMore,
+        ...(hasMore ? { next_offset: offset + limit } : {}),
+      },
       summary: {
         total_tasks: taskList.length,
         by_status: byStatus,
