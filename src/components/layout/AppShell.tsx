@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Circle, GitBranch, CalendarRange, CheckCircle, Smartphone } from 'lucide-react';
+import { LogOut, Circle, GitBranch, CalendarRange, CheckCircle, Smartphone, X, Download, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import logoSrc from '@/assets/nextmove-logo-dark.svg';
 
 const NAV_ITEMS = [
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const { showBanner, install, dismiss, deferredPrompt, isIos } = usePwaInstall();
 
   return (
     <div className="min-h-screen bg-[hsl(160_8%_95%)]">
@@ -111,6 +113,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
+        {showBanner && (
+          <div className="bg-primary text-primary-foreground px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <img src={logoSrc} alt="" className="h-8 w-8 rounded-lg shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">Install NextMove</p>
+                <p className="text-xs opacity-80 truncate">
+                  {isIos ? 'Tap Share → Add to Home Screen' : 'Add to your home screen for quick access'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {deferredPrompt ? (
+                <Button size="sm" variant="secondary" onClick={install} className="h-8 rounded-lg text-xs font-semibold">
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Install
+                </Button>
+              ) : isIos ? (
+                <Button size="sm" variant="secondary" className="h-8 rounded-lg text-xs font-semibold pointer-events-none">
+                  <Share className="h-3.5 w-3.5 mr-1.5" />
+                  Share → Add
+                </Button>
+              ) : null}
+              <button onClick={dismiss} className="p-1 opacity-70 hover:opacity-100 transition-opacity">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <main className="px-4 sm:px-6 py-6">
           {children}
         </main>
