@@ -69,7 +69,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   })}
                 </nav>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 px-2.5 rounded-lg text-muted-foreground hover:text-foreground transition-all duration-150">
+                      <Smartphone className="h-3.5 w-3.5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Install NextMove</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 text-sm text-muted-foreground">
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">iPhone / iPad (Safari)</p>
+                        <ol className="list-decimal list-inside space-y-1">
+                          <li>Tap the <span className="font-medium text-foreground">Share</span> button (square with arrow)</li>
+                          <li>Scroll down and tap <span className="font-medium text-foreground">Add to Home Screen</span></li>
+                          <li>Tap <span className="font-medium text-foreground">Add</span></li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">Android (Chrome)</p>
+                        <ol className="list-decimal list-inside space-y-1">
+                          <li>Tap the <span className="font-medium text-foreground">⋮ menu</span> (top right)</li>
+                          <li>Tap <span className="font-medium text-foreground">Add to Home screen</span></li>
+                          <li>Tap <span className="font-medium text-foreground">Install</span></li>
+                        </ol>
+                      </div>
+                      <p className="text-xs">The app will open in standalone mode — no browser chrome, just NextMove.</p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 <span className="text-xs text-muted-foreground hidden sm:inline font-mono tracking-tight">
                   {user?.email}
                 </span>
