@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AREAS, STATUSES, STRATEGIC_PHASES, STRATEGIC_PHASE_LABELS, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone, type StrategicPhase } from '@/types/task';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ExternalLink } from 'lucide-react';
 import { estimateDuration, suggestImpactScore, DURATION_MINUTES } from '@/lib/task-scoring';
 
 interface Props {
@@ -22,7 +22,7 @@ interface Props {
 
 export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, projects = [], milestones = [] }: Props) {
   const [form, setForm] = useState({
-    title: '', context: '', notes: '', blocked_by: '',
+    title: '', context: '', notes: '', blocked_by: '', link: '',
     area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus,
     project_id: '', milestone_id: '',
     due_date: '', target_window: '',
@@ -38,6 +38,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         context: task.context ?? '',
         notes: task.notes ?? '',
         blocked_by: task.blocked_by ?? '',
+        link: (task as any).link ?? '',
         area: task.area,
         status: task.status,
         project_id: task.project_id ?? '',
@@ -65,6 +66,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       context: form.context || null,
       notes: form.notes || null,
       blocked_by: form.blocked_by || null,
+      link: form.link || null,
       area: form.area,
       status: form.status,
       project_id: form.project_id || null,
@@ -144,6 +146,28 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Notes</Label>
             <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Link</Label>
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={form.link}
+                onChange={e => setForm(f => ({ ...f, link: e.target.value }))}
+                className="text-sm flex-1"
+                placeholder="https://..."
+              />
+              {form.link && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-2.5 shrink-0"
+                  onClick={() => window.open(form.link, '_blank', 'noopener')}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
           {form.status === 'Waiting' && (
             <div className="space-y-1.5">

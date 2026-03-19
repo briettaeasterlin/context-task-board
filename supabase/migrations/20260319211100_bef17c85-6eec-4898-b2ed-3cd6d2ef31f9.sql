@@ -1,0 +1,1 @@
+ALTER TABLE public.tasks ADD COLUMN link text DEFAULT NULL;
