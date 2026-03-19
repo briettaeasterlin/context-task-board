@@ -18,6 +18,7 @@ const NAV_ITEMS = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const { showBanner, install, dismiss, deferredPrompt, isIos } = usePwaInstall();
 
   return (
     <div className="min-h-screen bg-[hsl(160_8%_95%)]">
