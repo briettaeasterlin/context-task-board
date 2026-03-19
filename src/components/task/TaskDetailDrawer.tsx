@@ -22,7 +22,7 @@ interface Props {
 
 export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, projects = [], milestones = [] }: Props) {
   const [form, setForm] = useState({
-    title: '', context: '', notes: '', blocked_by: '',
+    title: '', context: '', notes: '', blocked_by: '', link: '',
     area: 'Personal' as TaskArea, status: 'Backlog' as TaskStatus,
     project_id: '', milestone_id: '',
     due_date: '', target_window: '',
