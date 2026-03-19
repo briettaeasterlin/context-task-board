@@ -321,10 +321,20 @@ Deno.serve(async (req) => {
     }
 
     // Build response
+    const hasMore = offset + limit < taskList.length;
     const response: any = {
       generated_at: now.toISOString(),
       scope,
+      compact: useCompact,
       user_id: userId,
+      pagination: {
+        total: taskList.length,
+        limit,
+        offset,
+        returned: paginatedTasks.length,
+        has_more: hasMore,
+        ...(hasMore ? { next_offset: offset + limit } : {}),
+      },
       summary: {
         total_tasks: taskList.length,
         by_status: byStatus,
