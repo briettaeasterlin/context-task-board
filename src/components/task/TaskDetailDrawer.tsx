@@ -147,6 +147,28 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
             <Label className="text-xs text-muted-foreground">Notes</Label>
             <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
           </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Link</Label>
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={form.link}
+                onChange={e => setForm(f => ({ ...f, link: e.target.value }))}
+                className="text-sm flex-1"
+                placeholder="https://..."
+              />
+              {form.link && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-2.5 shrink-0"
+                  onClick={() => window.open(form.link, '_blank', 'noopener')}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          </div>
           {form.status === 'Waiting' && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Blocked by</Label>
