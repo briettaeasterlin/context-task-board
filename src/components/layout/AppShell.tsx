@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Circle, GitBranch, CalendarRange, CheckCircle, Smartphone } from 'lucide-react';
+import { LogOut, Circle, GitBranch, CalendarRange, CheckCircle, Smartphone, X, Download, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import logoSrc from '@/assets/nextmove-logo-dark.svg';
 
 const NAV_ITEMS = [
