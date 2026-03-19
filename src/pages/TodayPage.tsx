@@ -162,7 +162,7 @@ export default function TodayPage() {
         </div>
 
         {/* Route Brief */}
-        <RouteBrief tasks={tasks} onHighlightTask={handleHighlightTask} />
+        <RouteBrief tasks={tasks} onHighlightTask={handleHighlightTask} onDemoteTask={handleDemoteTask} onMarkDone={handleMarkDone} />
 
         {/* Universal Command Field */}
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
