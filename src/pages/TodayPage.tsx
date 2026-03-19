@@ -123,6 +123,9 @@ export default function TodayPage() {
   const handleMarkDone = useCallback((id: string) => {
     updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Route cleared. Next move ready.') });
   }, [updateTask]);
+  const handleDemoteTask = useCallback((id: string) => {
+    updateTask.mutate({ id, status: 'Backlog' }, { onSuccess: () => toast.success('Moved to Backlog') });
+  }, [updateTask]);
 
   const handleHighlightTask = useCallback((taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -159,7 +162,7 @@ export default function TodayPage() {
         </div>
 
         {/* Route Brief */}
-        <RouteBrief tasks={tasks} onHighlightTask={handleHighlightTask} />
+        <RouteBrief tasks={tasks} onHighlightTask={handleHighlightTask} onDemoteTask={handleDemoteTask} onMarkDone={handleMarkDone} />
 
         {/* Universal Command Field */}
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
