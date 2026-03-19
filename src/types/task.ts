@@ -39,6 +39,7 @@ export interface Task {
   estimated_minutes: number | null;
   context_tag: string | null;
   strategic_phase: StrategicPhase | null;
+  link: string | null;
   created_at: string;
   updated_at: string;
 }

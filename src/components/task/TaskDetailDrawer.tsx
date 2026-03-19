@@ -66,6 +66,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
       context: form.context || null,
       notes: form.notes || null,
       blocked_by: form.blocked_by || null,
+      link: form.link || null,
       area: form.area,
       status: form.status,
       project_id: form.project_id || null,
