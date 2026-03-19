@@ -38,6 +38,7 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
         context: task.context ?? '',
         notes: task.notes ?? '',
         blocked_by: task.blocked_by ?? '',
+        link: (task as any).link ?? '',
         area: task.area,
         status: task.status,
         project_id: task.project_id ?? '',
