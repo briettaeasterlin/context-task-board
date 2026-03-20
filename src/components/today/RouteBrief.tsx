@@ -262,6 +262,7 @@ export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onM
             <TrimRouteButton tasks={tasks} projects={projects} onDemoteTask={onDemoteTask} />
           )}
         </div>
+      </div>
 
       {expanded && (
         <div className="border-t border-border/40 px-5 py-3 max-h-[400px] overflow-y-auto">
