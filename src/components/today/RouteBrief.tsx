@@ -120,7 +120,7 @@ function SortableStop({
   );
 }
 
-export function RouteBrief({ tasks, onHighlightTask, onDemoteTask, onMarkDone, onReorder }: Props) {
+export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onMarkDone, onReorder }: Props) {
   const now = new Date();
   const isEvening = now.getHours() >= 18;
   const [expanded, setExpanded] = useState(false);
