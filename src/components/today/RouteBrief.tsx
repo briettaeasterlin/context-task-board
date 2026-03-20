@@ -245,19 +245,23 @@ export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onM
           </p>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-3 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-full"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? (
-            <>Hide route <ChevronUp className="h-3.5 w-3.5 ml-1" /></>
-          ) : (
-            <>Preview & edit route <ChevronDown className="h-3.5 w-3.5 ml-1" /></>
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground rounded-full"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>Hide route <ChevronUp className="h-3.5 w-3.5 ml-1" /></>
+            ) : (
+              <>Preview & edit route <ChevronDown className="h-3.5 w-3.5 ml-1" /></>
+            )}
+          </Button>
+          {isTooMany && onDemoteTask && (
+            <TrimRouteButton tasks={tasks} projects={projects} onDemoteTask={onDemoteTask} />
           )}
-        </Button>
-      </div>
+        </div>
 
       {expanded && (
         <div className="border-t border-border/40 px-5 py-3 max-h-[400px] overflow-y-auto">
