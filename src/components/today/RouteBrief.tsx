@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Task } from '@/types/task';
+import { TrimRouteButton } from './TrimRouteButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface Props {
   tasks: Task[];
+  projects: { id: string; name: string }[];
   onHighlightTask?: (taskId: string) => void;
   onDemoteTask?: (taskId: string) => void;
   onMarkDone?: (taskId: string) => void;
@@ -118,7 +120,7 @@ function SortableStop({
   );
 }
 
-export function RouteBrief({ tasks, onHighlightTask, onDemoteTask, onMarkDone, onReorder }: Props) {
+export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onMarkDone, onReorder }: Props) {
   const now = new Date();
   const isEvening = now.getHours() >= 18;
   const [expanded, setExpanded] = useState(false);
@@ -243,18 +245,23 @@ export function RouteBrief({ tasks, onHighlightTask, onDemoteTask, onMarkDone, o
           </p>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-3 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-full"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? (
-            <>Hide route <ChevronUp className="h-3.5 w-3.5 ml-1" /></>
-          ) : (
-            <>Preview & edit route <ChevronDown className="h-3.5 w-3.5 ml-1" /></>
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground rounded-full"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>Hide route <ChevronUp className="h-3.5 w-3.5 ml-1" /></>
+            ) : (
+              <>Preview & edit route <ChevronDown className="h-3.5 w-3.5 ml-1" /></>
+            )}
+          </Button>
+          {isTooMany && onDemoteTask && (
+            <TrimRouteButton tasks={tasks} projects={projects} onDemoteTask={onDemoteTask} />
           )}
-        </Button>
+        </div>
       </div>
 
       {expanded && (
