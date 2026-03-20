@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -116,7 +116,14 @@ function detectDuplicates(projects: Project[]): DuplicateGroup[] {
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const { projects, createProject, updateProject, deleteProject } = useProjects();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, hasMoreTasks, loadMore, isLoadingMore } = useTasks();
+
+  // Auto-load all task pages so project progress counts are accurate
+  useEffect(() => {
+    if (hasMoreTasks && !isLoadingMore) {
+      loadMore();
+    }
+  }, [hasMoreTasks, isLoadingMore, loadMore]);
   const { clarifyQuestions } = useClarifyQuestions();
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
