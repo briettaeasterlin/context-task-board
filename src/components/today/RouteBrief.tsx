@@ -246,6 +246,20 @@ export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onM
               <span className="text-muted-foreground text-xs ml-2 font-mono">That's a lot — consider trimming.</span>
             )}
           </p>
+          {stats.estimatedMinutes > 0 && (
+            <p className="text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
+              <span className="font-mono text-xs">
+                ~{stats.estimatedMinutes >= 60
+                  ? `${Math.floor(stats.estimatedMinutes / 60)}h ${stats.estimatedMinutes % 60 > 0 ? `${stats.estimatedMinutes % 60}m` : ''}`
+                  : `${stats.estimatedMinutes}m`
+                } estimated
+                {stats.unestimatedCount > 0 && (
+                  <span className="text-muted-foreground/60"> · {stats.unestimatedCount} unestimated</span>
+                )}
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 mt-3 flex-wrap">
