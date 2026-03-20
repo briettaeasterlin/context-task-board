@@ -4,7 +4,7 @@ import { TrimRouteButton } from './TrimRouteButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, ArrowRight, ChevronDown, ChevronUp, ArrowDownToLine, CheckCircle2, GripVertical } from 'lucide-react';
+import { Navigation, ArrowRight, ChevronDown, ChevronUp, ArrowDownToLine, CheckCircle2, GripVertical, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DndContext,
