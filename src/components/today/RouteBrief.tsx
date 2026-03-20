@@ -25,6 +25,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface Props {
   tasks: Task[];
+  projects: { id: string; name: string }[];
   onHighlightTask?: (taskId: string) => void;
   onDemoteTask?: (taskId: string) => void;
   onMarkDone?: (taskId: string) => void;
