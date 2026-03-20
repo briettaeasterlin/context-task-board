@@ -132,6 +132,11 @@ export default function TodayPage() {
   }, [updateTask]);
 
   const handleHighlightTask = useCallback((taskId: string) => {
+    if (taskId === '__review_tomorrow__') {
+      // Navigate to plan page for tomorrow review
+      window.location.href = '/plan';
+      return;
+    }
     const task = tasks.find(t => t.id === taskId);
     if (task) setDetailTask(task);
   }, [tasks]);

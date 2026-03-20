@@ -90,7 +90,7 @@ function SortableStop({
           {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </Badge>
       )}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
         {onMarkDone && (
           <Button
             variant="ghost"
@@ -206,7 +206,12 @@ export function RouteBrief({ tasks, onHighlightTask, onDemoteTask, onMarkDone, o
           )}
         </p>
         <p className="text-xs text-muted-foreground font-mono mt-2 mb-3">Tomorrow's route is ready.</p>
-        <Button variant="outline" size="sm" className="rounded-full text-xs font-semibold hover:translate-x-px transition-all duration-150">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full text-xs font-semibold hover:translate-x-px transition-all duration-150 min-h-[44px] min-w-[44px]"
+          onClick={() => onHighlightTask?.('__review_tomorrow__')}
+        >
           Review tomorrow <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
         </Button>
       </Card>
