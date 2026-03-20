@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useHabits, type HabitIntention } from '@/hooks/useHabits';
+import { useHabitCompletions } from '@/hooks/useHabitCompletions';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Leaf, Plus, X, Check, MoreHorizontal, Trash2, Power } from 'lucide-react';
+import { Leaf, Plus, X, MoreHorizontal, Trash2, Power } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
@@ -17,47 +19,41 @@ const AFFIRMATIONS = [
   'Thanks for taking care.',
 ];
 
-function CelebrationOverlay({ phrase, onDone }: { phrase: string; onDone: () => void }) {
-  return (
-    <div
-      className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-      onAnimationEnd={onDone}
-    >
-      <span className="font-mono text-xs text-primary/80 animate-habit-celebrate select-none">
-        {phrase}
-      </span>
-    </div>
-  );
-}
-
-function HabitItem({ habit }: { habit: HabitIntention }) {
+function HabitItem({ habit, isCompleted, onToggle }: { habit: HabitIntention; isCompleted: boolean; onToggle: () => void }) {
   const { updateHabit, deleteHabit } = useHabits();
-  const [celebrating, setCelebrating] = useState(false);
+  const [showAffirmation, setShowAffirmation] = useState(false);
   const [phrase, setPhrase] = useState('');
 
-  const handleDone = useCallback(() => {
-    const p = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
-    setPhrase(p);
-    setCelebrating(true);
-  }, []);
+  const handleToggle = useCallback(() => {
+    if (!isCompleted) {
+      const p = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
+      setPhrase(p);
+      setShowAffirmation(true);
+      setTimeout(() => setShowAffirmation(false), 1500);
+    }
+    onToggle();
+  }, [isCompleted, onToggle]);
 
   const cadenceLabel = habit.cadence === 'Daily' ? 'daily' : habit.cadence === 'Weekly' ? 'weekly' : habit.cadence === 'Often' ? 'often' : 'seasonal';
 
   return (
     <div className="relative">
-      {celebrating && (
-        <CelebrationOverlay phrase={phrase} onDone={() => setCelebrating(false)} />
+      {showAffirmation && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <span className="font-mono text-xs text-primary/80 animate-fade-in select-none">
+            {phrase}
+          </span>
+        </div>
       )}
       <Card className="p-2.5 flex items-center gap-3 group transition-colors hover:bg-muted/30">
-        <button
-          onClick={handleDone}
-          className="h-5 w-5 rounded-full border border-border flex items-center justify-center shrink-0 transition-all hover:border-primary/50 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring"
-          title="Done today (optional)"
-        >
-          {celebrating && <Check className="h-3 w-3 text-primary animate-fade-in" />}
-        </button>
+        <Checkbox
+          checked={isCompleted}
+          onCheckedChange={handleToggle}
+          className="h-5 w-5 shrink-0 rounded-full"
+          aria-label={`Mark "${habit.name}" complete for today`}
+        />
         <div className="flex-1 min-w-0">
-          <span className="font-mono text-xs">{habit.name}</span>
+          <span className={`font-mono text-xs ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{habit.name}</span>
           {habit.description && (
             <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">{habit.description}</p>
           )}
@@ -85,6 +81,7 @@ function HabitItem({ habit }: { habit: HabitIntention }) {
 
 export function HabitSection() {
   const { habits, isLoading, createHabit } = useHabits();
+  const { completedHabitIds, toggleCompletion } = useHabitCompletions();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [cadence, setCadence] = useState<typeof CADENCES[number]>('Daily');
@@ -141,7 +138,14 @@ export function HabitSection() {
         </Card>
       ) : (
         <div className="space-y-1">
-          {habits.map(h => <HabitItem key={h.id} habit={h} />)}
+          {habits.map(h => (
+            <HabitItem
+              key={h.id}
+              habit={h}
+              isCompleted={completedHabitIds.has(h.id)}
+              onToggle={() => toggleCompletion.mutate(h.id)}
+            />
+          ))}
         </div>
       )}
     </section>
