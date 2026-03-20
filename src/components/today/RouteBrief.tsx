@@ -4,7 +4,7 @@ import { TrimRouteButton } from './TrimRouteButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, ArrowRight, ChevronDown, ChevronUp, ArrowDownToLine, CheckCircle2, GripVertical } from 'lucide-react';
+import { Navigation, ArrowRight, ChevronDown, ChevronUp, ArrowDownToLine, CheckCircle2, GripVertical, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DndContext,
@@ -167,7 +167,10 @@ export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onM
 
     const allDone = todayStops.length === 0 && doneToday > 0;
 
-    return { clearedYesterday, todayStops, todayStopsCount: todayStops.length, doneToday, nextMove, projectsAdvanced, allDone };
+    const estimatedMinutes = todayStops.reduce((sum, t) => sum + (t.estimated_minutes ?? 0), 0);
+    const unestimatedCount = todayStops.filter(t => !t.estimated_minutes).length;
+
+    return { clearedYesterday, todayStops, todayStopsCount: todayStops.length, doneToday, nextMove, projectsAdvanced, allDone, estimatedMinutes, unestimatedCount };
   }, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -243,6 +246,20 @@ export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onM
               <span className="text-muted-foreground text-xs ml-2 font-mono">That's a lot — consider trimming.</span>
             )}
           </p>
+          {stats.estimatedMinutes > 0 && (
+            <p className="text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
+              <span className="font-mono text-xs">
+                ~{stats.estimatedMinutes >= 60
+                  ? `${Math.floor(stats.estimatedMinutes / 60)}h ${stats.estimatedMinutes % 60 > 0 ? `${stats.estimatedMinutes % 60}m` : ''}`
+                  : `${stats.estimatedMinutes}m`
+                } estimated
+                {stats.unestimatedCount > 0 && (
+                  <span className="text-muted-foreground/60"> · {stats.unestimatedCount} unestimated</span>
+                )}
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 mt-3 flex-wrap">
