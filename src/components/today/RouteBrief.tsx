@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Task } from '@/types/task';
+import { TrimRouteButton } from './TrimRouteButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
