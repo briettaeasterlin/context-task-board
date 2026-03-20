@@ -167,7 +167,10 @@ export function RouteBrief({ tasks, projects, onHighlightTask, onDemoteTask, onM
 
     const allDone = todayStops.length === 0 && doneToday > 0;
 
-    return { clearedYesterday, todayStops, todayStopsCount: todayStops.length, doneToday, nextMove, projectsAdvanced, allDone };
+    const estimatedMinutes = todayStops.reduce((sum, t) => sum + (t.estimated_minutes ?? 0), 0);
+    const unestimatedCount = todayStops.filter(t => !t.estimated_minutes).length;
+
+    return { clearedYesterday, todayStops, todayStopsCount: todayStops.length, doneToday, nextMove, projectsAdvanced, allDone, estimatedMinutes, unestimatedCount };
   }, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
