@@ -171,7 +171,7 @@ export default function TodayPage() {
         </div>
 
         {/* Route Brief */}
-        <RouteBrief tasks={tasks} onHighlightTask={handleHighlightTask} onDemoteTask={handleDemoteTask} onMarkDone={handleMarkDone} onReorder={handleReorder} />
+        <RouteBrief tasks={tasks} projects={projects} onHighlightTask={handleHighlightTask} onDemoteTask={handleDemoteTask} onMarkDone={handleMarkDone} onReorder={handleReorder} />
 
         {/* Universal Command Field */}
         <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
