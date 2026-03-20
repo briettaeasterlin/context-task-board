@@ -43,7 +43,7 @@ export function TrimRouteButton({ tasks, projects, onDemoteTask }: Props) {
         due_date: t.due_date,
         project_name: t.project_id ? projectMap.get(t.project_id) ?? null : null,
         strategic_phase: t.strategic_phase,
-        impact_score: t.impact_score ?? null,
+        impact_score: (t as any).impact_score ?? null,
       }));
 
       const { data, error } = await supabase.functions.invoke('ai-trim-route', {
