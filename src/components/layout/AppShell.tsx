@@ -126,12 +126,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {deferredPrompt ? (
-                <Button size="sm" variant="secondary" onClick={install} className="h-8 rounded-lg text-xs font-semibold">
+                <Button size="sm" variant="secondary" onClick={install} className="h-11 min-w-[44px] rounded-lg text-xs font-semibold">
                   <Download className="h-3.5 w-3.5 mr-1.5" />
                   Install
                 </Button>
               ) : isIos ? (
-                <Button size="sm" variant="secondary" className="h-8 rounded-lg text-xs font-semibold pointer-events-none">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-11 min-w-[44px] rounded-lg text-xs font-semibold"
+                  onClick={() => {
+                    // Guide users - the share menu is a system action
+                    alert('Tap the Share button (square with arrow) at the bottom of Safari, then tap "Add to Home Screen".');
+                  }}
+                >
                   <Share className="h-3.5 w-3.5 mr-1.5" />
                   Share → Add
                 </Button>
