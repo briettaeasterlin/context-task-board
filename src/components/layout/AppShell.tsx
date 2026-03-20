@@ -144,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   Share → Add
                 </Button>
               ) : null}
-              <button onClick={dismiss} className="p-1 opacity-70 hover:opacity-100 transition-opacity">
+              <button onClick={dismiss} className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
                 <X className="h-4 w-4" />
               </button>
             </div>
