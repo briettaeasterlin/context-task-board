@@ -125,7 +125,7 @@ export function usePlannerSettings() {
     queryFn: async (): Promise<PlannerSettings | null> => {
       if (!user) return null;
       const { data, error } = await supabase.from('user_planner_settings')
-        .select('*').eq('user_id', user.id).maybeSingle();
+        .select('user_id, gcal_connected, gcal_timezone, gcal_token_expires_at, overlay_ics_token, overlay_ics_token_expires_at, workday_start, workday_end, max_next_tasks, created_at, updated_at').eq('user_id', user.id).maybeSingle();
       if (error) throw error;
       return data as unknown as PlannerSettings | null;
     },
