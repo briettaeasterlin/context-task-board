@@ -51,6 +51,7 @@ export interface Project {
   area: TaskArea;
   summary: string | null;
   scope_notes: string | null;
+  line_color: string | null;
   created_at: string;
   updated_at: string;
 }
