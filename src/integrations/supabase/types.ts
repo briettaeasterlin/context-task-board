@@ -427,6 +427,69 @@ export type Database = {
         }
         Relationships: []
       }
+      proposed_changes: {
+        Row: {
+          change_type: string
+          confidence: string | null
+          created_at: string
+          id: string
+          proposed_fields: Json | null
+          reasoning: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["proposed_change_status"]
+          summary: string
+          target_project_id: string | null
+          target_task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          change_type: string
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          proposed_fields?: Json | null
+          reasoning?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["proposed_change_status"]
+          summary: string
+          target_project_id?: string | null
+          target_task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          change_type?: string
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          proposed_fields?: Json | null
+          reasoning?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["proposed_change_status"]
+          summary?: string
+          target_project_id?: string | null
+          target_task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposed_changes_target_project_id_fkey"
+            columns: ["target_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposed_changes_target_task_id_fkey"
+            columns: ["target_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limit_log: {
         Row: {
           api_key_id: string
@@ -677,6 +740,7 @@ export type Database = {
       clarify_status: "open" | "answered" | "dismissed"
       completion_rule: "manual" | "tasks_based"
       habit_cadence: "Daily" | "Weekly" | "Often" | "Seasonal"
+      proposed_change_status: "pending" | "applied" | "rejected"
       strategic_phase:
         | "scoping"
         | "active_engagement"
@@ -822,6 +886,7 @@ export const Constants = {
       clarify_status: ["open", "answered", "dismissed"],
       completion_rule: ["manual", "tasks_based"],
       habit_cadence: ["Daily", "Weekly", "Often", "Seasonal"],
+      proposed_change_status: ["pending", "applied", "rejected"],
       strategic_phase: [
         "scoping",
         "active_engagement",
