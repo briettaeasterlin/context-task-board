@@ -546,14 +546,30 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="roadmap">
+        <Tabs defaultValue="route">
           <TabsList>
+            <TabsTrigger value="route" className="text-xs">Route</TabsTrigger>
             <TabsTrigger value="roadmap" className="text-xs">Roadmap</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs">Tasks ({tasks.length})</TabsTrigger>
             <TabsTrigger value="plan" className="text-xs">Plan</TabsTrigger>
             <TabsTrigger value="updates" className="text-xs">Updates ({updates.length})</TabsTrigger>
             <TabsTrigger value="clarify" className="text-xs">Clarify ({clarifyQuestions.filter(q => q.status === 'open').length})</TabsTrigger>
           </TabsList>
+          <TabsContent value="route" className="mt-4">
+            <Card className="rounded-2xl shadow-card p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
+                <span className="text-sm font-display font-semibold">{project.name} Line</span>
+                <span className="text-xs text-muted-foreground ml-auto font-mono">{done}/{total} stops cleared</span>
+              </div>
+              <TubeRoute
+                tasks={tasks}
+                lineColor={project.line_color || TUBE_LINES[0].hex}
+                onTaskClick={setDetailTask}
+                onMarkDone={(id) => updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Stop cleared ✨') })}
+              />
+            </Card>
+          </TabsContent>
           <TabsContent value="roadmap" className="mt-4 space-y-6">
             <RoadmapTimeline
               milestones={milestones}
