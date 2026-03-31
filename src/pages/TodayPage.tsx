@@ -1,333 +1,345 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects, useMilestones } from '@/hooks/useProjects';
-import { usePlannedBlocks, useCalendarEvents } from '@/hooks/usePlanner';
+import { useAuth } from '@/hooks/useAuth';
+import { useStreak } from '@/hooks/useStreak';
 import type { Task, TaskArea, TaskStatus, TaskUpdate } from '@/types/task';
-import { QuickAdd } from '@/components/task/QuickAdd';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, Clock, CheckCircle2, CalendarDays, Navigation, AlertCircle } from 'lucide-react';
-import { HabitSection } from '@/components/habit/HabitSection';
-import { FocusCardStack } from '@/components/task/FocusCardStack';
-import { RouteProgress } from '@/components/today/RouteProgress';
-import { RouteBrief } from '@/components/today/RouteBrief';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, isToday, isTomorrow, isPast, addDays, isBefore } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { QuickAdd } from '@/components/task/QuickAdd';
 
-interface TimelineItem {
-  type: 'event' | 'block';
-  id: string;
-  title: string;
-  startMinutes: number;
-  durationMinutes: number;
-  projectName?: string;
-  task?: Task;
-}
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' {
+  const h = new Date().getHours();
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
 }
 
 export default function TodayPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
   const { milestones } = useMilestones();
-
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { blocks } = usePlannedBlocks(todayStr, todayStr);
-  const { events } = useCalendarEvents(
-    new Date(todayStr).toISOString(),
-    new Date(todayStr + 'T23:59:59').toISOString()
-  );
+  const streak = useStreak(tasks);
 
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const timeOfDay = getTimeOfDay();
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
-  const taskMap = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
 
-  const greeting = getGreeting();
-
-  const timeline = useMemo(() => {
-    const items: TimelineItem[] = [];
-    for (const ev of events) {
-      if (ev.is_all_day) continue;
-      const start = new Date(ev.start_time);
-      const end = new Date(ev.end_time);
-      if (!isToday(start)) continue;
-      items.push({
-        type: 'event', id: ev.id, title: ev.title,
-        startMinutes: start.getHours() * 60 + start.getMinutes(),
-        durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
-      });
-    }
-    for (const block of blocks) {
-      const [h, m] = block.start_time.split(':').map(Number);
-      const task = block.task_id ? taskMap.get(block.task_id) : null;
-      const project = task?.project_id ? projectMap.get(task.project_id) : null;
-      items.push({
-        type: 'block', id: block.id, title: task?.title ?? 'Planned Block',
-        startMinutes: h * 60 + m, durationMinutes: block.duration_minutes,
-        projectName: project?.name, task: task ?? undefined,
-      });
-    }
-    return items.sort((a, b) => a.startMinutes - b.startMinutes);
-  }, [events, blocks, taskMap, projectMap]);
-
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-  const urgentDeadlines = useMemo(() => {
-    const cutoff = addDays(new Date(), 2);
+  // Today's moves: tasks with planned_date = today OR status = 'Today'
+  const todayMoves = useMemo(() => {
     return tasks
-      .filter(t => t.status !== 'Done' && t.due_date)
-      .filter(t => { const d = new Date(t.due_date!); return isBefore(d, cutoff) || isToday(d); })
-      .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
-  }, [tasks]);
+      .filter(t => (t.planned_date === todayStr || t.status === 'Today') && t.status !== 'Done')
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [tasks, todayStr]);
 
-  const nextTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Today' || t.status === 'Next').sort((a, b) => {
-      if (a.status === 'Today' && b.status !== 'Today') return -1;
-      if (b.status === 'Today' && a.status !== 'Today') return 1;
-      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
-    }),
-  [tasks]);
+  // Also show done-today for progress
+  const doneToday = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tasks.filter(t =>
+      t.status === 'Done' &&
+      (t.planned_date === todayStr || new Date(t.updated_at) >= today)
+    );
+  }, [tasks, todayStr]);
 
-  const upcomingDeadlines = useMemo(() => {
-    const start = addDays(new Date(), 2);
-    const end = addDays(new Date(), 8);
-    return tasks
-      .filter(t => t.status !== 'Done' && t.due_date)
-      .filter(t => { const d = new Date(t.due_date!); return !isBefore(d, start) && isBefore(d, end); })
-      .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
-  }, [tasks]);
+  const totalMoves = todayMoves.length + doneToday.length;
+  const completedCount = doneToday.length;
+  const progressPct = totalMoves > 0 ? Math.round((completedCount / totalMoves) * 100) : 0;
+  const allDone = todayMoves.length === 0 && completedCount > 0;
 
-  const nextIds = new Set(nextTasks.map(t => t.id));
-  const urgentOnlyIds = urgentDeadlines.filter(t => !nextIds.has(t.id));
+  const estimatedMinutes = todayMoves.reduce((sum, t) => sum + (t.estimated_minutes ?? 0), 0);
+  const displayName = user?.email?.split('@')[0] ?? '';
 
-  const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
-    createTask.mutate({ title, area, status: 'Next', context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null }, {
-      onSuccess: () => toast.success('Added to route'),
+  // Find current task (first non-done)
+  const currentTaskIdx = 0;
+
+  const handleMarkDone = useCallback((id: string) => {
+    setCompletedIds(prev => new Set(prev).add(id));
+    const remaining = todayMoves.filter(t => t.id !== id).length;
+    
+    // Contextual feedback
+    if (remaining === 0) {
+      setFeedbackMsg('Route complete for today! 🎉');
+    } else if (completedCount === 0) {
+      setFeedbackMsg('Nice — that moved things forward.');
+    } else {
+      setFeedbackMsg(`${completedCount + 1} down, ${remaining} to go.`);
+    }
+    setTimeout(() => setFeedbackMsg(null), 3000);
+
+    updateTask.mutate({ id, status: 'Done' }, {
+      onSuccess: () => toast.success('Move cleared'),
     });
-  }, [createTask]);
+  }, [updateTask, todayMoves, completedCount]);
 
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
-  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id, { onSuccess: () => toast.success('Removed from route') }); }, [deleteTask]);
-  const handleMarkDone = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Route cleared. Next move ready.') });
-  }, [updateTask]);
-  const handleDemoteTask = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Backlog' }, { onSuccess: () => toast.success('Moved to Backlog') });
-  }, [updateTask]);
+  const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
 
-  const handleReorder = useCallback((taskId: string, newSortOrder: number) => {
-    updateTask.mutate({ id: taskId, sort_order: newSortOrder });
-  }, [updateTask]);
+  const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
+    createTask.mutate({ title, area, status: 'Today', context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null, planned_date: todayStr }, {
+      onSuccess: () => toast.success('Added to today\'s moves'),
+    });
+  }, [createTask, todayStr]);
 
-  const handleHighlightTask = useCallback((taskId: string) => {
-    if (taskId === '__review_tomorrow__') {
-      // Navigate to plan page for tomorrow review
-      window.location.href = '/plan';
-      return;
+  // Hero content based on time of day
+  const heroContent = useMemo(() => {
+    if (allDone) {
+      return {
+        greeting: `Route complete.`,
+        subtitle: `You cleared all ${completedCount} moves today.${streak.streak > 1 ? ` Streak: ${streak.streak} days.` : ''}`,
+        cta: 'Plan Tomorrow',
+        ctaAction: () => navigate('/plan'),
+        secondaryCta: 'View Review',
+        secondaryAction: () => navigate('/review'),
+      };
     }
-    const task = tasks.find(t => t.id === taskId);
-    if (task) setDetailTask(task);
-  }, [tasks]);
-
-  const formatDueLabel = (dateStr: string) => {
-    const d = new Date(dateStr);
-    if (isPast(d) && !isToday(d)) return `Overdue · ${format(d, 'MMM d')}`;
-    if (isToday(d)) return 'Due today';
-    if (isTomorrow(d)) return 'Due tomorrow';
-    return `Due ${format(d, 'EEE, MMM d')}`;
-  };
-
-  const formatTime = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-  };
+    if (timeOfDay === 'morning') {
+      return {
+        greeting: `Good morning${displayName ? `, ${displayName}` : ''}.`,
+        subtitle: `You have ${todayMoves.length} move${todayMoves.length !== 1 ? 's' : ''} today.${estimatedMinutes > 0 ? ` Estimated time: ${estimatedMinutes >= 60 ? `${Math.floor(estimatedMinutes / 60)}h ${estimatedMinutes % 60 > 0 ? `${estimatedMinutes % 60}m` : ''}` : `${estimatedMinutes}m`}.` : ''}`,
+        cta: 'Start Your Day',
+        ctaAction: todayMoves[0] ? () => setDetailTask(todayMoves[0]) : undefined,
+      };
+    }
+    if (timeOfDay === 'afternoon') {
+      return {
+        greeting: `Good afternoon${displayName ? `, ${displayName}` : ''}.`,
+        subtitle: `${completedCount} of ${totalMoves} moves complete.${completedCount > 0 ? ' You\'re on track.' : ''}`,
+        cta: 'Continue',
+        ctaAction: todayMoves[0] ? () => setDetailTask(todayMoves[0]) : undefined,
+      };
+    }
+    return {
+      greeting: `Good evening${displayName ? `, ${displayName}` : ''}.`,
+      subtitle: `Your day is almost done.${todayMoves.length > 0 ? ` ${todayMoves.length} move${todayMoves.length !== 1 ? 's' : ''} remaining.` : ' Let\'s close out and set up tomorrow.'}`,
+      cta: todayMoves.length > 0 ? 'Continue' : 'Review Your Day',
+      ctaAction: todayMoves.length > 0 ? () => setDetailTask(todayMoves[0]) : () => navigate('/review'),
+      secondaryCta: 'Plan Tomorrow',
+      secondaryAction: () => navigate('/plan'),
+    };
+  }, [timeOfDay, displayName, todayMoves, completedCount, totalMoves, estimatedMinutes, allDone, streak, navigate]);
 
   return (
     <AppShell>
-      <div className="space-y-8">
-        {/* Greeting */}
-        <div className="pt-1">
-          <h1 className="text-2xl font-display font-bold">
-            {greeting}
+      <div className="space-y-6 max-w-2xl mx-auto">
+        {/* Hero Panel */}
+        <Card className="p-6 sm:p-8 rounded-2xl bg-[hsl(var(--mint)/0.15)] border-[hsl(var(--accent)/0.2)]">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+            {heroContent.greeting}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1 font-mono tracking-tight">
-            {format(new Date(), 'EEEE, MMMM d')} · {nextTasks.length} stops on today's route
+          <p className="text-sm text-muted-foreground mt-2">
+            {heroContent.subtitle}
           </p>
-        </div>
+          <div className="flex items-center gap-3 mt-5 flex-wrap">
+            {heroContent.ctaAction && (
+              <Button onClick={heroContent.ctaAction} className="rounded-xl font-display" size="sm">
+                {heroContent.cta} <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+            )}
+            {heroContent.secondaryCta && heroContent.secondaryAction && (
+              <Button variant="outline" onClick={heroContent.secondaryAction} className="rounded-xl font-display" size="sm">
+                {heroContent.secondaryCta}
+              </Button>
+            )}
+          </div>
 
-        {/* Route Brief */}
-        <RouteBrief tasks={tasks} projects={projects} onHighlightTask={handleHighlightTask} onDemoteTask={handleDemoteTask} onMarkDone={handleMarkDone} onReorder={handleReorder} />
-
-        {/* Universal Command Field */}
-        <QuickAdd defaultStatus="Next" projects={projects} milestones={milestones}
-          allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
-          onAdd={handleQuickAdd}
-          onTasksCreated={() => queryClient.invalidateQueries()} />
-
-        {/* Transit Path Timeline */}
-        {timeline.length > 0 && (
-          <section>
-            <SectionHeader icon={<CalendarClock className="h-4 w-4" />} label="Timeline" />
-            <div className="relative ml-3">
-              {/* Transit path line */}
-              <div className="absolute left-[3px] top-3 bottom-3 w-px bg-mint" />
-
-              <div className="space-y-0">
-                {timeline.map((item, idx) => {
-                  const isPastItem = item.startMinutes + item.durationMinutes < nowMinutes;
-                  const isCurrent = item.startMinutes <= nowMinutes && item.startMinutes + item.durationMinutes > nowMinutes;
-
-                  return (
-                    <div
-                      key={`${item.type}-${item.id}`}
-                      className="relative flex items-start gap-4 py-2 group"
-                    >
-                      {/* Transit node */}
-                      <div className={cn(
-                        'relative z-10 mt-3 w-[7px] h-[7px] rounded-full border-2 flex-shrink-0 transition-all duration-150',
-                        isCurrent
-                          ? 'border-accent bg-accent shadow-[0_0_6px_hsl(var(--accent)/0.4)]'
-                          : isPastItem
-                            ? 'border-muted-foreground/30 bg-muted-foreground/30'
-                            : 'border-primary bg-background'
-                      )} />
-
-                      {/* Timeline card */}
-                      <Card
-                        className={cn(
-                          "flex-1 p-3 flex items-center gap-3 transition-all duration-150 rounded-xl",
-                          item.type === 'block' && "cursor-pointer hover:shadow-card hover:translate-x-px",
-                          isPastItem && "opacity-40",
-                          isCurrent && "border-accent/40 bg-mint/30 shadow-card"
-                        )}
-                        onClick={() => item.task && setDetailTask(item.task)}
-                      >
-                        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground w-20 flex-shrink-0">
-                          <Clock className="h-3 w-3" />
-                          {formatTime(item.startMinutes)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{item.title}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-muted-foreground font-mono">{item.durationMinutes}m</span>
-                            {item.projectName && <span className="text-xs text-accent font-medium">{item.projectName}</span>}
-                            {item.type === 'event' && <Badge variant="outline" className="text-[10px] h-5 rounded-full font-mono">Cal</Badge>}
-                          </div>
-                        </div>
-                        {isCurrent && (
-                          <Badge className="text-[10px] h-5 bg-accent text-accent-foreground rounded-full font-mono">Now</Badge>
-                        )}
-                        {item.type === 'block' && item.task && (
-                          <Button
-                            variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg hover:translate-x-px transition-all duration-150"
-                            onClick={e => { e.stopPropagation(); handleMarkDone(item.task!.id); }}
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Clear
-                          </Button>
-                        )}
-                      </Card>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Streak indicator */}
+          {streak.streak > 0 && (
+            <div className="flex items-center gap-3 mt-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-orange-500" />
+                {streak.streak}-day streak
+              </span>
+              <span>|</span>
+              <span>This week: {streak.weekCleared} moves cleared</span>
             </div>
-          </section>
+          )}
+        </Card>
+
+        {/* Progress Bar */}
+        {totalMoves > 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-mono">{completedCount} of {totalMoves} moves complete</span>
+              <span className="font-mono">{progressPct}%</span>
+            </div>
+            <Progress value={progressPct} className="h-1.5 bg-muted" />
+          </div>
         )}
 
-        {/* Wayfinding divider */}
-        <div className="wayfinding-divider" />
-
-        {/* Urgent Deadlines */}
-        {urgentOnlyIds.length > 0 && (
-          <section>
-            <SectionHeader icon={<AlertCircle className="h-4 w-4" />} label="Imminent Deadlines" variant="destructive" />
-            <div className="space-y-2">
-              {urgentOnlyIds.map(t => (
-                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-card hover:translate-x-px transition-all duration-150 rounded-xl border-destructive/20" onClick={() => setDetailTask(t)}>
-                  <span className="transit-node border-destructive bg-destructive" style={{ width: 6, height: 6, borderWidth: 0 }} />
-                  <span className="text-sm flex-1 font-medium">{t.title}</span>
-                  <Badge variant="destructive" className="text-[10px] font-mono rounded-full">{formatDueLabel(t.due_date!)}</Badge>
-                  {t.project_id && <span className="text-xs text-accent font-medium">{projectMap.get(t.project_id)?.name}</span>}
-                </Card>
-              ))}
-            </div>
-          </section>
+        {/* Feedback message */}
+        {feedbackMsg && (
+          <div className="text-center text-sm text-accent font-medium animate-fade-in">
+            {feedbackMsg}
+          </div>
         )}
 
-        {/* Today's Route */}
+        {/* Today's Moves */}
         <section>
-          <SectionHeader icon={<Navigation className="h-4 w-4" />} label="Today's Route" />
+          <h2 className="font-display text-sm font-semibold flex items-center gap-2 mb-4 text-muted-foreground uppercase tracking-wider">
+            <Navigation className="h-4 w-4 text-accent" />
+            Today's Moves
+          </h2>
+
           {isLoading ? (
             <p className="text-sm text-muted-foreground text-center py-8 font-mono">Loading route...</p>
+          ) : todayMoves.length === 0 && doneToday.length === 0 ? (
+            <Card className="p-8 text-center rounded-2xl">
+              <p className="text-muted-foreground mb-2">No moves planned for today.</p>
+              <p className="text-sm text-muted-foreground mb-4">Plan your day to get started.</p>
+              <Button onClick={() => navigate('/plan')} className="rounded-xl font-display" size="sm">
+                Plan Today <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+            </Card>
           ) : (
-            <FocusCardStack nextTasks={nextTasks} allTasks={tasks} projects={projects} milestones={milestones}
-              onMarkDone={handleMarkDone} onSelect={setDetailTask} formatDueLabel={formatDueLabel} />
+            <div className="space-y-2">
+              {/* Done tasks (muted) */}
+              {doneToday.map(task => {
+                const taskProject = projectMap.get(task.project_id ?? '');
+                return (
+                  <Card key={task.id} className="rounded-xl overflow-hidden opacity-50">
+                    <div className="flex items-center gap-3 p-4">
+                      {taskProject?.line_color && (
+                        <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
+                      )}
+                      <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
+                      </div>
+                      <span className="text-sm flex-1 line-through text-muted-foreground">{task.title}</span>
+                      {taskProject && (
+                        <Badge variant="outline" className="text-[10px] rounded-full" style={{ borderColor: taskProject.line_color ?? undefined, color: taskProject.line_color ?? undefined }}>
+                          {taskProject.name}
+                        </Badge>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+
+              {/* Active tasks */}
+              {todayMoves.map((task, idx) => {
+                const isCurrentTask = idx === currentTaskIdx;
+                const taskProject = projectMap.get(task.project_id ?? '');
+                const justCompleted = completedIds.has(task.id);
+
+                return (
+                  <Card
+                    key={task.id}
+                    className={cn(
+                      "rounded-xl overflow-hidden transition-all duration-300 cursor-pointer group",
+                      isCurrentTask && "ring-2 ring-accent/30 shadow-card",
+                      justCompleted && "animate-slide-right-fade"
+                    )}
+                    onClick={() => setDetailTask(task)}
+                  >
+                    <div className="flex items-stretch">
+                      {/* Project color stripe */}
+                      {taskProject?.line_color && (
+                        <div className="w-1 flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
+                      )}
+                      <div className="flex items-center gap-3 p-4 flex-1 min-w-0">
+                        {/* Status indicator */}
+                        <div className="relative flex-shrink-0">
+                          {isCurrentTask ? (
+                            <div className="relative flex items-center justify-center">
+                              <div className="absolute w-7 h-7 rounded-full animate-ping opacity-20 bg-accent" />
+                              <div className="w-5 h-5 rounded-full border-[3px] border-accent bg-accent/10" />
+                            </div>
+                          ) : (
+                            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 bg-card" />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(
+                            "text-sm font-medium truncate",
+                            isCurrentTask && "text-foreground font-semibold"
+                          )}>
+                            {task.title}
+                          </p>
+                          {taskProject && (
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color ?? undefined }} />
+                              {taskProject.name}
+                            </p>
+                          )}
+                        </div>
+
+                        {task.estimated_minutes && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono flex-shrink-0">
+                            <Clock className="h-3 w-3" />{task.estimated_minutes}m
+                          </span>
+                        )}
+
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-8 w-8 p-0 shrink-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
+                          onClick={e => { e.stopPropagation(); handleMarkDone(task.id); }}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Overflow indicator */}
+          {todayMoves.length > 5 && (
+            <p className="text-xs text-muted-foreground font-mono mt-3 text-center">
+              Showing all {todayMoves.length} moves · Consider trimming to 3-5
+            </p>
           )}
         </section>
 
-        {/* Upcoming Stops */}
-        {upcomingDeadlines.length > 0 && (
-          <section>
-            <SectionHeader icon={<CalendarDays className="h-4 w-4" />} label="Upcoming Stops" />
-            <div className="space-y-2">
-              {upcomingDeadlines.map(t => (
-                <Card key={t.id} className="p-3 flex items-center gap-3 cursor-pointer hover:shadow-card hover:translate-x-px transition-all duration-150 rounded-xl" onClick={() => setDetailTask(t)}>
-                  <span className="transit-node" />
-                  <span className="text-sm flex-1 text-muted-foreground">{t.title}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono rounded-full">{format(new Date(t.due_date!), 'EEE, MMM d')}</Badge>
-                  {t.project_id && <span className="text-xs text-accent font-medium">{projectMap.get(t.project_id)?.name}</span>}
-                </Card>
-              ))}
+        {/* All-done celebration */}
+        {allDone && (
+          <Card className="p-6 rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
+            <Trophy className="h-8 w-8 text-accent mx-auto mb-3" />
+            <p className="font-display font-bold text-lg">Route complete.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              You cleared all {completedCount} moves today.
+              {streak.streak > 1 && ` Streak: ${streak.streak} days.`}
+            </p>
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <Button onClick={() => navigate('/plan')} className="rounded-xl font-display" size="sm">
+                Plan Tomorrow <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/review')} className="rounded-xl font-display" size="sm">
+                View Review
+              </Button>
             </div>
-          </section>
+          </Card>
         )}
 
-        <div className="wayfinding-divider" />
-
-        <RouteProgress tasks={tasks} />
-
-        <div className="wayfinding-divider" />
-
-        <HabitSection />
+        {/* Quick Add */}
+        <QuickAdd defaultStatus="Today" projects={projects} milestones={milestones}
+          allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
+          onAdd={handleQuickAdd}
+          onTasksCreated={() => queryClient.invalidateQueries()} />
       </div>
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
     </AppShell>
-  );
-}
-
-/* Reusable section header with transit node */
-function SectionHeader({ icon, label, variant }: { icon: React.ReactNode; label: string; variant?: 'destructive' }) {
-  return (
-    <h2 className={cn(
-      "font-display text-xs font-semibold flex items-center gap-2.5 mb-3 uppercase tracking-[0.12em]",
-      variant === 'destructive' ? 'text-destructive' : 'text-muted-foreground'
-    )}>
-      <span className={cn(
-        'flex items-center justify-center w-6 h-6 rounded-full border-2',
-        variant === 'destructive'
-          ? 'border-destructive/40 text-destructive'
-          : 'border-accent/40 text-accent'
-      )}>
-        {icon}
-      </span>
-      {label}
-    </h2>
   );
 }
