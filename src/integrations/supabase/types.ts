@@ -387,6 +387,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           id: string
+          line_color: string | null
           name: string
           scope_notes: string | null
           strategic_phase: Database["public"]["Enums"]["strategic_phase"] | null
@@ -399,6 +400,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           id?: string
+          line_color?: string | null
           name: string
           scope_notes?: string | null
           strategic_phase?:
@@ -413,6 +415,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           id?: string
+          line_color?: string | null
           name?: string
           scope_notes?: string | null
           strategic_phase?:
