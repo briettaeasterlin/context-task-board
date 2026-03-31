@@ -179,7 +179,8 @@ export default function PlanPage() {
               {displayTasks.map((task, idx) => {
                 const taskProject = projectMap.get(task.project_id ?? '');
                 return (
-                  <Card key={task.id} className="rounded-xl overflow-hidden group">
+                  <Card key={task.id} className="rounded-xl overflow-hidden group cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setDrawerTask(task)}>
                     <div className="flex items-center gap-3 p-4">
                       {taskProject?.line_color && (
                         <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
@@ -198,7 +199,7 @@ export default function PlanPage() {
                       )}
                       {adjustMode && (
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100"
-                          onClick={() => handleRemoveTask(task.id)}>
+                          onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       )}
