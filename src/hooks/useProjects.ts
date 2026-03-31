@@ -20,7 +20,7 @@ export function useProjects() {
   });
 
   const createProject = useMutation({
-    mutationFn: async (project: Omit<Project, 'id' | 'user_id' | 'created_at' | 'updated_at'> & { line_color?: string | null }) => {
+    mutationFn: async (project: { name: string; area: Project['area']; summary: string | null; scope_notes: string | null; line_color?: string | null }) => {
       if (!user) throw new Error('Not authenticated');
       // Auto-assign line color if not provided
       const existingColors = (projectsQuery.data ?? []).map(p => p.line_color);
