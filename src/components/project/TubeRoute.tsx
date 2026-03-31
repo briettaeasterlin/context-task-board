@@ -181,7 +181,7 @@ export function TubeRoute({ tasks, lineColor, onTaskClick, onMarkDone, compact =
                 isHovered ? "bg-muted/40" : "",
                 isDone ? "opacity-60" : ""
               )}
-              style={isYouAreHere ? { ringColor: lineColor, boxShadow: `0 0 12px ${lineColor}20` } : undefined}
+              style={isYouAreHere ? { boxShadow: `0 0 0 1px ${lineColor}40, 0 0 12px ${lineColor}20` } : undefined}
               >
                 <div className="flex items-center gap-2">
                   <span className={cn(
