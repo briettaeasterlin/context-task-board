@@ -435,7 +435,9 @@ export type Database = {
           id: string
           proposed_fields: Json | null
           reasoning: string | null
+          requires_review: boolean
           source: string | null
+          source_event_id: string | null
           status: Database["public"]["Enums"]["proposed_change_status"]
           summary: string
           target_project_id: string | null
@@ -450,7 +452,9 @@ export type Database = {
           id?: string
           proposed_fields?: Json | null
           reasoning?: string | null
+          requires_review?: boolean
           source?: string | null
+          source_event_id?: string | null
           status?: Database["public"]["Enums"]["proposed_change_status"]
           summary: string
           target_project_id?: string | null
@@ -465,7 +469,9 @@ export type Database = {
           id?: string
           proposed_fields?: Json | null
           reasoning?: string | null
+          requires_review?: boolean
           source?: string | null
+          source_event_id?: string | null
           status?: Database["public"]["Enums"]["proposed_change_status"]
           summary?: string
           target_project_id?: string | null
@@ -474,6 +480,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "proposed_changes_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "source_events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "proposed_changes_target_project_id_fkey"
             columns: ["target_project_id"]
@@ -515,6 +528,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      source_events: {
+        Row: {
+          created_at: string
+          id: string
+          raw_content: string
+          received_at: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raw_content: string
+          received_at?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raw_content?: string
+          received_at?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
