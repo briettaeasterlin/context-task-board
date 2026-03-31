@@ -481,22 +481,30 @@ export default function ProjectDetailPage() {
   return (
     <AppShell>
       <div className="space-y-4">
+        {/* Colored line bar */}
+        <div className="h-2 rounded-full -mx-1" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
+
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="h-7 px-2 hover:translate-x-px transition-all duration-150" onClick={() => navigate('/review')}>
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
               <h2 className="font-mono text-sm font-semibold">{project.name}</h2>
               <AreaBadge area={project.area} />
             </div>
-            {project.summary && <p className="text-xs text-muted-foreground mt-0.5">{project.summary}</p>}
+            {project.summary && <p className="text-xs text-muted-foreground mt-0.5 ml-5">{project.summary}</p>}
           </div>
           <div className="flex items-center gap-2">
+            <LineColorPicker
+              value={project.line_color}
+              onChange={(color) => updateProject.mutate({ id: project.id, line_color: color } as any)}
+            />
             <div className="text-right mr-2">
               <div className="text-[10px] text-muted-foreground">{progress}% complete</div>
               <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
               </div>
             </div>
             <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={copySnapshot}>
