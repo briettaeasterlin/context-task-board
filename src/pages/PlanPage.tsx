@@ -22,7 +22,7 @@ export default function PlanPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tasks, updateTask, deleteTask } = useTasks();
-  const { projects, milestones } = useProjects();
+  const { projects } = useProjects();
   const [drawerTask, setDrawerTask] = useState<Task | null>(null);
 
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
