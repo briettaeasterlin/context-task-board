@@ -228,11 +228,12 @@ export default function Dashboard() {
               <span>📁</span> Active Projects
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {activeProjects.map(p => (
+              {activeProjects.map((p, idx) => (
                 <ProjectCard key={p.id} project={p} tasks={tasks.filter(t => t.project_id === p.id)}
                   milestones={milestones}
                   clarifyCount={clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open').length}
-                  onClick={() => window.location.href = `/projects/${p.id}`} />
+                  onClick={() => window.location.href = `/projects/${p.id}`}
+                  colorIndex={idx} />
               ))}
             </div>
           </section>

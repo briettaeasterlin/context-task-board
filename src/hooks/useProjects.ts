@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import type { Project, Milestone } from '@/types/task';
+import { getNextAvailableColor } from '@/lib/tube-colors';
 
 export function useProjects() {
   const { user } = useAuth();
@@ -19,9 +20,12 @@ export function useProjects() {
   });
 
   const createProject = useMutation({
-    mutationFn: async (project: Omit<Project, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (project: { name: string; area: Project['area']; summary: string | null; scope_notes: string | null; line_color?: string | null }) => {
       if (!user) throw new Error('Not authenticated');
-      const { data, error } = await supabase.from('projects').insert({ ...project, user_id: user.id } as any).select().single();
+      // Auto-assign line color if not provided
+      const existingColors = (projectsQuery.data ?? []).map(p => p.line_color);
+      const lineColor = project.line_color || getNextAvailableColor(existingColors);
+      const { data, error } = await supabase.from('projects').insert({ ...project, line_color: lineColor, user_id: user.id } as any).select().single();
       if (error) throw error;
       return data as unknown as Project;
     },

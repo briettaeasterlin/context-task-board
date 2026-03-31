@@ -1,24 +1,9 @@
 import type { Project, Task, Milestone, TaskArea } from '@/types/task';
 import { AreaBadge } from '@/components/task/AreaBadge';
 import { Card } from '@/components/ui/card';
+import { TubeRoute } from '@/components/project/TubeRoute';
+import { getTubeLineByHex, TUBE_LINES } from '@/lib/tube-colors';
 import { cn } from '@/lib/utils';
-
-/** Tube-line color per area — matches CSS variable names */
-const AREA_LINE_COLORS: Record<TaskArea, string> = {
-  Client: 'bg-line-piccadilly',
-  Business: 'bg-line-metropolitan',
-  Home: 'bg-line-district',
-  Family: 'bg-line-bakerloo',
-  Personal: 'bg-line-elizabeth',
-};
-
-const AREA_LINE_ACCENT: Record<TaskArea, string> = {
-  Client: 'text-line-piccadilly',
-  Business: 'text-line-metropolitan',
-  Home: 'text-line-district',
-  Family: 'text-line-bakerloo',
-  Personal: 'text-line-elizabeth',
-};
 
 function guessEmoji(name: string): string {
   const n = name.toLowerCase();
@@ -39,9 +24,11 @@ interface Props {
   clarifyCount: number;
   milestones?: Milestone[];
   onClick: () => void;
+  /** Index for fallback color assignment */
+  colorIndex?: number;
 }
 
-export function ProjectCard({ project, tasks, clarifyCount, milestones = [], onClick }: Props) {
+export function ProjectCard({ project, tasks, clarifyCount, milestones = [], onClick, colorIndex = 0 }: Props) {
   const total = tasks.length;
   const done = tasks.filter(t => t.status === 'Done').length;
   const next = tasks.filter(t => t.status === 'Next').length;
@@ -55,18 +42,14 @@ export function ProjectCard({ project, tasks, clarifyCount, milestones = [], onC
   const isDormant = total > 0 && next === 0 && waiting === 0 && backlog > 0;
 
   const emoji = guessEmoji(project.name);
-  const lineColor = AREA_LINE_COLORS[project.area];
-  const lineAccent = AREA_LINE_ACCENT[project.area];
+  const lineColor = project.line_color || TUBE_LINES[colorIndex % TUBE_LINES.length].hex;
+  const lineName = getTubeLineByHex(lineColor).name;
 
-  const momentum = isAtRisk ? { label: 'At risk', emoji: '⚠️', color: 'text-status-waiting' }
-    : isDormant ? { label: 'Dormant', emoji: '💤', color: 'text-muted-foreground' }
-    : next >= 3 ? { label: 'High activity', emoji: '🔥', color: 'text-status-today' }
-    : isInProgress ? { label: 'Steady', emoji: '🌿', color: 'text-status-done' }
+  const momentum = isAtRisk ? { label: 'At risk', emoji: '⚠️' }
+    : isDormant ? { label: 'Dormant', emoji: '💤' }
+    : next >= 3 ? { label: 'High activity', emoji: '🔥' }
+    : isInProgress ? { label: 'Steady', emoji: '🌿' }
     : null;
-
-  // Build station dots for the route progress
-  const stationCount = Math.min(total, 8);
-  const filledStations = total > 0 ? Math.round((done / total) * stationCount) : 0;
 
   return (
     <Card
@@ -77,14 +60,17 @@ export function ProjectCard({ project, tasks, clarifyCount, milestones = [], onC
       onClick={onClick}
     >
       {/* Colored line top bar */}
-      <div className={cn("h-1.5 w-full", lineColor)} />
+      <div className="h-1.5 w-full" style={{ backgroundColor: lineColor }} />
 
       <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-start gap-2.5 min-w-0">
-            <span className="text-lg flex-shrink-0">{emoji}</span>
+            <div
+              className="w-3 h-3 rounded-full mt-1 flex-shrink-0"
+              style={{ backgroundColor: lineColor }}
+            />
             <div className="min-w-0">
-              <h3 className={cn("font-sans text-sm font-semibold transition-colors truncate", `group-hover:${lineAccent}`)}>
+              <h3 className="font-sans text-sm font-semibold transition-colors truncate group-hover:text-foreground">
                 {project.name}
               </h3>
               <div className="flex items-center gap-1.5 mt-1">
@@ -93,54 +79,29 @@ export function ProjectCard({ project, tasks, clarifyCount, milestones = [], onC
             </div>
           </div>
           {momentum && (
-            <span className={cn('flex items-center gap-1 text-[10px] font-medium flex-shrink-0', momentum.color)}>
+            <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground flex-shrink-0">
               {momentum.emoji} {momentum.label}
             </span>
           )}
         </div>
 
         {project.summary && (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">{project.summary}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2">{project.summary}</p>
         )}
 
-        {/* Station-dot route progress */}
-        <div>
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-2">
-            <span className={cn("font-semibold", lineAccent)}>{progress}% complete</span>
-            <span>{done}/{total} stops</span>
-          </div>
-
-          {/* Tube line with station dots */}
-          <div className="relative flex items-center gap-0 h-4">
-            {/* Track line background */}
-            <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-[3px] rounded-full bg-muted" />
-            {/* Filled track */}
-            <div
-              className={cn("absolute left-1 top-1/2 -translate-y-1/2 h-[3px] rounded-full transition-all duration-500", lineColor)}
-              style={{ width: `${Math.max(progress, 0)}%` }}
-            />
-            {/* Station dots */}
-            {stationCount > 0 && Array.from({ length: stationCount }).map((_, i) => (
-              <div
-                key={i}
-                className="flex-1 flex justify-center relative z-10"
-              >
-                <div className={cn(
-                  "w-2 h-2 rounded-full border-2 transition-all",
-                  i < filledStations
-                    ? cn(lineColor, "border-transparent")
-                    : "bg-card border-muted-foreground/30"
-                )} />
-              </div>
-            ))}
-          </div>
+        {/* Tube route visualization */}
+        <div className="mb-2">
+          <TubeRoute tasks={tasks} lineColor={lineColor} compact />
         </div>
 
-        <div className="flex items-center gap-3 mt-3 text-[11px]">
-          {next > 0 && <span className="text-status-next font-medium">🎯 {next} next</span>}
-          {waiting > 0 && <span className="text-status-waiting font-medium">⏳ {waiting} waiting</span>}
-          {backlog > 0 && <span className="text-muted-foreground">{backlog} backlog</span>}
-          {clarifyCount > 0 && <span className="text-status-today font-medium">❓ {clarifyCount}</span>}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 text-[11px]">
+            {next > 0 && <span className="font-medium" style={{ color: lineColor }}>🎯 {next} next</span>}
+            {waiting > 0 && <span className="text-muted-foreground font-medium">⏳ {waiting}</span>}
+            {backlog > 0 && <span className="text-muted-foreground">{backlog} planned</span>}
+            {clarifyCount > 0 && <span className="text-destructive font-medium">❓ {clarifyCount}</span>}
+          </div>
+          <span className="text-[10px] font-mono text-muted-foreground">{done}/{total} stops</span>
         </div>
       </div>
     </Card>

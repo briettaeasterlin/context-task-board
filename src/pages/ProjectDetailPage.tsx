@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoadmapTimeline } from '@/components/project/RoadmapTimeline';
 import { ProjectPlanTab } from '@/components/project/ProjectPlanTab';
+import { TubeRoute } from '@/components/project/TubeRoute';
+import { LineColorPicker } from '@/components/project/LineColorPicker';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { QuickAdd } from '@/components/task/QuickAdd';
@@ -31,6 +33,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { scoreTasks } from '@/lib/task-scoring';
 import { cn } from '@/lib/utils';
+import { TUBE_LINES } from '@/lib/tube-colors';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -478,22 +481,30 @@ export default function ProjectDetailPage() {
   return (
     <AppShell>
       <div className="space-y-4">
+        {/* Colored line bar */}
+        <div className="h-2 rounded-full -mx-1" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
+
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="h-7 px-2 hover:translate-x-px transition-all duration-150" onClick={() => navigate('/review')}>
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
               <h2 className="font-mono text-sm font-semibold">{project.name}</h2>
               <AreaBadge area={project.area} />
             </div>
-            {project.summary && <p className="text-xs text-muted-foreground mt-0.5">{project.summary}</p>}
+            {project.summary && <p className="text-xs text-muted-foreground mt-0.5 ml-5">{project.summary}</p>}
           </div>
           <div className="flex items-center gap-2">
+            <LineColorPicker
+              value={project.line_color}
+              onChange={(color) => updateProject.mutate({ id: project.id, line_color: color } as any)}
+            />
             <div className="text-right mr-2">
               <div className="text-[10px] text-muted-foreground">{progress}% complete</div>
               <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
               </div>
             </div>
             <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={copySnapshot}>
@@ -535,14 +546,30 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="roadmap">
+        <Tabs defaultValue="route">
           <TabsList>
+            <TabsTrigger value="route" className="text-xs">Route</TabsTrigger>
             <TabsTrigger value="roadmap" className="text-xs">Roadmap</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs">Tasks ({tasks.length})</TabsTrigger>
             <TabsTrigger value="plan" className="text-xs">Plan</TabsTrigger>
             <TabsTrigger value="updates" className="text-xs">Updates ({updates.length})</TabsTrigger>
             <TabsTrigger value="clarify" className="text-xs">Clarify ({clarifyQuestions.filter(q => q.status === 'open').length})</TabsTrigger>
           </TabsList>
+          <TabsContent value="route" className="mt-4">
+            <Card className="rounded-2xl shadow-card p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
+                <span className="text-sm font-display font-semibold">{project.name} Line</span>
+                <span className="text-xs text-muted-foreground ml-auto font-mono">{done}/{total} stops cleared</span>
+              </div>
+              <TubeRoute
+                tasks={tasks}
+                lineColor={project.line_color || TUBE_LINES[0].hex}
+                onTaskClick={setDetailTask}
+                onMarkDone={(id) => updateTask.mutate({ id, status: 'Done' }, { onSuccess: () => toast.success('Stop cleared ✨') })}
+              />
+            </Card>
+          </TabsContent>
           <TabsContent value="roadmap" className="mt-4 space-y-6">
             <RoadmapTimeline
               milestones={milestones}

@@ -7,11 +7,12 @@ import { useWorkload } from '@/hooks/useWorkload';
 import { useProjectCompletion } from '@/hooks/useProjectCompletion';
 import type { Task, TaskUpdate } from '@/types/task';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
+import { TubeMapOverview } from '@/components/project/TubeMapOverview';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight, Zap, Sparkles, AlertTriangle, TrendingUp } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Zap, Sparkles, AlertTriangle, TrendingUp, Map } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays, startOfWeek, endOfWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -189,69 +190,67 @@ export default function HQPage() {
             </Card>
           ) : (
             <div className="space-y-2">
-              {focusTasks.map(task => (
-                <Card key={task.id}
-                  className="p-4 rounded-2xl shadow-card flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 group"
-                  onClick={() => setDetailTask(task)}
-                >
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                    onClick={e => { e.stopPropagation(); handleMarkDone(task.id); }}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium flex-1">{task.title}</span>
-                  {task.project_id && (
-                    <span className="text-xs text-accent">
-                      {projects.find(p => p.id === task.project_id)?.name}
-                    </span>
-                  )}
-                  {task.due_date && (
-                    <Badge variant="outline" className="text-[10px] rounded-full">{format(new Date(task.due_date), 'MMM d')}</Badge>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Active Projects */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-              📁 Active Projects
-            </h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} className="text-xs text-muted-foreground">
-              View all <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </div>
-          {activeProjects.length === 0 ? (
-            <Card className="p-8 text-center rounded-2xl shadow-card">
-              <p className="text-muted-foreground mb-2">No projects yet.</p>
-              <p className="text-sm text-muted-foreground">Create a project to organize your work.</p>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeProjects.map(project => {
-                const projectTasks = tasks.filter(t => t.project_id === project.id);
-                const done = projectTasks.filter(t => t.status === 'Done').length;
-                const total = projectTasks.length;
+              {focusTasks.map(task => {
+                const taskProject = projects.find(p => p.id === task.project_id);
+                const taskColor = taskProject?.line_color;
                 return (
-                  <Card key={project.id}
-                    className="p-5 rounded-2xl shadow-card cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200"
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                  <Card key={task.id}
+                    className="rounded-2xl shadow-card flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 group overflow-hidden"
+                    onClick={() => setDetailTask(task)}
                   >
-                    <h3 className="font-display font-semibold text-sm mb-1">{project.name}</h3>
-                    {project.summary && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{project.summary}</p>}
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-[10px] rounded-full">{project.area}</Badge>
-                      <span className="text-xs text-muted-foreground">{done}/{total} done</span>
+                    {/* Project line color stripe */}
+                    {taskColor && (
+                      <div className="w-1 self-stretch flex-shrink-0" style={{ backgroundColor: taskColor }} />
+                    )}
+                    <div className={cn("flex-1 flex items-center gap-3 p-4", !taskColor && "pl-4")}>
+                      <Button
+                        variant="ghost" size="sm"
+                        className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                        onClick={e => { e.stopPropagation(); handleMarkDone(task.id); }}
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium flex-1">{task.title}</span>
+                      {taskProject && (
+                        <span className="text-xs flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: taskColor }} />
+                          {taskProject.name}
+                        </span>
+                      )}
+                      {task.due_date && (
+                        <Badge variant="outline" className="text-[10px] rounded-full">{format(new Date(task.due_date), 'MMM d')}</Badge>
+                      )}
                     </div>
                   </Card>
                 );
               })}
             </div>
+          )}
+        </section>
+
+        {/* Route Map — All Projects */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+              <Map className="h-5 w-5" /> Route Map
+            </h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} className="text-xs text-muted-foreground">
+              All routes <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+          {activeProjects.length === 0 ? (
+            <Card className="p-8 text-center rounded-2xl shadow-card">
+              <p className="text-muted-foreground mb-2">No projects yet.</p>
+              <p className="text-sm text-muted-foreground">Create a project to see your route map.</p>
+            </Card>
+          ) : (
+            <Card className="rounded-2xl shadow-card p-4">
+              <TubeMapOverview
+                projects={activeProjects}
+                tasks={tasks}
+                onProjectClick={(id) => navigate(`/projects/${id}`)}
+              />
+            </Card>
           )}
         </section>
 
