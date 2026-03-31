@@ -257,6 +257,15 @@ export default function PlanPage() {
           </>
         )}
       </div>
+
+      <TaskDetailDrawer
+        task={drawerTask}
+        open={!!drawerTask}
+        onClose={() => setDrawerTask(null)}
+        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates } as any)}
+        onDelete={(id) => deleteTask.mutate(id)}
+        projects={projects}
+      />
     </AppShell>
   );
 }
