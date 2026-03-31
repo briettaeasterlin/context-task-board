@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
 import { RoadmapTimeline } from '@/components/project/RoadmapTimeline';
 import { ProjectPlanTab } from '@/components/project/ProjectPlanTab';
+import { TubeRoute } from '@/components/project/TubeRoute';
+import { LineColorPicker } from '@/components/project/LineColorPicker';
 import { TaskTable } from '@/components/task/TaskTable';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 import { QuickAdd } from '@/components/task/QuickAdd';
@@ -31,6 +33,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { scoreTasks } from '@/lib/task-scoring';
 import { cn } from '@/lib/utils';
+import { TUBE_LINES } from '@/lib/tube-colors';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
