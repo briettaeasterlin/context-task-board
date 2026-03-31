@@ -53,6 +53,53 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          proposed_change_id: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          proposed_change_id?: string | null
+          source?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          proposed_change_id?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_proposed_change_id_fkey"
+            columns: ["proposed_change_id"]
+            isOneToOne: false
+            referencedRelation: "proposed_changes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events_cache: {
         Row: {
           end_time: string
@@ -436,6 +483,8 @@ export type Database = {
           proposed_fields: Json | null
           reasoning: string | null
           requires_review: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
           source: string | null
           source_event_id: string | null
           status: Database["public"]["Enums"]["proposed_change_status"]
@@ -453,6 +502,8 @@ export type Database = {
           proposed_fields?: Json | null
           reasoning?: string | null
           requires_review?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           source?: string | null
           source_event_id?: string | null
           status?: Database["public"]["Enums"]["proposed_change_status"]
@@ -470,6 +521,8 @@ export type Database = {
           proposed_fields?: Json | null
           reasoning?: string | null
           requires_review?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           source?: string | null
           source_event_id?: string | null
           status?: Database["public"]["Enums"]["proposed_change_status"]
