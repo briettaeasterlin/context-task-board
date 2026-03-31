@@ -217,42 +217,29 @@ export default function HQPage() {
           )}
         </section>
 
-        {/* Active Projects */}
+        {/* Route Map — All Projects */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-              📁 Active Projects
+              <Map className="h-5 w-5" /> Route Map
             </h2>
             <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} className="text-xs text-muted-foreground">
-              View all <ArrowRight className="h-3 w-3 ml-1" />
+              All routes <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </div>
           {activeProjects.length === 0 ? (
             <Card className="p-8 text-center rounded-2xl shadow-card">
               <p className="text-muted-foreground mb-2">No projects yet.</p>
-              <p className="text-sm text-muted-foreground">Create a project to organize your work.</p>
+              <p className="text-sm text-muted-foreground">Create a project to see your route map.</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeProjects.map(project => {
-                const projectTasks = tasks.filter(t => t.project_id === project.id);
-                const done = projectTasks.filter(t => t.status === 'Done').length;
-                const total = projectTasks.length;
-                return (
-                  <Card key={project.id}
-                    className="p-5 rounded-2xl shadow-card cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200"
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                  >
-                    <h3 className="font-display font-semibold text-sm mb-1">{project.name}</h3>
-                    {project.summary && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{project.summary}</p>}
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-[10px] rounded-full">{project.area}</Badge>
-                      <span className="text-xs text-muted-foreground">{done}/{total} done</span>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+            <Card className="rounded-2xl shadow-card p-4">
+              <TubeMapOverview
+                projects={activeProjects}
+                tasks={tasks}
+                onProjectClick={(id) => navigate(`/projects/${id}`)}
+              />
+            </Card>
           )}
         </section>
 
