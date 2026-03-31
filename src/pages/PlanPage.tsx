@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { scoreTasks } from '@/lib/task-scoring';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 
 type PlanStep = 'suggest' | 'adjust' | 'confirmed';
 
