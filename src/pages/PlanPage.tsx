@@ -21,8 +21,9 @@ type PlanStep = 'suggest' | 'adjust' | 'confirmed';
 export default function PlanPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { tasks, updateTask } = useTasks();
-  const { projects } = useProjects();
+  const { tasks, updateTask, deleteTask } = useTasks();
+  const { projects, milestones } = useProjects();
+  const [drawerTask, setDrawerTask] = useState<Task | null>(null);
 
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
   const todayStr = format(new Date(), 'yyyy-MM-dd');
