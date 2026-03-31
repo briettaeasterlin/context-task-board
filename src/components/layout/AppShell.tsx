@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Circle, GitBranch, CalendarRange, CheckCircle, Smartphone, X, Download, Share } from 'lucide-react';
+import { LogOut, Navigation, Map, CalendarCheck, BarChart3, Smartphone, X, Download, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import logoSrc from '@/assets/nextmove-logo-dark.svg';
 
 const NAV_ITEMS = [
-  { path: '/today', label: 'Today', icon: Circle },
-  { path: '/projects', label: 'Projects', icon: GitBranch },
-  { path: '/plan', label: 'Calendar', icon: CalendarRange },
-  { path: '/review', label: 'Review', icon: CheckCircle },
+  { path: '/today', label: 'Today', icon: Navigation, tooltip: 'Do your work' },
+  { path: '/plan', label: 'Plan', icon: CalendarCheck, tooltip: 'Set tomorrow' },
+  { path: '/routes', label: 'Routes', icon: Map, tooltip: 'See your projects' },
+  { path: '/review', label: 'Review', icon: BarChart3, tooltip: 'Reflect & improve' },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Wayfinding navigation — transit stop style */}
                 <nav className="flex items-center gap-0.5">
                   {NAV_ITEMS.map((item, idx) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive = location.pathname === item.path || (item.path === '/routes' && location.pathname.startsWith('/projects'));
                     const Icon = item.icon;
                     return (
                       <div key={item.path} className="flex items-center">

@@ -468,6 +468,7 @@ export type Database = {
           link: string | null
           milestone_id: string | null
           notes: string | null
+          planned_date: string | null
           project: string | null
           project_id: string | null
           sort_order: number | null
@@ -494,6 +495,7 @@ export type Database = {
           link?: string | null
           milestone_id?: string | null
           notes?: string | null
+          planned_date?: string | null
           project?: string | null
           project_id?: string | null
           sort_order?: number | null
@@ -522,6 +524,7 @@ export type Database = {
           link?: string | null
           milestone_id?: string | null
           notes?: string | null
+          planned_date?: string | null
           project?: string | null
           project_id?: string | null
           sort_order?: number | null
