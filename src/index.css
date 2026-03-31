@@ -67,20 +67,40 @@
     --surface-active: 162 14% 93%;
     --task-border: 162 14% 88%;
 
-    /* Area colors — muted, functional */
-    --area-client: 174 47% 47%;
-    --area-business: 187 32% 20%;
-    --area-home: 38 45% 48%;
-    --area-family: 340 35% 50%;
-    --area-personal: 265 28% 52%;
+    /* Area colors — London Underground inspired */
+    --area-client: 218 100% 27%;     /* Piccadilly navy */
+    --area-business: 327 100% 30%;   /* Metropolitan magenta */
+    --area-home: 147 100% 24%;       /* District green */
+    --area-family: 30 90% 35%;       /* Bakerloo brown */
+    --area-personal: 259 30% 47%;    /* Elizabeth purple */
 
-    /* Status colors — wayfinding palette */
-    --status-today: 174 47% 42%;
-    --status-next: 187 32% 30%;
-    --status-waiting: 38 45% 48%;
-    --status-backlog: 187 8% 58%;
-    --status-closing: 280 30% 50%;
-    --status-done: 160 50% 42%;
+    /* Status colors — tube line palette */
+    --status-today: 0 78% 50%;       /* Central red */
+    --status-next: 218 100% 27%;     /* Piccadilly navy */
+    --status-waiting: 48 100% 44%;   /* Circle yellow */
+    --status-backlog: 210 4% 55%;    /* Jubilee silver */
+    --status-closing: 327 100% 30%;  /* Metropolitan magenta */
+    --status-done: 147 100% 24%;     /* District green */
+
+    /* Category line colors — tube lines */
+    --cat-pipeline: 0 78% 50%;       /* Central red */
+    --cat-client: 218 100% 27%;      /* Piccadilly navy */
+    --cat-business: 327 100% 30%;    /* Metropolitan magenta */
+    --cat-personal: 259 30% 47%;     /* Elizabeth purple */
+
+    /* Tube line palette — for project color assignment */
+    --line-central: 0 78% 50%;
+    --line-victoria: 199 100% 42%;
+    --line-northern: 0 0% 20%;
+    --line-piccadilly: 218 100% 27%;
+    --line-circle: 48 100% 44%;
+    --line-district: 147 100% 24%;
+    --line-jubilee: 210 4% 65%;
+    --line-metropolitan: 327 100% 30%;
+    --line-bakerloo: 30 90% 35%;
+    --line-hammersmith: 345 76% 72%;
+    --line-elizabeth: 259 30% 47%;
+    --line-overground: 27 86% 49%;
 
     /* Shadows — soft elevation for instrument panels */
     --shadow-soft: 0 1px 8px -2px hsl(187 20% 40% / 0.06);
