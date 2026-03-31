@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Wayfinding navigation — transit stop style */}
                 <nav className="flex items-center gap-0.5">
                   {NAV_ITEMS.map((item, idx) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive = location.pathname === item.path || (item.path === '/routes' && location.pathname.startsWith('/projects'));
                     const Icon = item.icon;
                     return (
                       <div key={item.path} className="flex items-center">
