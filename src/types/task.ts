@@ -40,6 +40,7 @@ export interface Task {
   context_tag: string | null;
   strategic_phase: StrategicPhase | null;
   link: string | null;
+  planned_date: string | null;
   created_at: string;
   updated_at: string;
 }

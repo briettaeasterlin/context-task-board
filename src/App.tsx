@@ -64,14 +64,15 @@ const App = () => (
             <Route path="/" element={<PublicOrRedirect><LandingPage /></PublicOrRedirect>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
-            <Route path="/hq" element={<ProtectedRoute><HQPage /></ProtectedRoute>} />
             <Route path="/today" element={<ProtectedRoute><TodayPage /></ProtectedRoute>} />
             <Route path="/plan" element={<ProtectedRoute><PlanPage /></ProtectedRoute>} />
+            <Route path="/routes" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
             <Route path="/review" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
-            <Route path="/archive" element={<ProtectedRoute><ArchivePage /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
             <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+            <Route path="/archive" element={<ProtectedRoute><ArchivePage /></ProtectedRoute>} />
             <Route path="/workload" element={<ProtectedRoute><WorkloadPage /></ProtectedRoute>} />
+            <Route path="/hq" element={<Navigate to="/today" replace />} />
             {/* Legacy redirects */}
             <Route path="/dashboard" element={<Navigate to="/today" replace />} />
             <Route path="/kanban" element={<Navigate to="/review" replace />} />

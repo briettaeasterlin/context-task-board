@@ -9,10 +9,10 @@ import { usePwaInstall } from '@/hooks/usePwaInstall';
 import logoSrc from '@/assets/nextmove-logo-dark.svg';
 
 const NAV_ITEMS = [
-  { path: '/today', label: 'Today', icon: Circle },
-  { path: '/projects', label: 'Projects', icon: GitBranch },
-  { path: '/plan', label: 'Calendar', icon: CalendarRange },
-  { path: '/review', label: 'Review', icon: CheckCircle },
+  { path: '/today', label: 'Today', icon: Navigation, tooltip: 'Do your work' },
+  { path: '/plan', label: 'Plan', icon: CalendarCheck, tooltip: 'Set tomorrow' },
+  { path: '/routes', label: 'Routes', icon: Map, tooltip: 'See your projects' },
+  { path: '/review', label: 'Review', icon: BarChart3, tooltip: 'Reflect & improve' },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
