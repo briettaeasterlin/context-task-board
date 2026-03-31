@@ -139,7 +139,8 @@ export default function PlanPage() {
                 {existingPlan.map((task, idx) => {
                   const taskProject = projectMap.get(task.project_id ?? '');
                   return (
-                    <Card key={task.id} className="rounded-xl overflow-hidden">
+                    <Card key={task.id} className="rounded-xl overflow-hidden cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => setDrawerTask(task)}>
                       <div className="flex items-center gap-3 p-4">
                         {taskProject?.line_color && (
                           <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
