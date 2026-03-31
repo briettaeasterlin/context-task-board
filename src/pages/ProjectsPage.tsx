@@ -273,13 +273,14 @@ export default function ProjectsPage() {
 
                 {/* Project cards */}
                 <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {catProjects.map(p => (
+                  {catProjects.map((p, idx) => (
                     <ProjectCard
                       key={p.id}
                       project={p}
                       tasks={tasks.filter(t => t.project_id === p.id)}
                       clarifyCount={clarifyQuestions.filter(q => q.project_id === p.id && q.status === 'open').length}
                       onClick={() => navigate(`/projects/${p.id}`)}
+                      colorIndex={projects.indexOf(p)}
                     />
                   ))}
                 </div>
