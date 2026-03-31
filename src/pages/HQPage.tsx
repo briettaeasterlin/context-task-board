@@ -190,29 +190,40 @@ export default function HQPage() {
             </Card>
           ) : (
             <div className="space-y-2">
-              {focusTasks.map(task => (
-                <Card key={task.id}
-                  className="p-4 rounded-2xl shadow-card flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 group"
-                  onClick={() => setDetailTask(task)}
-                >
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                    onClick={e => { e.stopPropagation(); handleMarkDone(task.id); }}
+              {focusTasks.map(task => {
+                const taskProject = projects.find(p => p.id === task.project_id);
+                const taskColor = taskProject?.line_color;
+                return (
+                  <Card key={task.id}
+                    className="rounded-2xl shadow-card flex items-center gap-3 cursor-pointer hover:shadow-elevated hover:-translate-y-0.5 transition-all duration-200 group overflow-hidden"
+                    onClick={() => setDetailTask(task)}
                   >
-                    <CheckCircle2 className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium flex-1">{task.title}</span>
-                  {task.project_id && (
-                    <span className="text-xs text-accent">
-                      {projects.find(p => p.id === task.project_id)?.name}
-                    </span>
-                  )}
-                  {task.due_date && (
-                    <Badge variant="outline" className="text-[10px] rounded-full">{format(new Date(task.due_date), 'MMM d')}</Badge>
-                  )}
-                </Card>
-              ))}
+                    {/* Project line color stripe */}
+                    {taskColor && (
+                      <div className="w-1 self-stretch flex-shrink-0" style={{ backgroundColor: taskColor }} />
+                    )}
+                    <div className={cn("flex-1 flex items-center gap-3 p-4", !taskColor && "pl-4")}>
+                      <Button
+                        variant="ghost" size="sm"
+                        className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                        onClick={e => { e.stopPropagation(); handleMarkDone(task.id); }}
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium flex-1">{task.title}</span>
+                      {taskProject && (
+                        <span className="text-xs flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: taskColor }} />
+                          {taskProject.name}
+                        </span>
+                      )}
+                      {task.due_date && (
+                        <Badge variant="outline" className="text-[10px] rounded-full">{format(new Date(task.due_date), 'MMM d')}</Badge>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </section>
