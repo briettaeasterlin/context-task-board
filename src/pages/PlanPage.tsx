@@ -14,14 +14,16 @@ import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { scoreTasks } from '@/lib/task-scoring';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 
 type PlanStep = 'suggest' | 'adjust' | 'confirmed';
 
 export default function PlanPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
+  const [drawerTask, setDrawerTask] = useState<Task | null>(null);
 
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -137,7 +139,8 @@ export default function PlanPage() {
                 {existingPlan.map((task, idx) => {
                   const taskProject = projectMap.get(task.project_id ?? '');
                   return (
-                    <Card key={task.id} className="rounded-xl overflow-hidden">
+                    <Card key={task.id} className="rounded-xl overflow-hidden cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => setDrawerTask(task)}>
                       <div className="flex items-center gap-3 p-4">
                         {taskProject?.line_color && (
                           <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
@@ -176,7 +179,8 @@ export default function PlanPage() {
               {displayTasks.map((task, idx) => {
                 const taskProject = projectMap.get(task.project_id ?? '');
                 return (
-                  <Card key={task.id} className="rounded-xl overflow-hidden group">
+                  <Card key={task.id} className="rounded-xl overflow-hidden group cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setDrawerTask(task)}>
                     <div className="flex items-center gap-3 p-4">
                       {taskProject?.line_color && (
                         <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
@@ -195,7 +199,7 @@ export default function PlanPage() {
                       )}
                       {adjustMode && (
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100"
-                          onClick={() => handleRemoveTask(task.id)}>
+                          onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       )}
@@ -253,6 +257,15 @@ export default function PlanPage() {
           </>
         )}
       </div>
+
+      <TaskDetailDrawer
+        task={drawerTask}
+        open={!!drawerTask}
+        onClose={() => setDrawerTask(null)}
+        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates } as any)}
+        onDelete={(id) => deleteTask.mutate(id)}
+        projects={projects}
+      />
     </AppShell>
   );
 }
