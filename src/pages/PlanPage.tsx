@@ -581,7 +581,31 @@ export default function PlanPage() {
                   </p>
                 )}
 
-                {search.trim() && !exactSearchMatch && (
+                {!search.trim() && searchFocused && topPicks.length > 0 && (
+                  <div className="border rounded-xl divide-y divide-border/50 overflow-hidden">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3 py-1.5 bg-muted/20">Top picks</p>
+                    {topPicks.map(task => {
+                      const tp = projectMap.get(task.project_id ?? '');
+                      return (
+                        <div key={task.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => handleAddTask(task)}>
+                          <Plus className="h-3.5 w-3.5 text-accent flex-shrink-0" />
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tp?.line_color ?? 'hsl(var(--muted-foreground))' }} />
+                          <span className="text-sm flex-1 truncate">{task.title}</span>
+                          {task.due_date && (
+                            <span className="text-[10px] text-muted-foreground font-mono flex-shrink-0">{task.due_date}</span>
+                          )}
+                          {tp && (
+                            <Badge variant="outline" className="text-[10px] rounded-full" style={{ borderColor: tp.line_color ?? undefined, color: tp.line_color ?? undefined }}>
+                              {tp.name}
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+
                   <button
                     type="button"
                     className="w-full border rounded-xl p-3 text-left hover:bg-muted/30 transition-colors"
