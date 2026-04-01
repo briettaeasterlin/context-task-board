@@ -95,7 +95,21 @@ function inferProjectForText(input: string, projects: Project[]) {
   return best && best.score >= 2 ? best.project : null;
 }
 
-interface SortableTaskCardProps {
+/** Parse a target_window like "8-10 am" or "1:00-4:00" into start minutes from midnight */
+function parseTimeWindow(tw: string | null | undefined): number | null {
+  if (!tw) return null;
+  const m = tw.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const period = m[3]?.toLowerCase();
+  // Infer AM/PM: if no period specified, hours 1-7 are PM (afternoon), 8-12 are AM
+  if (period === 'pm' && h < 12) h += 12;
+  else if (period === 'am' && h === 12) h = 0;
+  else if (!period && h >= 1 && h <= 7) h += 12;
+  return h * 60 + min;
+}
+
   task: Task;
   taskProject?: Project;
   isSwapTarget?: boolean;
