@@ -192,17 +192,18 @@ export default function RoutesPage() {
         {/* Route Lines */}
         {sortedProjects.length === 0 ? (
           <Card className="p-8 text-center rounded-2xl">
-            <div className="flex justify-center mb-4">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-                <span className="w-8 h-px bg-muted-foreground/20" />
-                <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-                <span className="w-8 h-px bg-muted-foreground/20" />
-                <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-              </div>
+            <div className="flex flex-col items-center gap-1 mb-4">
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/30" />
+              <div className="w-px h-6 bg-muted-foreground/15" />
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/30" />
+              <div className="w-px h-6 bg-muted-foreground/15" />
+              <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/30" />
             </div>
-            <p className="text-muted-foreground">No routes yet.</p>
-            <p className="text-sm text-muted-foreground mt-1">Create a project to add your first line.</p>
+            <p className="text-muted-foreground font-medium">No lines yet.</p>
+            <p className="text-sm text-muted-foreground mt-1">Create your first project to start mapping progress.</p>
+            <Button onClick={() => navigate('/projects')} className="rounded-xl font-display mt-4" size="sm">
+              <Plus className="h-3.5 w-3.5 mr-1.5" /> New Line
+            </Button>
           </Card>
         ) : (
           <Card className="rounded-2xl divide-y divide-border/50 overflow-hidden">

@@ -11,12 +11,14 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { CompletionCelebration } from '@/components/task/CompletionCelebration';
+import { AIHelperPanel } from '@/components/today/AIHelperPanel';
+import { TodaySkeleton } from '@/components/loading/TubeSkeletons';
 
 function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
@@ -37,6 +39,7 @@ export default function TodayPage() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [celebration, setCelebration] = useState<{ task: Task; doneToday: number; totalToday: number } | null>(null);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const timeOfDay = getTimeOfDay();
@@ -100,7 +103,15 @@ export default function TodayPage() {
   const allDone = todayMoves.length === 0 && completedCount > 0;
 
   const estimatedMinutes = todayMoves.reduce((sum, t) => sum + (t.estimated_minutes ?? 0), 0);
-  const displayName = user?.email?.split('@')[0] ?? '';
+  const displayName = useMemo(() => {
+    const meta = user?.user_metadata;
+    const fullName = meta?.display_name || meta?.full_name || meta?.name;
+    if (fullName) {
+      return fullName.split(' ')[0];
+    }
+    const emailPrefix = user?.email?.split('@')[0] ?? '';
+    return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+  }, [user]);
 
   // Next Move = first task in list
   const nextMoveTask = todayMoves[0] ?? null;
@@ -167,6 +178,10 @@ export default function TodayPage() {
     }
     return segments;
   }, [doneToday, totalMoves, projectMap]);
+
+  if (isLoading) {
+    return <AppShell><TodaySkeleton /></AppShell>;
+  }
 
   return (
     <AppShell>
@@ -274,23 +289,21 @@ export default function TodayPage() {
             Today's Moves
           </h2>
 
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8 font-mono">Loading route...</p>
-          ) : todayMoves.length === 0 && doneToday.length === 0 ? (
+          {todayMoves.length === 0 && doneToday.length === 0 ? (
             <Card className="p-8 text-center rounded-2xl">
               <div className="flex justify-center mb-4">
                 <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-                  <span className="w-8 h-px bg-muted-foreground/20" />
-                  <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-                  <span className="w-8 h-px bg-muted-foreground/20" />
-                  <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/20" />
+                  <span className="w-10 h-px border-t-2 border-dashed border-muted-foreground/15" />
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/20" />
+                  <span className="w-10 h-px border-t-2 border-dashed border-muted-foreground/15" />
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/20" />
                 </div>
               </div>
-              <p className="text-muted-foreground mb-1">No stops on this route yet.</p>
-              <p className="text-sm text-muted-foreground mb-4">Set your route to get moving.</p>
+              <p className="text-muted-foreground font-medium mb-1">No stops on today's route.</p>
+              <p className="text-sm text-muted-foreground mb-4">Plan your day to get moving.</p>
               <Button onClick={() => navigate('/plan')} className="rounded-xl font-display" size="sm">
-                Set Your Route <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                Plan your day <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             </Card>
           ) : (
@@ -410,12 +423,31 @@ export default function TodayPage() {
           </Card>
         )}
 
+        {/* AI Helper Button */}
+        {!allDone && todayMoves.length > 0 && (
+          <Button variant="outline" onClick={() => setAiPanelOpen(true)} className="w-full rounded-xl text-sm font-display" size="sm">
+            <MessageSquare className="h-3.5 w-3.5 mr-2" />
+            Talk to your AI about today
+          </Button>
+        )}
+
         {/* Quick Add */}
         <QuickAdd defaultStatus="Today" projects={projects} milestones={milestones}
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
       </div>
+
+      <AIHelperPanel
+        open={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        todayTasks={todayMoves}
+        doneTodayTasks={doneToday}
+        projects={projects}
+        allTasks={tasks}
+        streak={streak.streak}
+        weekCleared={streak.weekCleared}
+      />
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />

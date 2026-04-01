@@ -127,7 +127,11 @@ export function WrapUpPanel() {
           })}
           {scorecardTasks.length === 0 && (
             <Card className="p-6 text-center rounded-xl">
-              <p className="text-sm text-muted-foreground">No moves planned or completed today.</p>
+              <p className="text-muted-foreground font-medium mb-1">Nothing to wrap up today.</p>
+              <p className="text-sm text-muted-foreground mb-3">Complete a task to start tracking progress.</p>
+              <Button variant="outline" size="sm" className="rounded-xl font-display text-xs" onClick={() => navigate('/today')}>
+                Go to Today <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
             </Card>
           )}
         </div>
