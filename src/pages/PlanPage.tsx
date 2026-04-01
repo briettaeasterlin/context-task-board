@@ -303,9 +303,20 @@ export default function PlanPage() {
                     placeholder="Search tasks to add..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && backlogTasks.length > 0) {
+                        e.preventDefault();
+                        handleAddTask(backlogTasks[0]);
+                      }
+                    }}
                     className="pl-9 rounded-xl text-sm"
                   />
                 </div>
+                {swapTargetId && (
+                  <p className="text-xs text-accent font-medium animate-pulse">
+                    Select a task below to swap in, or tap the highlighted task again to cancel.
+                  </p>
+                )}
                 {backlogTasks.length > 0 && (
                   <div className="border rounded-xl divide-y divide-border/50 overflow-hidden">
                     {backlogTasks.map(task => {
