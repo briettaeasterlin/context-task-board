@@ -17,9 +17,10 @@ interface RouteLineProps {
   tasks: Task[];
   onNavigate: (projectId: string) => void;
   onColorChange: (projectId: string, color: string) => void;
+  onTaskClick: (task: Task) => void;
 }
 
-function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps) {
+function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick }: RouteLineProps) {
   const [expanded, setExpanded] = useState(false);
   const color = project.line_color ?? '#3FAFA4';
 
