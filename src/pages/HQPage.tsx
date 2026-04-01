@@ -79,14 +79,14 @@ export default function HQPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto px-1 sm:px-0">
         {/* Greeting */}
         <div className="pt-2">
-          <h1 className="text-3xl font-display font-bold flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold flex items-center gap-3">
             <span>{greeting.emoji}</span>
             {greeting.text}
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             {format(new Date(), 'EEEE, MMMM d')} · {stats.today} today · {stats.focus} next
           </p>
         </div>
