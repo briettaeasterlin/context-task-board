@@ -318,11 +318,12 @@ export default function PlanPage() {
     const tasksToClear = tasks.filter(task => task.planned_date === tomorrowStr && task.status !== 'Done' && !keepIds.has(task.id));
 
     await Promise.all([
-      ...tasksToConfirm.map(task =>
+      ...tasksToConfirm.map((task, i) =>
         updateTask.mutateAsync({
           id: task.id,
           planned_date: tomorrowStr,
           status: task.status === 'Backlog' ? 'Next' : task.status,
+          sort_order: i,
         } as any)
       ),
       ...tasksToClear.map(task =>
