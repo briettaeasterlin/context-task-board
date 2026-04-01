@@ -21,9 +21,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { showBanner, install, dismiss, deferredPrompt, isIos } = usePwaInstall();
 
   return (
-    <div className="min-h-screen bg-[hsl(160_8%_95%)]">
+    <div className="min-h-screen bg-[hsl(160_8%_95%)] overflow-x-hidden">
       {/* Spatial frame — mission control workspace */}
-      <div className="max-w-[1280px] mx-auto min-h-screen bg-card rounded-none sm:rounded-2xl sm:my-0 shadow-elevated">
+      <div className="max-w-[1280px] mx-auto min-h-screen bg-card rounded-none sm:rounded-2xl sm:my-0 shadow-elevated overflow-x-hidden">
         <header className="border-b border-border/50 sticky top-0 z-10 bg-card/95 backdrop-blur-sm sm:rounded-t-2xl">
           <div className="px-4 sm:px-6">
             <div className="flex items-center justify-between h-14">
