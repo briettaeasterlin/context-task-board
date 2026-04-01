@@ -97,7 +97,7 @@ function SortableStop({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-accent"
+            className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full text-muted-foreground hover:text-accent"
             title="Mark done"
             onClick={(e) => { e.stopPropagation(); onMarkDone(task.id); }}
           >
