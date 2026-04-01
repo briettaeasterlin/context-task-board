@@ -36,6 +36,7 @@ export default function PlanPage() {
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [adjustMode, setAdjustMode] = useState(false);
   const [search, setSearch] = useState('');
+  const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
