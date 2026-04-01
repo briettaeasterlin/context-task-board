@@ -180,7 +180,7 @@ export function WrapUpPanel() {
           const topProject = topId ? projectMap.get(topId) : null;
           if (!topProject) return null;
           return (
-            <Card className="p-4 rounded-xl mt-3 flex items-center gap-3">
+            <Card className="p-4 rounded-xl mt-3 flex items-center gap-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => navigate(`/projects/${topId}`)}>
               <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: topProject.line_color ?? undefined }} />
               <div className="flex-1">
                 <span className="text-xs text-muted-foreground">Top project</span>
