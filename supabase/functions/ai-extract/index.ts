@@ -209,12 +209,14 @@ Classify each piece of information into exactly ONE of these buckets:
    "reorganize", "reclassify", "move", "only X should be Next", "the rest should be Backlog",
    "this work is sequential", "set up phases/milestones".
    
-   Directive types:
-   - "create_project": Create a new project when the user describes a body of work with a shared goal. Provide name, area, summary.
-   - "group_tasks": Attach existing tasks to a project. Provide taskMatchHints and projectMatchHint.
-   - "reclassify": Change area or status of existing tasks. Provide taskMatchHints, optional newArea, optional newStatus.
-   - "create_milestones": Set up milestones/phases for a project. Provide projectMatchHint and milestones array.
-   - "reorder_next": Limit which tasks are Next. Provide keepNextHints (tasks to keep as Next), demoteToBacklog = true for the rest.
+    Directive types:
+    - "create_project": Create a new project when the user describes a body of work with a shared goal. Provide name, area, summary.
+    - "group_tasks": Attach existing tasks to a project. Provide taskMatchHints and projectMatchHint.
+    - "reclassify": Change area or status of existing tasks. Provide taskMatchHints, optional newArea, optional newStatus.
+    - "create_milestones": Set up milestones/phases for a project. Provide projectMatchHint and milestones array.
+    - "reorder_next": Limit which tasks are Next. Provide keepNextHints (tasks to keep as Next), demoteToBacklog = true for the rest.
+    - "move_tasks": Move tasks from the current project to another project. Provide projectMatchHint (target project name) and optionally taskMatchHints to move specific tasks (empty = move all non-Done tasks). Use when user says "move work to X", "transfer tasks to X", etc.
+    - "close_project": Mark the current project as completed/archived. Sets project_state to 'completed'. Use when user says "close out", "archive", "wrap up this project", etc.
    
    CRITICAL: Directives are NEVER tasks. Do not create tasks for organizational intent.
 
