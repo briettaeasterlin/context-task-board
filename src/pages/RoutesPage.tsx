@@ -254,7 +254,7 @@ export default function RoutesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-              <Map className="h-5 w-5 text-accent" />
+              <MapPin className="h-5 w-5 text-accent" />
               Routes
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
