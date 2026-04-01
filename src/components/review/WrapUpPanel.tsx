@@ -103,7 +103,7 @@ export function WrapUpPanel() {
           {incompleteToday.map(task => {
             const tp = projectMap.get(task.project_id ?? '');
             return (
-              <Card key={task.id} className="rounded-xl overflow-hidden border-muted-foreground/20">
+              <Card key={task.id} className="rounded-xl overflow-hidden border-muted-foreground/20 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setDetailTask(task)}>
                 <div className="flex items-stretch">
                   {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
                   <div className="flex items-center gap-3 p-4 flex-1">
