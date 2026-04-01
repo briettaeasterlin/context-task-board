@@ -255,8 +255,23 @@ export default function PlanPage() {
                 {displayTasks.map((task, idx) => {
                   const taskProject = projectMap.get(task.project_id ?? '');
                   return (
-                    <Card key={task.id} className="rounded-xl overflow-hidden group cursor-pointer hover:bg-muted/30 transition-colors"
-                      onClick={() => setDrawerTask(task)}>
+                    <Card key={task.id}
+                      className={cn(
+                        "rounded-xl overflow-hidden group cursor-pointer transition-colors",
+                        swapTargetId === task.id
+                          ? "ring-2 ring-accent bg-accent/10"
+                          : "hover:bg-muted/30"
+                      )}
+                      onClick={() => {
+                        if (adjustMode && swapTargetId === task.id) {
+                          setSwapTargetId(null);
+                        } else if (adjustMode && displayTasks.length >= 7) {
+                          setSwapTargetId(task.id);
+                          toast('Now search and select a task to swap in.');
+                        } else {
+                          setDrawerTask(task);
+                        }
+                      }}>
                       <div className="flex items-stretch">
                         {taskProject?.line_color && (
                           <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
