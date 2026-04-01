@@ -39,7 +39,7 @@ function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps
       >
         {/* Project label */}
         <div className="flex items-center gap-2 min-w-0 w-[120px] sm:w-[220px] flex-shrink-0">
-          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+          <RouteColorPicker currentColor={color} onColorChange={(c) => onColorChange(project.id, c)} />
           <span className="text-sm font-semibold truncate">{project.name}</span>
         </div>
 
