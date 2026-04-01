@@ -190,7 +190,7 @@ export default function PlanPage() {
                         <div className="flex items-center gap-3 p-4 flex-1">
                           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{task.title}</p>
+                            <p className="text-sm font-medium">{task.title}</p>
                             {taskProject && (
                               <p className="text-xs text-muted-foreground mt-0.5">{taskProject.name}</p>
                             )}
@@ -252,7 +252,7 @@ export default function PlanPage() {
                         <div className="flex items-center gap-3 p-4 flex-1">
                           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{task.title}</p>
+                            <p className="text-sm font-medium">{task.title}</p>
                             {taskProject && (
                               <p className="text-xs text-muted-foreground mt-0.5">{taskProject.name}</p>
                             )}
