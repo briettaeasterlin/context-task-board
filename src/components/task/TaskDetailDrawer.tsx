@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AREAS, STATUSES, STRATEGIC_PHASES, STRATEGIC_PHASE_LABELS, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone, type StrategicPhase } from '@/types/task';
-import { Trash2, ExternalLink } from 'lucide-react';
+import { Trash2, ExternalLink, ChevronDown } from 'lucide-react';
 import { estimateDuration, suggestImpactScore, DURATION_MINUTES } from '@/lib/task-scoring';
+import { TaskUpdatesFeed } from './TaskUpdatesFeed';
 
 interface Props {
   task: Task | null;
