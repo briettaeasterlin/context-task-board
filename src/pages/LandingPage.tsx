@@ -39,9 +39,9 @@ export default function LandingPage() {
       </header>
 
       {/* ── 1. HERO ── */}
-      <section className="container max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
+      <section className="container max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
         <motion.h1
-          className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08]"
+          className="font-display text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.08]"
           initial="hidden" animate="visible" variants={fadeUp} custom={0}
         >
           Always know the next move.
