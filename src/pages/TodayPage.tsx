@@ -408,65 +408,67 @@ export default function TodayPage() {
                       {taskProject?.line_color && (
                         <div className="w-1 flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
                       )}
-                      <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 flex-1 min-w-0">
-                        {/* ●/◉/○ indicator */}
-                        <div className="relative flex-shrink-0">
-                          {isCurrentTask ? (
-                            <div className="relative flex items-center justify-center">
-                              <div className="absolute w-7 h-7 rounded-full animate-ping opacity-20" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
-                              <div className="w-4 h-4 rounded-full border-[3px]" style={{ borderColor: taskProject?.line_color ?? 'hsl(var(--accent))', backgroundColor: `${taskProject?.line_color ?? 'hsl(var(--accent))'}20` }} />
-                            </div>
-                          ) : (
-                            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 bg-card" />
-                          )}
-                        </div>
+                      <div className="flex flex-col gap-1.5 p-3 sm:p-4 flex-1 min-w-0">
+                        {/* Top row: indicator + title + time */}
+                        <div className="flex items-start gap-2.5 sm:gap-3">
+                          {/* ●/◉/○ indicator */}
+                          <div className="relative flex-shrink-0 mt-0.5">
+                            {isCurrentTask ? (
+                              <div className="relative flex items-center justify-center">
+                                <div className="absolute w-7 h-7 rounded-full animate-ping opacity-20" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
+                                <div className="w-4 h-4 rounded-full border-[3px]" style={{ borderColor: taskProject?.line_color ?? 'hsl(var(--accent))', backgroundColor: `${taskProject?.line_color ?? 'hsl(var(--accent))'}20` }} />
+                              </div>
+                            ) : (
+                              <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 bg-card" />
+                            )}
+                          </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-sm font-medium truncate",
-                            isCurrentTask && "text-foreground font-semibold"
-                          )}>
-                            {task.title}
-                          </p>
-                          {taskProject && (
-                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color ?? undefined }} />
-                              {taskProject.name}
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              "text-sm font-medium",
+                              isCurrentTask && "text-foreground font-semibold"
+                            )}>
+                              {task.title}
                             </p>
-                          )}
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {taskProject && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color ?? undefined }} />
+                                  {taskProject.name}
+                                </span>
+                              )}
+                              {task.estimated_minutes && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
+                                  <Clock className="h-3 w-3" />{task.estimated_minutes}m
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        {task.estimated_minutes && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono flex-shrink-0">
-                            <Clock className="h-3 w-3" />{task.estimated_minutes}m
-                          </span>
-                        )}
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          {/* Done */}
+                        {/* Action buttons row */}
+                        <div className="flex items-center gap-0.5 ml-6 sm:ml-7">
                           <Button
                             variant="ghost" size="sm"
-                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-accent"
+                            className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-accent"
                             title="Mark done"
                             onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
                           >
-                            <CheckCircle2 className="h-4 w-4" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           </Button>
 
-                          {/* Swap */}
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="ghost" size="sm"
-                                className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                                className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-foreground"
                                 title="Swap task"
                                 onClick={e => e.stopPropagation()}
                               >
-                                <RefreshCw className="h-3.5 w-3.5" />
+                                <RefreshCw className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-72 p-0 rounded-xl" align="end" onClick={e => e.stopPropagation()}>
+                            <PopoverContent className="w-72 p-0 rounded-xl" align="start" onClick={e => e.stopPropagation()}>
                               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3 py-2 border-b bg-muted/20">
                                 Swap with
                               </p>
@@ -496,34 +498,31 @@ export default function TodayPage() {
                             </PopoverContent>
                           </Popover>
 
-                          {/* Deprioritize */}
                           <Button
                             variant="ghost" size="sm"
-                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-amber-500"
+                            className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-amber-500"
                             title="Deprioritize to Backlog"
                             onClick={e => { e.stopPropagation(); handleDeprioritize(task); }}
                           >
-                            <ArrowDownToLine className="h-3.5 w-3.5" />
+                            <ArrowDownToLine className="h-3 w-3" />
                           </Button>
 
-                          {/* Move to Tomorrow */}
                           <Button
                             variant="ghost" size="sm"
-                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-primary"
+                            className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-primary"
                             title="Move to tomorrow"
                             onClick={e => { e.stopPropagation(); handleBumpTomorrow(task); }}
                           >
-                            <CalendarArrowDown className="h-3.5 w-3.5" />
+                            <CalendarArrowDown className="h-3 w-3" />
                           </Button>
 
-                          {/* Delete */}
                           <Button
                             variant="ghost" size="sm"
-                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-destructive"
+                            className="h-7 w-7 p-0 rounded-full text-muted-foreground hover:text-destructive"
                             title="Delete task"
                             onClick={e => { e.stopPropagation(); handleDelete(task.id); toast('Task deleted'); }}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
