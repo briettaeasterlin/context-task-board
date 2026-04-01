@@ -100,7 +100,15 @@ export default function TodayPage() {
   const allDone = todayMoves.length === 0 && completedCount > 0;
 
   const estimatedMinutes = todayMoves.reduce((sum, t) => sum + (t.estimated_minutes ?? 0), 0);
-  const displayName = user?.email?.split('@')[0] ?? '';
+  const displayName = useMemo(() => {
+    const meta = user?.user_metadata;
+    const fullName = meta?.display_name || meta?.full_name || meta?.name;
+    if (fullName) {
+      return fullName.split(' ')[0];
+    }
+    const emailPrefix = user?.email?.split('@')[0] ?? '';
+    return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+  }, [user]);
 
   // Next Move = first task in list
   const nextMoveTask = todayMoves[0] ?? null;
