@@ -298,30 +298,13 @@ function AddRouteInline({ groupKey, onAdd }: { groupKey: RouteGroup; onAdd: (nam
 
 const GROUP_ORDER: RouteGroup[] = ['consulting', 'products', 'health', 'life'];
 
-const FOCUS_MODE_KEY = 'nextmove-focus-mode';
-
 export default function RoutesPage() {
   const navigate = useNavigate();
   const { projects, updateProject, createProject, reorderProjects, isLoading: projectsLoading } = useProjects();
   const { tasks, hasMoreTasks, loadMore, isLoadingMore, isLoading, updateTask, deleteTask } = useTasks();
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(['victories', 'parked']));
-  const [focusMode, setFocusMode] = useState(() => {
-    try { return localStorage.getItem(FOCUS_MODE_KEY) !== 'off'; } catch { return true; }
-  });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
-  );
-
-  const toggleFocusMode = useCallback(() => {
-    setFocusMode(prev => {
-      const next = !prev;
-      try { localStorage.setItem(FOCUS_MODE_KEY, next ? 'on' : 'off'); } catch {}
-      return next;
-    });
-  }, []);
+  const [showAll, setShowAll] = useState(false);
 
   const handleColorChange = useCallback((projectId: string, color: string) => {
     updateProject.mutate({ id: projectId, line_color: color } as any);
