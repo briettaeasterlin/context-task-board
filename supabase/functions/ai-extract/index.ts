@@ -304,7 +304,7 @@ TRANSPARENCY: When you infer a status, project assignment, or merge, include a b
                   items: {
                     type: 'object',
                     properties: {
-                      type: { type: 'string', enum: ['create_project', 'group_tasks', 'reclassify', 'create_milestones', 'reorder_next'], description: 'Type of organizational directive' },
+                      type: { type: 'string', enum: ['create_project', 'group_tasks', 'reclassify', 'create_milestones', 'reorder_next', 'move_tasks', 'close_project'], description: 'Type of organizational directive' },
                       label: { type: 'string', description: 'Human-readable summary of this directive (e.g. "Create project: Consulting Setup")' },
                       projectName: { type: 'string', description: 'Name for new or existing project' },
                       projectArea: { type: 'string', enum: ['Client', 'Business', 'Home', 'Family', 'Personal'], description: 'Area for new project' },
