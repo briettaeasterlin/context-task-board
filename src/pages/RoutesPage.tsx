@@ -219,6 +219,7 @@ export default function RoutesPage() {
                 project={project}
                 tasks={projectTasks}
                 onNavigate={(id) => navigate(`/projects/${id}`)}
+                onColorChange={handleColorChange}
               />
             ))}
           </Card>
