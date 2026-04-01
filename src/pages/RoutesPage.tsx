@@ -223,6 +223,7 @@ export default function RoutesPage() {
                 tasks={projectTasks}
                 onNavigate={(id) => navigate(`/projects/${id}`)}
                 onColorChange={handleColorChange}
+                onTaskClick={setDetailTask}
               />
             ))}
           </Card>
