@@ -36,6 +36,7 @@ export default function PlanPage() {
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [adjustMode, setAdjustMode] = useState(false);
   const [search, setSearch] = useState('');
+  const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
@@ -121,14 +122,22 @@ export default function PlanPage() {
     setSelectedTasks(prev => {
       const existing = prev.length > 0 ? prev : [...suggestedTasks];
       if (existing.find(t => t.id === task.id)) return existing;
+
+      // If there's a swap target, replace it
+      if (swapTargetId) {
+        const updated = existing.map(t => t.id === swapTargetId ? task : t);
+        setSwapTargetId(null);
+        return updated;
+      }
+
       if (existing.length >= 7) {
-        toast.error('Max 7 moves per day');
+        toast.error('Tap a task to swap it out, then add the new one.');
         return existing;
       }
       return [...existing, task];
     });
     setSearch('');
-  }, [suggestedTasks]);
+  }, [suggestedTasks, swapTargetId]);
 
   const handleRemoveTask = useCallback((taskId: string) => {
     setSelectedTasks(prev => {
@@ -246,8 +255,23 @@ export default function PlanPage() {
                 {displayTasks.map((task, idx) => {
                   const taskProject = projectMap.get(task.project_id ?? '');
                   return (
-                    <Card key={task.id} className="rounded-xl overflow-hidden group cursor-pointer hover:bg-muted/30 transition-colors"
-                      onClick={() => setDrawerTask(task)}>
+                    <Card key={task.id}
+                      className={cn(
+                        "rounded-xl overflow-hidden group cursor-pointer transition-colors",
+                        swapTargetId === task.id
+                          ? "ring-2 ring-accent bg-accent/10"
+                          : "hover:bg-muted/30"
+                      )}
+                      onClick={() => {
+                        if (adjustMode && swapTargetId === task.id) {
+                          setSwapTargetId(null);
+                        } else if (adjustMode && displayTasks.length >= 7) {
+                          setSwapTargetId(task.id);
+                          toast('Now search and select a task to swap in.');
+                        } else {
+                          setDrawerTask(task);
+                        }
+                      }}>
                       <div className="flex items-stretch">
                         {taskProject?.line_color && (
                           <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
@@ -294,9 +318,20 @@ export default function PlanPage() {
                     placeholder="Search tasks to add..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && backlogTasks.length > 0) {
+                        e.preventDefault();
+                        handleAddTask(backlogTasks[0]);
+                      }
+                    }}
                     className="pl-9 rounded-xl text-sm"
                   />
                 </div>
+                {swapTargetId && (
+                  <p className="text-xs text-accent font-medium animate-pulse">
+                    Select a task below to swap in, or tap the highlighted task again to cancel.
+                  </p>
+                )}
                 {backlogTasks.length > 0 && (
                   <div className="border rounded-xl divide-y divide-border/50 overflow-hidden">
                     {backlogTasks.map(task => {
