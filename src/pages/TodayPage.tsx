@@ -17,6 +17,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { CompletionCelebration } from '@/components/task/CompletionCelebration';
+import { AIHelperPanel } from '@/components/today/AIHelperPanel';
+import { TodaySkeleton } from '@/components/loading/TubeSkeletons';
 
 function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
