@@ -8,11 +8,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, ArrowRight, X, Plus, Search, Clock, Sparkles, Moon } from 'lucide-react';
+import { CheckCircle2, ArrowRight, X, Plus, Search, Clock, Sparkles, Moon, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 type PlanStep = 'suggest' | 'adjust' | 'confirmed';
 
@@ -91,9 +95,83 @@ function inferProjectForText(input: string, projects: Project[]) {
   return best && best.score >= 2 ? best.project : null;
 }
 
+interface SortableTaskCardProps {
+  task: Task;
+  taskProject?: Project;
+  isSwapTarget?: boolean;
+  adjustMode?: boolean;
+  onRemove?: (id: string) => void;
+  onSwap?: (id: string) => void;
+  onClick?: (task: Task) => void;
+  isConfirmed?: boolean;
+  displayCount: number;
+}
+
+function SortableTaskCard({ task, taskProject, isSwapTarget, adjustMode, onRemove, onSwap, onClick, isConfirmed, displayCount }: SortableTaskCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'rounded-xl overflow-hidden group cursor-pointer transition-colors',
+        isSwapTarget ? 'ring-2 ring-accent bg-accent/10' : 'hover:bg-muted/30',
+        isDragging && 'shadow-lg'
+      )}
+      onClick={() => {
+        if (adjustMode && isSwapTarget) {
+          onSwap?.('');
+        } else if (adjustMode && displayCount >= MAX_PLAN_TASKS) {
+          onSwap?.(task.id);
+          toast('Now press Enter to add the replacement.');
+        } else {
+          onClick?.(task);
+        }
+      }}
+    >
+      <div className="flex items-stretch">
+        {taskProject?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />}
+        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 flex-1">
+          <button
+            className="touch-none p-1 -ml-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+            {...attributes}
+            {...listeners}
+            onClick={e => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium">{task.title}</p>
+            {taskProject && <p className="text-xs text-muted-foreground mt-0.5">{taskProject.name}</p>}
+          </div>
+          {task.target_window && <span className="text-xs text-muted-foreground font-mono flex-shrink-0">{task.target_window}</span>}
+          {task.estimated_minutes && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono flex-shrink-0">
+              <Clock className="h-3 w-3" />{task.estimated_minutes}m
+            </span>
+          )}
+          {adjustMode && onRemove && (
+            <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); onRemove(task.id); }}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function PlanPage() {
   const navigate = useNavigate();
-  const { tasks, createTask, updateTask, deleteTask } = useTasks();
+  const { tasks, createTask, updateTask, deleteTask, reorderTasks } = useTasks();
   const { projects } = useProjects();
   const [drawerTask, setDrawerTask] = useState<Task | null>(null);
 
@@ -106,11 +184,17 @@ export default function PlanPage() {
 
   const [step, setStep] = useState<PlanStep>(existingPlan.length > 0 ? 'confirmed' : 'suggest');
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [confirmedOrder, setConfirmedOrder] = useState<Task[] | null>(null);
   const [adjustMode, setAdjustMode] = useState(false);
   const [search, setSearch] = useState('');
   const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
 
   const suggestedTasks = useMemo(() => {
     const result: Task[] = [];
@@ -153,10 +237,31 @@ export default function PlanPage() {
   }, [tasks, tomorrowStr, todayStr]);
 
   const displayTasks = useMemo(() => {
-    if (step === 'confirmed') return existingPlan;
+    if (step === 'confirmed') return confirmedOrder ?? existingPlan;
     if (selectedTasks.length > 0) return selectedTasks;
     return suggestedTasks;
-  }, [step, selectedTasks, suggestedTasks, existingPlan]);
+  }, [step, selectedTasks, suggestedTasks, existingPlan, confirmedOrder]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentList = step === 'confirmed' ? (confirmedOrder ?? existingPlan) : (selectedTasks.length > 0 ? selectedTasks : [...suggestedTasks]);
+    const oldIndex = currentList.findIndex(t => t.id === active.id);
+    const newIndex = currentList.findIndex(t => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(currentList, oldIndex, newIndex);
+
+    if (step === 'confirmed') {
+      setConfirmedOrder(reordered);
+      // Persist sort_order to DB
+      const updates = reordered.map((t, i) => ({ id: t.id, sort_order: i }));
+      reorderTasks.mutate(updates);
+    } else {
+      setSelectedTasks(reordered);
+    }
+  }, [step, confirmedOrder, existingPlan, selectedTasks, suggestedTasks, reorderTasks]);
 
   const normalizedSearch = useMemo(() => normalizeText(search), [search]);
 
@@ -292,9 +397,9 @@ export default function PlanPage() {
                 {existingPlan.length} move{existingPlan.length !== 1 ? 's' : ''} locked in.
                 {estimatedMinutes > 0 && ` Estimated: ${estimatedMinutes >= 60 ? `${Math.floor(estimatedMinutes / 60)}h ${estimatedMinutes % 60 > 0 ? `${estimatedMinutes % 60}m` : ''}` : `${estimatedMinutes}m`}.`}
               </p>
-              {existingPlan[0] && (
+              {displayTasks[0] && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  You'll start with: <span className="font-semibold text-foreground">{existingPlan[0].title}</span>
+                  You'll start with: <span className="font-semibold text-foreground">{displayTasks[0].title}</span>
                 </p>
               )}
               <p className="text-xs text-muted-foreground mt-4 font-mono">Close your laptop. You're good.</p>
@@ -310,31 +415,23 @@ export default function PlanPage() {
 
             <section>
               <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Tomorrow's Route</h2>
-              <div className="space-y-2">
-                {existingPlan.map(task => {
-                  const taskProject = projectMap.get(task.project_id ?? '');
-                  return (
-                    <Card key={task.id} className="rounded-xl overflow-hidden cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setDrawerTask(task)}>
-                      <div className="flex items-stretch">
-                        {taskProject?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />}
-                        <div className="flex items-center gap-3 p-4 flex-1">
-                          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{task.title}</p>
-                            {taskProject && <p className="text-xs text-muted-foreground mt-0.5">{taskProject.name}</p>}
-                          </div>
-                          {task.target_window && <span className="text-xs text-muted-foreground font-mono flex-shrink-0">{task.target_window}</span>}
-                          {task.estimated_minutes && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono flex-shrink-0">
-                              <Clock className="h-3 w-3" />{task.estimated_minutes}m
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
+              <p className="text-xs text-muted-foreground mb-2">Drag to reorder by priority or timing.</p>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
+                <SortableContext items={displayTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {displayTasks.map(task => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        taskProject={projectMap.get(task.project_id ?? '')}
+                        onClick={setDrawerTask}
+                        isConfirmed
+                        displayCount={displayTasks.length}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </section>
           </>
         )}
@@ -366,52 +463,25 @@ export default function PlanPage() {
                 <p className="text-sm text-muted-foreground">Add some tasks first, then come back to plan.</p>
               </Card>
             ) : (
-              <div className="space-y-2">
-                {displayTasks.map(task => {
-                  const taskProject = projectMap.get(task.project_id ?? '');
-                  return (
-                    <Card
-                      key={task.id}
-                      className={cn(
-                        'rounded-xl overflow-hidden group cursor-pointer transition-colors',
-                        swapTargetId === task.id ? 'ring-2 ring-accent bg-accent/10' : 'hover:bg-muted/30'
-                      )}
-                      onClick={() => {
-                        if (adjustMode && swapTargetId === task.id) {
-                          setSwapTargetId(null);
-                        } else if (adjustMode && displayTasks.length >= MAX_PLAN_TASKS) {
-                          setSwapTargetId(task.id);
-                          toast('Now press Enter to add the replacement.');
-                        } else {
-                          setDrawerTask(task);
-                        }
-                      }}
-                    >
-                      <div className="flex items-stretch">
-                        {taskProject?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />}
-                        <div className="flex items-center gap-3 p-4 flex-1">
-                          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{task.title}</p>
-                            {taskProject && <p className="text-xs text-muted-foreground mt-0.5">{taskProject.name}</p>}
-                          </div>
-                          {task.target_window && <span className="text-xs text-muted-foreground font-mono flex-shrink-0">{task.target_window}</span>}
-                          {task.estimated_minutes && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono flex-shrink-0">
-                              <Clock className="h-3 w-3" />{task.estimated_minutes}m
-                            </span>
-                          )}
-                          {adjustMode && (
-                            <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
+                <SortableContext items={displayTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {displayTasks.map(task => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        taskProject={projectMap.get(task.project_id ?? '')}
+                        isSwapTarget={swapTargetId === task.id}
+                        adjustMode={adjustMode}
+                        onRemove={handleRemoveTask}
+                        onSwap={(id) => id ? setSwapTargetId(id) : setSwapTargetId(null)}
+                        onClick={setDrawerTask}
+                        displayCount={displayTasks.length}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
 
             {estimatedMinutes > 0 && (
