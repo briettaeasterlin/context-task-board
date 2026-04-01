@@ -373,7 +373,7 @@ function QuickWinsSection({ tasks, onSelect, onMarkDone }: { tasks: Task[]; onSe
         {quickWins.map(t => (
           <div key={t.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/30 transition-colors rounded-lg p-2 group"
             onClick={() => onSelect(t)}>
-            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-5 sm:w-5 p-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
               <CheckCircle2 className="h-3 w-3" />
             </Button>

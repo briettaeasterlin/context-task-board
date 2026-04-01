@@ -202,10 +202,10 @@ export default function HQPage() {
                     {taskColor && (
                       <div className="w-1 self-stretch flex-shrink-0" style={{ backgroundColor: taskColor }} />
                     )}
-                    <div className={cn("flex-1 flex items-center gap-3 p-4", !taskColor && "pl-4")}>
+                    <div className={cn("flex-1 flex items-center gap-3 p-3 sm:p-4", !taskColor && "pl-3 sm:pl-4")}>
                       <Button
                         variant="ghost" size="sm"
-                        className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                        className="h-8 w-8 sm:h-7 sm:w-7 p-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-full"
                         onClick={e => { e.stopPropagation(); handleMarkDone(task.id); }}
                       >
                         <CheckCircle2 className="h-4 w-4" />

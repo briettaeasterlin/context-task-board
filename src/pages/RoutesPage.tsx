@@ -249,19 +249,19 @@ export default function RoutesPage() {
 
   return (
     <AppShell>
-      <div className="space-y-5 max-w-3xl mx-auto">
+      <div className="space-y-4 sm:space-y-5 max-w-3xl mx-auto px-1 sm:px-0">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-display font-bold flex items-center gap-2">
               <MapPin className="h-5 w-5 text-accent" />
               Routes
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {stats.activeGroups} active group{stats.activeGroups !== 1 ? 's' : ''} · {stats.activeLines} active line{stats.activeLines !== 1 ? 's' : ''} · {stats.totalDone} stops cleared
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+              {stats.activeGroups} group{stats.activeGroups !== 1 ? 's' : ''} · {stats.activeLines} line{stats.activeLines !== 1 ? 's' : ''} · {stats.totalDone} cleared
             </p>
           </div>
-          <Button size="sm" className="text-xs h-8 gap-1 rounded-xl" onClick={() => navigate('/projects')}>
+          <Button size="sm" className="text-xs h-8 gap-1 rounded-xl min-h-[44px] sm:min-h-0" onClick={() => navigate('/projects')}>
             <Plus className="h-3.5 w-3.5" /> New Line
           </Button>
         </div>

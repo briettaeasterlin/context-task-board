@@ -85,10 +85,10 @@ export default function WorkloadPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto px-1 sm:px-0">
         <div className="pt-2">
-          <h1 className="text-3xl font-display font-bold">📊 Workload Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold">📊 Workload Dashboard</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Week of {format(startOfWeek(now, { weekStartsOn: 1 }), 'MMM d')} – {format(endOfWeek(now, { weekStartsOn: 1 }), 'MMM d, yyyy')}
           </p>
         </div>

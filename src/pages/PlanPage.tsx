@@ -402,7 +402,7 @@ export default function PlanPage() {
                             </span>
                           )}
                           {adjustMode && (
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           )}

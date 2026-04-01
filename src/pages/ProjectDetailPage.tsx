@@ -553,7 +553,7 @@ export default function ProjectDetailPage() {
         </div>
 
         <Tabs defaultValue="route">
-          <TabsList>
+          <TabsList className="overflow-x-auto no-scrollbar w-full justify-start">
             <TabsTrigger value="route" className="text-xs">Route</TabsTrigger>
             <TabsTrigger value="roadmap" className="text-xs">Roadmap</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs">Tasks ({tasks.length})</TabsTrigger>

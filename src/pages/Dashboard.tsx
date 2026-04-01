@@ -209,16 +209,16 @@ export default function Dashboard() {
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => navigate('/planner')}>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg min-h-[44px] sm:min-h-0" onClick={() => navigate('/planner')}>
             <CalendarDays className="h-3.5 w-3.5 mr-1.5" /> Plan My Week
           </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => setReviewMode(true)}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Run AI Status Review
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg min-h-[44px] sm:min-h-0" onClick={() => setReviewMode(true)}>
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Status Review
           </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={copyAllForAI}>
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg min-h-[44px] sm:min-h-0" onClick={copyAllForAI}>
             {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
-            {copied ? 'Copied!' : 'Copy All for AI'}
+            {copied ? 'Copied!' : 'Copy for AI'}
           </Button>
         </div>
 

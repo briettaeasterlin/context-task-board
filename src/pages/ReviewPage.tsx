@@ -69,7 +69,7 @@ export default function ReviewPage() {
           <button
             onClick={() => setActiveTab('wrapup')}
             className={cn(
-              'flex-1 text-sm font-medium py-2 px-4 rounded-lg transition-all',
+              'flex-1 text-sm font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-all min-h-[44px] sm:min-h-0',
               activeTab === 'wrapup'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -80,7 +80,7 @@ export default function ReviewPage() {
           <button
             onClick={() => setActiveTab('changes')}
             className={cn(
-              'flex-1 text-sm font-medium py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2',
+              'flex-1 text-sm font-medium py-2.5 sm:py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2 min-h-[44px] sm:min-h-0',
               activeTab === 'changes'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
