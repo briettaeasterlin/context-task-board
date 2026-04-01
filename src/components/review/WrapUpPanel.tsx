@@ -14,9 +14,11 @@ import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 
 export function WrapUpPanel() {
   const navigate = useNavigate();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
+  const { milestones } = useMilestones();
   const streak = useStreak(tasks);
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
