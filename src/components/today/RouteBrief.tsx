@@ -108,7 +108,7 @@ function SortableStop({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full text-muted-foreground hover:text-destructive"
             title="Move to Backlog"
             onClick={(e) => { e.stopPropagation(); onDemoteTask(task.id); }}
           >
