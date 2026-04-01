@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <Link
                           to={item.path}
                           className={cn(
-                            'relative flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150',
+                            'relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 whitespace-nowrap flex-shrink-0',
                             isActive
                               ? 'bg-mint text-primary shadow-inset'
                               : 'text-muted-foreground hover:text-foreground hover:translate-x-px hover:bg-secondary'
