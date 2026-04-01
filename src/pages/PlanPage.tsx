@@ -605,7 +605,7 @@ export default function PlanPage() {
                   </div>
                 )}
 
-
+                {search.trim() && !exactSearchMatch && (
                   <button
                     type="button"
                     className="w-full border rounded-xl p-3 text-left hover:bg-muted/30 transition-colors"
