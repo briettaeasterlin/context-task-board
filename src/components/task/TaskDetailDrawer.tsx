@@ -145,10 +145,24 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
             <Label className="text-xs text-muted-foreground">Context</Label>
             <Textarea value={form.context} onChange={e => setForm(f => ({ ...f, context: e.target.value }))} rows={3} className="text-sm" placeholder="Clarifying details..." />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Notes</Label>
-            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
+          {/* Chronological Updates Feed */}
+          <div className="border-t pt-3">
+            <TaskUpdatesFeed taskId={task.id} />
           </div>
+
+          {/* Notes moved to collapsible Advanced section */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-between h-7 text-xs text-muted-foreground px-1">
+                Advanced
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1.5 pt-2">
+              <Label className="text-xs text-muted-foreground">Notes</Label>
+              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
+            </CollapsibleContent>
+          </Collapsible>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Link</Label>
             <div className="flex gap-2">
