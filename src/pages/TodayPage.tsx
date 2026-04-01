@@ -179,6 +179,10 @@ export default function TodayPage() {
     return segments;
   }, [doneToday, totalMoves, projectMap]);
 
+  if (isLoading) {
+    return <AppShell><TodaySkeleton /></AppShell>;
+  }
+
   return (
     <AppShell>
       <div className="space-y-6 max-w-2xl mx-auto">
