@@ -84,7 +84,7 @@ export default function GuidePage() {
                   {stop.bullets && (
                     <ul className="mt-2 space-y-1">
                       {stop.bullets.map((b, i) => (
-                        <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <li key={i} className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2">
                           <span className="text-muted-foreground/50">·</span> {b}
                         </li>
                       ))}
@@ -92,16 +92,16 @@ export default function GuidePage() {
                   )}
 
                   {stop.example && (
-                    <div className="mt-4 bg-muted/50 rounded-xl p-4">
-                      <p className="text-sm italic text-foreground/80 leading-relaxed">
+                    <div className="mt-3 sm:mt-4 bg-muted/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                      <p className="text-xs sm:text-sm italic text-foreground/80 leading-relaxed">
                         {stop.example}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">{stop.exampleCaption}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2">{stop.exampleCaption}</p>
                     </div>
                   )}
 
                   {stop.detail && (
-                    <p className="text-sm text-muted-foreground mt-3">{stop.detail}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2 sm:mt-3">{stop.detail}</p>
                   )}
                 </Card>
               </div>
