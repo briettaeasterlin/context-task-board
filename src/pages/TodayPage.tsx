@@ -250,17 +250,17 @@ export default function TodayPage() {
                 className="w-2 flex-shrink-0"
                 style={{ backgroundColor: nextMoveProject?.line_color ?? 'hsl(var(--accent))' }}
               />
-              <div className="p-5 sm:p-6 flex-1">
-                <p className="text-[10px] font-display font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
+              <div className="p-4 sm:p-6 flex-1">
+                <p className="text-[10px] font-display font-bold uppercase tracking-[0.15em] text-muted-foreground mb-2 sm:mb-3">
                   Your Next Move
                 </p>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5 sm:gap-3">
                   <span
-                    className="w-4 h-4 rounded-full flex-shrink-0 mt-0.5"
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex-shrink-0 mt-0.5"
                     style={{ backgroundColor: nextMoveProject?.line_color ?? 'hsl(var(--accent))' }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-display font-bold text-foreground leading-snug">
+                    <p className="text-base sm:text-lg font-display font-bold text-foreground leading-snug">
                       {nextMoveTask.title}
                     </p>
                     {nextMoveProject && (
