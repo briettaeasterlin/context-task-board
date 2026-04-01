@@ -179,7 +179,20 @@ export default function PlanPage() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const existingPlan = useMemo(() => {
-    return tasks.filter(t => t.planned_date === tomorrowStr && t.status !== 'Done');
+    const planned = tasks.filter(t => t.planned_date === tomorrowStr && t.status !== 'Done');
+    return planned.sort((a, b) => {
+      // First sort by sort_order (drag-reorder persists here)
+      const orderA = a.sort_order ?? 999;
+      const orderB = b.sort_order ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      // Then by parsed time window (earliest first)
+      const timeA = parseTimeWindow(a.target_window);
+      const timeB = parseTimeWindow(b.target_window);
+      if (timeA !== null && timeB !== null) return timeA - timeB;
+      if (timeA !== null) return -1;
+      if (timeB !== null) return 1;
+      return 0;
+    });
   }, [tasks, tomorrowStr]);
 
   const [step, setStep] = useState<PlanStep>(existingPlan.length > 0 ? 'confirmed' : 'suggest');
