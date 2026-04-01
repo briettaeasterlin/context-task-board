@@ -8,11 +8,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, ArrowRight, X, Plus, Search, Clock, Sparkles, Moon } from 'lucide-react';
+import { CheckCircle2, ArrowRight, X, Plus, Search, Clock, Sparkles, Moon, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 type PlanStep = 'suggest' | 'adjust' | 'confirmed';
 
