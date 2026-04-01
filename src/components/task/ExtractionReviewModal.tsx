@@ -46,7 +46,7 @@ export interface ExtractedQuestion {
 }
 
 export interface ExtractedDirective {
-  type: 'create_project' | 'group_tasks' | 'reclassify' | 'create_milestones' | 'reorder_next';
+  type: 'create_project' | 'group_tasks' | 'reclassify' | 'create_milestones' | 'reorder_next' | 'move_tasks' | 'close_project';
   label: string;
   projectName: string | null;
   projectArea: TaskArea | null;
