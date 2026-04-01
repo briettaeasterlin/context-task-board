@@ -39,9 +39,9 @@ export default function LandingPage() {
       </header>
 
       {/* ── 1. HERO ── */}
-      <section className="container max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
+      <section className="container max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
         <motion.h1
-          className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08]"
+          className="font-display text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.08]"
           initial="hidden" animate="visible" variants={fadeUp} custom={0}
         >
           Always know the next move.
@@ -88,16 +88,16 @@ export default function LandingPage() {
         </motion.div>
 
         <motion.div
-          className="flex items-center justify-center gap-4 mt-10"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 sm:mt-10"
           initial="hidden" animate="visible" variants={fadeUp} custom={3}
         >
           <Link to="/auth?mode=signup">
-            <Button size="lg" className="text-base px-8 h-12 rounded-2xl font-display font-semibold">
+            <Button size="lg" className="text-base px-8 h-12 rounded-2xl font-display font-semibold w-full sm:w-auto min-h-[48px]">
               Plot your route <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           <a href="#how">
-            <Button variant="outline" size="lg" className="text-base px-8 h-12 rounded-2xl font-display">
+            <Button variant="outline" size="lg" className="text-base px-8 h-12 rounded-2xl font-display w-full sm:w-auto min-h-[48px]">
               See how it works
             </Button>
           </a>

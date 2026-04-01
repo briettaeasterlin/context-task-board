@@ -237,12 +237,12 @@ export default function ProjectsPage() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-display font-bold">Projects</h1>
-          <div className="flex gap-2 items-center">
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="h-8 text-sm w-[180px]" />
-            <Button size="sm" className="text-xs h-8 gap-1" onClick={() => setCreateOpen(true)}>
-              <Plus className="h-3.5 w-3.5" /> New Project
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-display font-bold">Projects</h1>
+          <div className="flex gap-2 items-center w-full sm:w-auto">
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="h-8 text-sm flex-1 sm:w-[180px]" />
+            <Button size="sm" className="text-xs h-8 gap-1 min-h-[44px] sm:min-h-0 shrink-0" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> New
             </Button>
           </div>
         </div>

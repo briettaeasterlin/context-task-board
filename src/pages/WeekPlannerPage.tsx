@@ -235,9 +235,9 @@ export default function WeekPlannerPage() {
 
   return (
     <AppShell>
-      <div className="flex gap-4 h-[calc(100vh-8rem)]">
-        {/* Left sidebar: task drawer */}
-        <div className="w-64 flex-shrink-0 flex flex-col border-r pr-4">
+      <div className="flex flex-col sm:flex-row gap-4 h-[calc(100vh-8rem)]">
+        {/* Left sidebar: task drawer — hidden on mobile, shown as overlay or collapsed */}
+        <div className="hidden sm:flex w-64 flex-shrink-0 flex-col border-r pr-4">
           <h2 className="font-mono text-xs font-semibold text-muted-foreground mb-2">Unscheduled Tasks</h2>
           <Input
             placeholder="Filter tasks..."

@@ -141,14 +141,14 @@ export default function FocusPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-3xl mx-auto">
+      <div className="space-y-5 sm:space-y-6 max-w-3xl mx-auto px-1 sm:px-0">
         {/* Greeting */}
         <div className="pt-2">
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-sans font-bold flex items-center gap-2">
             <span>{greeting.emoji}</span>
             {greeting.text}, Brietta
           </h1>
-          <p className="text-sm text-muted-foreground mt-1 italic">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 italic">
             {getRitualMessage()}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -333,7 +333,7 @@ function DailyPlanSection({ tasks, onSelect, onMarkDone }: { tasks: Task[]; onSe
                 <div key={t.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
                   onClick={() => onSelect(t)}>
                   <span className="text-xs text-muted-foreground font-mono w-5">{i + 1}.</span>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-6 sm:w-6 p-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
                     <CheckCircle2 className="h-3.5 w-3.5" />
                   </Button>
@@ -373,7 +373,7 @@ function QuickWinsSection({ tasks, onSelect, onMarkDone }: { tasks: Task[]; onSe
         {quickWins.map(t => (
           <div key={t.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/30 transition-colors rounded-lg p-2 group"
             onClick={() => onSelect(t)}>
-            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-5 sm:w-5 p-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
               <CheckCircle2 className="h-3 w-3" />
             </Button>

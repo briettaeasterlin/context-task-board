@@ -124,26 +124,26 @@ export default function ArchivePage() {
 
   return (
     <AppShell>
-      <div className="space-y-4">
+      <div className="space-y-4 px-1 sm:px-0">
         <div>
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-sans font-bold flex items-center gap-2">
             <span>📦</span> Archive
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {doneTasks.length} completed · {deletedTasks.length} deleted tasks · {deletedProjects.length} deleted projects
           </p>
         </div>
 
         <Tabs value={tab} onValueChange={v => setTab(v as ArchiveTab)}>
-          <TabsList>
+          <TabsList className="overflow-x-auto no-scrollbar w-full justify-start">
             <TabsTrigger value="completed" className="text-xs">
-              ✅ Completed ({doneTasks.length})
+              ✅ Done ({doneTasks.length})
             </TabsTrigger>
             <TabsTrigger value="deleted_tasks" className="text-xs">
-              🗑️ Deleted Tasks ({deletedTasks.length})
+              🗑️ Tasks ({deletedTasks.length})
             </TabsTrigger>
             <TabsTrigger value="deleted_projects" className="text-xs">
-              🗑️ Deleted Projects ({deletedProjects.length})
+              🗑️ Projects ({deletedProjects.length})
             </TabsTrigger>
           </TabsList>
         </Tabs>

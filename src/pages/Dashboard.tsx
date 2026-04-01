@@ -168,14 +168,14 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
         {/* Greeting Banner */}
-        <div className="rounded-2xl bg-accent/50 border border-accent p-6">
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+        <div className="rounded-2xl bg-accent/50 border border-accent p-4 sm:p-6">
+          <h1 className="text-xl sm:text-2xl font-sans font-bold flex items-center gap-2">
             <span>{greeting.emoji}</span>
             {greeting.text}, Brietta
           </h1>
-          <div className="flex items-center gap-6 mt-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-2 sm:mt-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="text-base">📌</span>
               <span className="font-medium text-foreground">{todayCount}</span> today
@@ -209,16 +209,16 @@ export default function Dashboard() {
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => navigate('/planner')}>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg min-h-[44px] sm:min-h-0" onClick={() => navigate('/planner')}>
             <CalendarDays className="h-3.5 w-3.5 mr-1.5" /> Plan My Week
           </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={() => setReviewMode(true)}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Run AI Status Review
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg min-h-[44px] sm:min-h-0" onClick={() => setReviewMode(true)}>
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Status Review
           </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={copyAllForAI}>
+          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg min-h-[44px] sm:min-h-0" onClick={copyAllForAI}>
             {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
-            {copied ? 'Copied!' : 'Copy All for AI'}
+            {copied ? 'Copied!' : 'Copy for AI'}
           </Button>
         </div>
 

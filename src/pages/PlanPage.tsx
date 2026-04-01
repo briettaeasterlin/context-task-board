@@ -282,12 +282,12 @@ export default function PlanPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto px-1 sm:px-0">
         {step === 'confirmed' && (
           <>
-            <Card className="p-6 sm:p-8 rounded-2xl bg-accent/5 border-accent/20 text-center">
-              <Moon className="h-8 w-8 text-accent mx-auto mb-3 opacity-60" />
-              <h1 className="text-2xl font-display font-bold">✅ Tomorrow is set.</h1>
+            <Card className="p-4 sm:p-8 rounded-2xl bg-accent/5 border-accent/20 text-center">
+              <Moon className="h-6 w-6 sm:h-8 sm:w-8 text-accent mx-auto mb-2 sm:mb-3 opacity-60" />
+              <h1 className="text-xl sm:text-2xl font-display font-bold">✅ Tomorrow is set.</h1>
               <p className="text-sm text-muted-foreground mt-2">
                 {existingPlan.length} move{existingPlan.length !== 1 ? 's' : ''} locked in.
                 {estimatedMinutes > 0 && ` Estimated: ${estimatedMinutes >= 60 ? `${Math.floor(estimatedMinutes / 60)}h ${estimatedMinutes % 60 > 0 ? `${estimatedMinutes % 60}m` : ''}` : `${estimatedMinutes}m`}.`}
@@ -402,7 +402,7 @@ export default function PlanPage() {
                             </span>
                           )}
                           {adjustMode && (
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleRemoveTask(task.id); }}>
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           )}
