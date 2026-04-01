@@ -6,9 +6,10 @@ import { useStreak } from '@/hooks/useStreak';
 import type { Task } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight, Flame, BarChart3, Clock, Hourglass } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Flame, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { CompletionCelebration } from '@/components/task/CompletionCelebration';
 
 export function WrapUpPanel() {
   const navigate = useNavigate();
@@ -20,48 +21,41 @@ export function WrapUpPanel() {
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
+  const [celebration, setCelebration] = useState<{ task: Task; doneToday: number; totalToday: number } | null>(null);
+
   const todayStart = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
 
-  // Planned tasks for today (completed + incomplete)
-  const plannedToday = useMemo(() =>
-    tasks.filter(t => t.planned_date === todayStr || t.status === 'Today'),
-  [tasks, todayStr]);
+  // Today's scorecard: planned_date = today OR marked Done today
+  const scorecardTasks = useMemo(() => {
+    const result: Task[] = [];
+    const ids = new Set<string>();
+    for (const t of tasks) {
+      if (ids.has(t.id)) continue;
+      const isPlannedToday = t.planned_date === todayStr || t.status === 'Today';
+      const isDoneToday = t.status === 'Done' && new Date(t.updated_at) >= todayStart;
+      if (isPlannedToday || isDoneToday) {
+        result.push(t);
+        ids.add(t.id);
+      }
+    }
+    return result;
+  }, [tasks, todayStr, todayStart]);
 
-  const completedToday = useMemo(() =>
-    plannedToday.filter(t => t.status === 'Done'),
-  [plannedToday]);
-
-  const incompleteToday = useMemo(() =>
-    plannedToday.filter(t => t.status !== 'Done'),
-  [plannedToday]);
-
-  // If no planned tasks, show recently active tasks
-  const recentlyActive = useMemo(() => {
-    if (plannedToday.length > 0) return [];
-    const weekAgo = subDays(new Date(), 7).toISOString();
-    return tasks
-      .filter(t => t.status !== 'Done' && t.status !== 'Someday' && t.updated_at >= weekAgo)
-      .slice(0, 5);
-  }, [plannedToday, tasks]);
-
-  const showRecent = plannedToday.length === 0 && recentlyActive.length > 0;
-
-  // Summary counts
-  const movedForward = completedToday.length;
-  const waitingCount = useMemo(() =>
-    plannedToday.filter(t => t.status === 'Waiting').length,
-  [plannedToday]);
+  const completedToday = useMemo(() => scorecardTasks.filter(t => t.status === 'Done'), [scorecardTasks]);
+  const incompleteToday = useMemo(() => scorecardTasks.filter(t => t.status !== 'Done'), [scorecardTasks]);
 
   // Tomorrow preview
   const tomorrowPlan = useMemo(() =>
     tasks.filter(t => t.planned_date === tomorrowStr && t.status !== 'Done').slice(0, 5),
   [tasks, tomorrowStr]);
 
-  const handleDone = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Done' }, {
+  const handleDone = useCallback((task: Task) => {
+    const newDoneCount = completedToday.length + 1;
+    setCelebration({ task, doneToday: newDoneCount, totalToday: scorecardTasks.length });
+    updateTask.mutate({ id: task.id, status: 'Done' }, {
       onSuccess: () => toast.success('Move cleared'),
     });
-  }, [updateTask]);
+  }, [updateTask, completedToday.length, scorecardTasks.length]);
 
   const handleTomorrow = useCallback((id: string) => {
     updateTask.mutate({ id, planned_date: tomorrowStr, status: 'Next' } as any, {
@@ -69,94 +63,75 @@ export function WrapUpPanel() {
     });
   }, [updateTask, tomorrowStr]);
 
-  const handleBacklog = useCallback((id: string) => {
+  const handleDrop = useCallback((id: string) => {
     updateTask.mutate({ id, status: 'Backlog', planned_date: null } as any, {
-      onSuccess: () => toast.success('Moved to Backlog'),
+      onSuccess: () => toast.success('Dropped to Backlog'),
     });
   }, [updateTask]);
-
-  const handleWaiting = useCallback((id: string) => {
-    updateTask.mutate({ id, status: 'Waiting', planned_date: null } as any, {
-      onSuccess: () => toast.success('Marked as Waiting'),
-    });
-  }, [updateTask]);
-
-  const renderTaskCard = (task: Task, isComplete: boolean) => {
-    const taskProject = projectMap.get(task.project_id ?? '');
-    return (
-      <Card key={task.id} className={`rounded-xl overflow-hidden ${isComplete ? '' : 'border-muted-foreground/20'}`}>
-        <div className="flex items-center gap-3 p-4">
-          {taskProject?.line_color && (
-            <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
-          )}
-          {isComplete ? (
-            <CheckCircle2 className="h-4 w-4 text-accent flex-shrink-0" />
-          ) : (
-            <div className="w-4 h-4 rounded-sm border-2 border-muted-foreground/30 flex-shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            <span className={`text-sm ${isComplete ? 'line-through text-muted-foreground' : ''}`}>{task.title}</span>
-            {taskProject && (
-              <p className="text-[11px] text-muted-foreground mt-0.5">{taskProject.name}</p>
-            )}
-          </div>
-          {!isComplete && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-accent" onClick={() => handleDone(task.id)}>
-                Done
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg" onClick={() => handleTomorrow(task.id)}>
-                Tomorrow
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={() => handleBacklog(task.id)}>
-                Backlog
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={() => handleWaiting(task.id)}>
-                Waiting
-              </Button>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  };
 
   return (
     <div className="space-y-6">
+      {/* Today's date */}
+      <p className="text-sm text-muted-foreground font-mono">{format(new Date(), 'MMMM d, yyyy')}</p>
+
       {/* Scorecard */}
       <section>
         <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          {showRecent ? 'Recently Active' : 'Today\'s Moves'}
+          Today's Scorecard
         </h2>
         <div className="space-y-2">
-          {completedToday.map(t => renderTaskCard(t, true))}
-          {incompleteToday.map(t => renderTaskCard(t, false))}
-          {showRecent && recentlyActive.map(t => renderTaskCard(t, false))}
-          {plannedToday.length === 0 && recentlyActive.length === 0 && (
+          {completedToday.map(task => {
+            const tp = projectMap.get(task.project_id ?? '');
+            return (
+              <Card key={task.id} className="rounded-xl overflow-hidden">
+                <div className="flex items-stretch">
+                  {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
+                  <div className="flex items-center gap-3 p-4 flex-1">
+                    <CheckCircle2 className="h-4 w-4 text-accent flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm line-through text-muted-foreground">{task.title}</span>
+                      {tp && <p className="text-[11px] text-muted-foreground mt-0.5">{tp.name}</p>}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+          {incompleteToday.map(task => {
+            const tp = projectMap.get(task.project_id ?? '');
+            return (
+              <Card key={task.id} className="rounded-xl overflow-hidden border-muted-foreground/20">
+                <div className="flex items-stretch">
+                  {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
+                  <div className="flex items-center gap-3 p-4 flex-1">
+                    <div className="w-4 h-4 rounded-sm border-2 border-muted-foreground/30 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm">{task.title}</span>
+                      {tp && <p className="text-[11px] text-muted-foreground mt-0.5">{tp.name}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-accent" onClick={() => handleDone(task)}>
+                        Done
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg" onClick={() => handleTomorrow(task.id)}>
+                        Tomorrow
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={() => handleDrop(task.id)}>
+                        Drop
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+          {scorecardTasks.length === 0 && (
             <Card className="p-6 text-center rounded-xl">
-              <p className="text-sm text-muted-foreground">No moves planned or active today.</p>
+              <p className="text-sm text-muted-foreground">No moves planned or completed today.</p>
             </Card>
           )}
         </div>
       </section>
-
-      {/* Daily summary */}
-      {plannedToday.length > 0 && (
-        <section className="grid grid-cols-3 gap-3">
-          <Card className="p-3 rounded-xl text-center">
-            <div className="text-lg font-display font-bold text-accent">{movedForward}</div>
-            <div className="text-[11px] text-muted-foreground">completed</div>
-          </Card>
-          <Card className="p-3 rounded-xl text-center">
-            <div className="text-lg font-display font-bold">{incompleteToday.length}</div>
-            <div className="text-[11px] text-muted-foreground">remaining</div>
-          </Card>
-          <Card className="p-3 rounded-xl text-center">
-            <div className="text-lg font-display font-bold">{waitingCount}</div>
-            <div className="text-[11px] text-muted-foreground">waiting</div>
-          </Card>
-        </section>
-      )}
 
       {/* Weekly Stats */}
       <section>
@@ -178,12 +153,12 @@ export function WrapUpPanel() {
               <Flame className="h-5 w-5 text-[#FFD300]" />
               {streak.streak}
             </div>
-            <div className="text-xs text-muted-foreground">days</div>
+            <div className="text-xs text-muted-foreground">{streak.streak === 0 ? "Today's a good day to start." : 'days'}</div>
           </Card>
           <Card className="p-4 rounded-xl text-center">
             <div className="text-xs text-muted-foreground mb-1">Best Day</div>
             <div className="text-2xl font-display font-bold">{streak.bestDay}</div>
-            <div className="text-xs text-muted-foreground">most productive</div>
+            <div className="text-xs text-muted-foreground">this week</div>
           </Card>
         </div>
         {/* Top project */}
@@ -204,7 +179,7 @@ export function WrapUpPanel() {
                 <span className="text-xs text-muted-foreground">Top project</span>
                 <p className="text-sm font-semibold">{topProject.name}</p>
               </div>
-              <span className="text-sm font-mono text-muted-foreground">{projectDone[topId]} moves</span>
+              <span className="text-sm font-mono text-muted-foreground">{projectDone[topId!]} moves</span>
             </Card>
           );
         })()}
@@ -215,27 +190,26 @@ export function WrapUpPanel() {
         <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Tomorrow</h2>
         {tomorrowPlan.length > 0 ? (
           <>
+            <p className="text-sm text-muted-foreground mb-3">Tomorrow's route is ready:</p>
             <div className="space-y-2">
               {tomorrowPlan.map((task, idx) => {
-                const taskProject = projectMap.get(task.project_id ?? '');
+                const tp = projectMap.get(task.project_id ?? '');
                 return (
                   <Card key={task.id} className="rounded-xl overflow-hidden">
-                    <div className="flex items-center gap-3 p-3">
-                      {taskProject?.line_color && (
-                        <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
-                      )}
-                      <span className="text-xs font-mono text-muted-foreground">{idx + 1}.</span>
-                      <span className="text-sm flex-1">{task.title}</span>
+                    <div className="flex items-stretch">
+                      {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
+                      <div className="flex items-center gap-3 p-3 flex-1">
+                        <span className="text-xs font-mono text-muted-foreground">{idx + 1}.</span>
+                        <span className="text-sm flex-1">{task.title}</span>
+                      </div>
                     </div>
                   </Card>
                 );
               })}
             </div>
-            <div className="flex items-center gap-3 mt-3">
-              <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => navigate('/plan')}>
-                Adjust
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" className="rounded-xl text-xs mt-3" onClick={() => navigate('/plan')}>
+              View Plan <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
           </>
         ) : (
           <Card className="p-6 text-center rounded-xl bg-accent/5">
@@ -246,6 +220,18 @@ export function WrapUpPanel() {
           </Card>
         )}
       </section>
+
+      {/* Completion Celebration */}
+      {celebration && (
+        <CompletionCelebration
+          task={celebration.task}
+          project={projectMap.get(celebration.task.project_id ?? '')}
+          allTasksForProject={tasks.filter(t => t.project_id === celebration.task.project_id)}
+          doneToday={celebration.doneToday}
+          totalToday={celebration.totalToday}
+          onDismiss={() => setCelebration(null)}
+        />
+      )}
     </div>
   );
 }
