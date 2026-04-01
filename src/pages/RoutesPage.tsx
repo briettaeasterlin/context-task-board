@@ -505,18 +505,6 @@ export default function RoutesPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant={focusMode ? 'default' : 'outline'}
-              className={cn(
-                "text-xs h-8 gap-1.5 rounded-full min-h-[44px] sm:min-h-0 transition-colors",
-                focusMode && "bg-primary text-primary-foreground"
-              )}
-              onClick={toggleFocusMode}
-            >
-              <Focus className="h-3.5 w-3.5" />
-              Focus {focusMode ? 'ON' : 'OFF'}
-            </Button>
             <Button size="sm" className="text-xs h-8 gap-1 rounded-xl min-h-[44px] sm:min-h-0" onClick={() => navigate('/projects')}>
               <Plus className="h-3.5 w-3.5" /> New Line
             </Button>
@@ -524,7 +512,7 @@ export default function RoutesPage() {
         </div>
 
         {/* Overdue safeguard alert */}
-        {focusMode && overdueHiddenCount > 0 && (
+        {!showAll && overdueHiddenCount > 0 && (
           <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[hsl(var(--accent))]/10 border border-[hsl(var(--accent))]/20">
             <div className="flex items-center gap-2 text-sm">
               <AlertTriangle className="h-3.5 w-3.5 text-[hsl(var(--accent))]" />
@@ -532,7 +520,7 @@ export default function RoutesPage() {
                 {overdueHiddenCount} hidden project{overdueHiddenCount !== 1 ? 's have' : ' has'} overdue tasks
               </span>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs h-7 rounded-lg" onClick={toggleFocusMode}>
+            <Button variant="ghost" size="sm" className="text-xs h-7 rounded-lg" onClick={() => setShowAll(true)}>
               Show all →
             </Button>
           </div>
