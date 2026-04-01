@@ -389,7 +389,7 @@ export default function TodayPage() {
 
                         <Button
                           variant="ghost" size="sm"
-                          className="h-8 w-8 p-0 shrink-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
+                          className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
                           onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
                         >
                           <CheckCircle2 className="h-4 w-4" />
