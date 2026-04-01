@@ -6,7 +6,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Map, ChevronDown, ChevronUp, Plus, Trophy } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Plus, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Project, RouteGroup, ROUTE_GROUP_META } from '@/types/task';
 import { RouteColorPicker } from '@/components/project/RouteColorPicker';
