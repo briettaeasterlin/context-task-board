@@ -95,6 +95,21 @@ function inferProjectForText(input: string, projects: Project[]) {
   return best && best.score >= 2 ? best.project : null;
 }
 
+/** Parse a target_window like "8-10 am" or "1:00-4:00" into start minutes from midnight */
+function parseTimeWindow(tw: string | null | undefined): number | null {
+  if (!tw) return null;
+  const m = tw.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const period = m[3]?.toLowerCase();
+  // Infer AM/PM: if no period specified, hours 1-7 are PM (afternoon), 8-12 are AM
+  if (period === 'pm' && h < 12) h += 12;
+  else if (period === 'am' && h === 12) h = 0;
+  else if (!period && h >= 1 && h <= 7) h += 12;
+  return h * 60 + min;
+}
+
 interface SortableTaskCardProps {
   task: Task;
   taskProject?: Project;
@@ -179,7 +194,20 @@ export default function PlanPage() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const existingPlan = useMemo(() => {
-    return tasks.filter(t => t.planned_date === tomorrowStr && t.status !== 'Done');
+    const planned = tasks.filter(t => t.planned_date === tomorrowStr && t.status !== 'Done');
+    return planned.sort((a, b) => {
+      // First sort by sort_order (drag-reorder persists here)
+      const orderA = a.sort_order ?? 999;
+      const orderB = b.sort_order ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      // Then by parsed time window (earliest first)
+      const timeA = parseTimeWindow(a.target_window);
+      const timeB = parseTimeWindow(b.target_window);
+      if (timeA !== null && timeB !== null) return timeA - timeB;
+      if (timeA !== null) return -1;
+      if (timeB !== null) return 1;
+      return 0;
+    });
   }, [tasks, tomorrowStr]);
 
   const [step, setStep] = useState<PlanStep>(existingPlan.length > 0 ? 'confirmed' : 'suggest');
@@ -290,11 +318,12 @@ export default function PlanPage() {
     const tasksToClear = tasks.filter(task => task.planned_date === tomorrowStr && task.status !== 'Done' && !keepIds.has(task.id));
 
     await Promise.all([
-      ...tasksToConfirm.map(task =>
+      ...tasksToConfirm.map((task, i) =>
         updateTask.mutateAsync({
           id: task.id,
           planned_date: tomorrowStr,
           status: task.status === 'Backlog' ? 'Next' : task.status,
+          sort_order: i,
         } as any)
       ),
       ...tasksToClear.map(task =>
