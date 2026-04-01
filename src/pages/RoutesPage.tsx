@@ -306,6 +306,11 @@ export default function RoutesPage() {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(['victories', 'parked']));
   const [showAll, setShowAll] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
   const handleColorChange = useCallback((projectId: string, color: string) => {
     updateProject.mutate({ id: projectId, line_color: color } as any);
   }, [updateProject]);
