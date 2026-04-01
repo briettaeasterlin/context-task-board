@@ -92,17 +92,17 @@ export default function HQPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {[
             { label: 'Today', value: stats.today, color: 'text-status-today' },
             { label: 'In Focus', value: stats.focus, color: 'text-accent' },
-            { label: 'Completed (7d)', value: stats.doneThisWeek, color: 'text-success' },
+            { label: 'Done (7d)', value: stats.doneThisWeek, color: 'text-success' },
             { label: 'Waiting', value: stats.waiting, color: 'text-status-waiting' },
             { label: 'Backlog', value: stats.backlog, color: 'text-muted-foreground' },
           ].map(stat => (
-            <Card key={stat.label} className="p-5 rounded-2xl shadow-card text-center">
-              <div className={cn("text-3xl font-display font-bold", stat.color)}>{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-1.5">{stat.label}</div>
+            <Card key={stat.label} className="p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-card text-center">
+              <div className={cn("text-2xl sm:text-3xl font-display font-bold", stat.color)}>{stat.value}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground mt-1">{stat.label}</div>
             </Card>
           ))}
         </div>
