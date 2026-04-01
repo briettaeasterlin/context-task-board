@@ -289,23 +289,21 @@ export default function TodayPage() {
             Today's Moves
           </h2>
 
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8 font-mono">Loading route...</p>
-          ) : todayMoves.length === 0 && doneToday.length === 0 ? (
+          {todayMoves.length === 0 && doneToday.length === 0 ? (
             <Card className="p-8 text-center rounded-2xl">
               <div className="flex justify-center mb-4">
                 <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-                  <span className="w-8 h-px bg-muted-foreground/20" />
-                  <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
-                  <span className="w-8 h-px bg-muted-foreground/20" />
-                  <span className="w-2 h-2 rounded-full border-2 border-muted-foreground/30" />
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/20" />
+                  <span className="w-10 h-px border-t-2 border-dashed border-muted-foreground/15" />
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/20" />
+                  <span className="w-10 h-px border-t-2 border-dashed border-muted-foreground/15" />
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-muted-foreground/20" />
                 </div>
               </div>
-              <p className="text-muted-foreground mb-1">No stops on this route yet.</p>
-              <p className="text-sm text-muted-foreground mb-4">Set your route to get moving.</p>
+              <p className="text-muted-foreground font-medium mb-1">No stops on today's route.</p>
+              <p className="text-sm text-muted-foreground mb-4">Plan your day to get moving.</p>
               <Button onClick={() => navigate('/plan')} className="rounded-xl font-display" size="sm">
-                Set Your Route <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                Plan your day <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             </Card>
           ) : (

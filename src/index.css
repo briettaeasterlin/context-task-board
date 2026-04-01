@@ -327,3 +327,19 @@
 /* Hide scrollbar for nav overflow */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Button press feedback */
+.btn-press:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
