@@ -424,9 +424,9 @@ export default function RoutesPage() {
     return candidates.slice(0, 3);
   }, [projects, projectTasksMap]);
 
-  // Focus Mode: filter supporting projects and compute hidden overdue
+  // Smart filtering: always applied unless showAll is true
   const { filteredGroups, overdueHiddenCount } = useMemo(() => {
-    if (!focusMode) return { filteredGroups: grouped.groups, overdueHiddenCount: 0 };
+    if (showAll) return { filteredGroups: grouped.groups, overdueHiddenCount: 0 };
 
     const today = startOfDay(new Date());
     const weekFromNow = addDays(today, 7);
@@ -445,7 +445,6 @@ export default function RoutesPage() {
           return false;
         });
         if (!hasUpcoming) {
-          // Check if hidden project has overdue tasks
           const hasOverdue = entry.tasks.some(t =>
             t.due_date && t.status !== 'Done' && isBefore(new Date(t.due_date), today)
           );
@@ -457,7 +456,7 @@ export default function RoutesPage() {
     }
 
     return { filteredGroups: filtered, overdueHiddenCount: overdueCount };
-  }, [focusMode, grouped.groups]);
+  }, [showAll, grouped.groups]);
 
   const handleDragEnd = useCallback((groupKey: string) => (event: DragEndEvent) => {
     const { active, over } = event;
