@@ -179,7 +179,7 @@ export default function RoutesPage() {
 
   // Build project-tasks map
   const projectTasksMap = useMemo(() => {
-    const map = new Map<string, Task[]>();
+    const map: Map<string, Task[]> = new Map();
     for (const p of projects) map.set(p.id, []);
     for (const t of tasks) {
       if (t.project_id && map.has(t.project_id)) {
