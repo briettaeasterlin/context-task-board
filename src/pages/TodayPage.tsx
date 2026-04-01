@@ -353,7 +353,7 @@ export default function TodayPage() {
                       {taskProject?.line_color && (
                         <div className="w-1 flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
                       )}
-                      <div className="flex items-center gap-3 p-4 flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 flex-1 min-w-0">
                         {/* ●/◉/○ indicator */}
                         <div className="relative flex-shrink-0">
                           {isCurrentTask ? (
