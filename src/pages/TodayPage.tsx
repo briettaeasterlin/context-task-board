@@ -187,11 +187,11 @@ export default function TodayPage() {
     <AppShell>
       <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto px-1 sm:px-0">
         {/* Hero Panel */}
-        <Card className="p-6 sm:p-8 rounded-2xl bg-[hsl(var(--mint)/0.15)] border-[hsl(var(--accent)/0.2)]">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+        <Card className="p-4 sm:p-8 rounded-2xl bg-[hsl(var(--mint)/0.15)] border-[hsl(var(--accent)/0.2)]">
+          <h1 className="text-xl sm:text-3xl font-display font-bold text-foreground">
             {heroContent.greeting}
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-2">
             {heroContent.subtitle}
           </p>
           {heroContent.ctaAction && (
