@@ -323,3 +323,7 @@
 .animate-mint-glow {
   animation: mint-glow 0.5s ease-out;
 }
+
+/* Hide scrollbar for nav overflow */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

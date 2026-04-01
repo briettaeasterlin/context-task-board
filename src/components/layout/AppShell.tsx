@@ -21,20 +21,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { showBanner, install, dismiss, deferredPrompt, isIos } = usePwaInstall();
 
   return (
-    <div className="min-h-screen bg-[hsl(160_8%_95%)]">
+    <div className="min-h-screen bg-[hsl(160_8%_95%)] overflow-x-hidden">
       {/* Spatial frame — mission control workspace */}
-      <div className="max-w-[1280px] mx-auto min-h-screen bg-card rounded-none sm:rounded-2xl sm:my-0 shadow-elevated">
+      <div className="max-w-[1280px] mx-auto min-h-screen bg-card rounded-none sm:rounded-2xl sm:my-0 shadow-elevated overflow-x-hidden">
         <header className="border-b border-border/50 sticky top-0 z-10 bg-card/95 backdrop-blur-sm sm:rounded-t-2xl">
           <div className="px-4 sm:px-6">
             <div className="flex items-center justify-between h-14">
-              <div className="flex items-center gap-8">
-                <Link to="/today" className="flex items-center gap-2.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
+              <div className="flex items-center gap-3 sm:gap-8 min-w-0">
+                <Link to="/today" className="flex items-center gap-2 sm:gap-2.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity flex-shrink-0">
                   <img src={logoSrc} alt="NextMove" className="h-7 w-7" />
-                  <span>NextMove</span>
+                  <span className="hidden sm:inline">NextMove</span>
                 </Link>
 
                 {/* Wayfinding navigation — transit stop style */}
-                <nav className="flex items-center gap-0.5">
+                <nav className="flex items-center gap-0.5 overflow-x-auto no-scrollbar">
                   {NAV_ITEMS.map((item, idx) => {
                     const isActive = location.pathname === item.path || (item.path === '/routes' && location.pathname.startsWith('/projects'));
                     const Icon = item.icon;
@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <Link
                           to={item.path}
                           className={cn(
-                            'relative flex items-center gap-2 px-3.5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150',
+                            'relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 whitespace-nowrap flex-shrink-0',
                             isActive
                               ? 'bg-mint text-primary shadow-inset'
                               : 'text-muted-foreground hover:text-foreground hover:translate-x-px hover:bg-secondary'
