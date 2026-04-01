@@ -130,6 +130,52 @@ export default function TodayPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
 
+  const handleDeprioritize = useCallback((task: Task) => {
+    updateTask.mutate({ id: task.id, status: 'Backlog', planned_date: null } as any, {
+      onSuccess: () => toast('Moved to Backlog'),
+    });
+  }, [updateTask]);
+
+  const handleSwapIn = useCallback((oldTask: Task, newTask: Task) => {
+    // Move old task back to Next, bring new task into Today
+    updateTask.mutate({ id: oldTask.id, status: 'Next', planned_date: null } as any);
+    updateTask.mutate({ id: newTask.id, status: 'Today', planned_date: format(new Date(), 'yyyy-MM-dd') } as any, {
+      onSuccess: () => toast.success(`Swapped in: ${newTask.title}`),
+    });
+  }, [updateTask]);
+
+  // Get swap candidates for a task (same project or same route_group, not already in today)
+  const getSwapCandidates = useCallback((task: Task) => {
+    const todayIds = new Set(todayMoves.map(t => t.id));
+    const taskProject = task.project_id ? projectMap.get(task.project_id) : null;
+    const routeGroup = taskProject?.route_group;
+
+    return tasks.filter(t => {
+      if (t.id === task.id || todayIds.has(t.id)) return false;
+      if (t.status === 'Done' || t.status === 'Someday' || t.status === 'Closing') return false;
+      // Same project first, or same route group
+      if (task.project_id && t.project_id === task.project_id) return true;
+      if (routeGroup && t.project_id) {
+        const tp = projectMap.get(t.project_id);
+        if (tp?.route_group === routeGroup) return true;
+      }
+      return false;
+    }).sort((a, b) => {
+      // Prefer same project
+      const aMatch = a.project_id === task.project_id ? 0 : 1;
+      const bMatch = b.project_id === task.project_id ? 0 : 1;
+      if (aMatch !== bMatch) return aMatch - bMatch;
+      // Then by status (Next first)
+      if (a.status === 'Next' && b.status !== 'Next') return -1;
+      if (b.status === 'Next' && a.status !== 'Next') return 1;
+      // Then by due date
+      if (a.due_date && !b.due_date) return -1;
+      if (!a.due_date && b.due_date) return 1;
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+      return 0;
+    }).slice(0, 8);
+  }, [tasks, todayMoves, projectMap]);
+
   const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
     createTask.mutate({ title, area, status: 'Today', context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null, planned_date: todayStr }, {
       onSuccess: () => toast.success('Added to today\'s moves'),
