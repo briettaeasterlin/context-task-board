@@ -78,8 +78,8 @@ export default function GuidePage() {
                     <h2 className="font-display font-bold text-sm sm:text-base">{stop.title}</h2>
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: stop.color }} />
                   </div>
-                  <p className="text-xs text-muted-foreground font-mono mb-3">{stop.time}</p>
-                  <p className="text-sm text-foreground leading-relaxed">{stop.description}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-mono mb-2 sm:mb-3">{stop.time}</p>
+                  <p className="text-xs sm:text-sm text-foreground leading-relaxed">{stop.description}</p>
 
                   {stop.bullets && (
                     <ul className="mt-2 space-y-1">
