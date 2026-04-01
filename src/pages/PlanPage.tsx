@@ -122,14 +122,22 @@ export default function PlanPage() {
     setSelectedTasks(prev => {
       const existing = prev.length > 0 ? prev : [...suggestedTasks];
       if (existing.find(t => t.id === task.id)) return existing;
+
+      // If there's a swap target, replace it
+      if (swapTargetId) {
+        const updated = existing.map(t => t.id === swapTargetId ? task : t);
+        setSwapTargetId(null);
+        return updated;
+      }
+
       if (existing.length >= 7) {
-        toast.error('Max 7 moves per day');
+        toast.error('Tap a task to swap it out, then add the new one.');
         return existing;
       }
       return [...existing, task];
     });
     setSearch('');
-  }, [suggestedTasks]);
+  }, [suggestedTasks, swapTargetId]);
 
   const handleRemoveTask = useCallback((taskId: string) => {
     setSelectedTasks(prev => {
