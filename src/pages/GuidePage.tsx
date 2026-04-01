@@ -62,20 +62,20 @@ export default function GuidePage() {
             background: `linear-gradient(180deg, #0098D4, #E32017, #003688)`,
           }} />
 
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {STOPS.map((stop, idx) => (
-              <div key={idx} className="flex gap-5 relative">
+              <div key={idx} className="flex gap-3 sm:gap-5 relative">
                 {/* Stop dot */}
                 <div className="flex-shrink-0 relative z-10">
-                  <div className="w-10 h-10 rounded-full border-[3px] flex items-center justify-center bg-card text-lg" style={{ borderColor: stop.color }}>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-[3px] flex items-center justify-center bg-card text-base sm:text-lg" style={{ borderColor: stop.color }}>
                     {stop.emoji}
                   </div>
                 </div>
 
                 {/* Content */}
-                <Card className="flex-1 p-5 rounded-xl border-l-[3px]" style={{ borderLeftColor: stop.color }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="font-display font-bold text-base">{stop.title}</h2>
+                <Card className="flex-1 p-4 sm:p-5 rounded-xl border-l-[3px] min-w-0" style={{ borderLeftColor: stop.color }}>
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <h2 className="font-display font-bold text-sm sm:text-base">{stop.title}</h2>
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: stop.color }} />
                   </div>
                   <p className="text-xs text-muted-foreground font-mono mb-3">{stop.time}</p>
