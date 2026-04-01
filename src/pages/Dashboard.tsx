@@ -168,14 +168,14 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
         {/* Greeting Banner */}
-        <div className="rounded-2xl bg-accent/50 border border-accent p-6">
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+        <div className="rounded-2xl bg-accent/50 border border-accent p-4 sm:p-6">
+          <h1 className="text-xl sm:text-2xl font-sans font-bold flex items-center gap-2">
             <span>{greeting.emoji}</span>
             {greeting.text}, Brietta
           </h1>
-          <div className="flex items-center gap-6 mt-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-2 sm:mt-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="text-base">📌</span>
               <span className="font-medium text-foreground">{todayCount}</span> today
