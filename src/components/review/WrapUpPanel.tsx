@@ -113,13 +113,13 @@ export function WrapUpPanel() {
                       {tp && <p className="text-[11px] text-muted-foreground mt-0.5">{tp.name}</p>}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-accent" onClick={() => handleDone(task)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-accent" onClick={(e) => { e.stopPropagation(); handleDone(task); }}>
                         Done
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg" onClick={() => handleTomorrow(task.id)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg" onClick={(e) => { e.stopPropagation(); handleTomorrow(task.id); }}>
                         Tomorrow
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={() => handleDrop(task.id)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={(e) => { e.stopPropagation(); handleDrop(task.id); }}>
                         Drop
                       </Button>
                     </div>
