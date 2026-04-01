@@ -397,9 +397,9 @@ export default function PlanPage() {
                 {existingPlan.length} move{existingPlan.length !== 1 ? 's' : ''} locked in.
                 {estimatedMinutes > 0 && ` Estimated: ${estimatedMinutes >= 60 ? `${Math.floor(estimatedMinutes / 60)}h ${estimatedMinutes % 60 > 0 ? `${estimatedMinutes % 60}m` : ''}` : `${estimatedMinutes}m`}.`}
               </p>
-              {existingPlan[0] && (
+              {displayTasks[0] && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  You'll start with: <span className="font-semibold text-foreground">{existingPlan[0].title}</span>
+                  You'll start with: <span className="font-semibold text-foreground">{displayTasks[0].title}</span>
                 </p>
               )}
               <p className="text-xs text-muted-foreground mt-4 font-mono">Close your laptop. You're good.</p>
