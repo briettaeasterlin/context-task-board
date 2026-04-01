@@ -43,15 +43,16 @@ export default function GuidePage() {
 
   return (
     <AppShell>
-      <div className="max-w-xl mx-auto space-y-8 pb-12">
+      <div className="max-w-xl mx-auto space-y-6 sm:space-y-8 pb-12 px-4 sm:px-0">
         {/* Header */}
-        <div className="text-center pt-4">
-          <h1 className="text-2xl font-display font-bold">How to Use NextMove</h1>
-          <p className="text-sm text-muted-foreground mt-2">Your AI-powered daily execution system</p>
+        <div className="text-center pt-2 sm:pt-4">
+          <h1 className="text-xl sm:text-2xl font-display font-bold">How to Use NextMove</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-2">Your AI-powered daily execution system</p>
         </div>
 
-        <p className="text-sm text-muted-foreground text-center leading-relaxed">
-          NextMove works best as a loop — three touches a day,<br />each one in the right place.
+        <p className="text-xs sm:text-sm text-muted-foreground text-center leading-relaxed">
+          NextMove works best as a loop — three touches a day,<br className="hidden sm:inline" />
+          <span className="sm:hidden"> </span>each one in the right place.
         </p>
 
         {/* Three stops */}
