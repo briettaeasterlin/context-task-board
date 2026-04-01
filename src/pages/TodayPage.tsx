@@ -425,12 +425,31 @@ export default function TodayPage() {
           </Card>
         )}
 
+        {/* AI Helper Button */}
+        {!allDone && todayMoves.length > 0 && (
+          <Button variant="outline" onClick={() => setAiPanelOpen(true)} className="w-full rounded-xl text-sm font-display" size="sm">
+            <MessageSquare className="h-3.5 w-3.5 mr-2" />
+            Talk to your AI about today
+          </Button>
+        )}
+
         {/* Quick Add */}
         <QuickAdd defaultStatus="Today" projects={projects} milestones={milestones}
           allTasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, area: t.area, project_id: t.project_id }))}
           onAdd={handleQuickAdd}
           onTasksCreated={() => queryClient.invalidateQueries()} />
       </div>
+
+      <AIHelperPanel
+        open={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        todayTasks={todayMoves}
+        doneTodayTasks={doneToday}
+        projects={projects}
+        allTasks={tasks}
+        streak={streak.streak}
+        weekCleared={streak.weekCleared}
+      />
 
       <TaskDetailDrawer task={detailTask} open={!!detailTask} onClose={() => setDetailTask(null)}
         onUpdate={handleUpdate} onDelete={handleDelete} projects={projects} milestones={milestones} />
