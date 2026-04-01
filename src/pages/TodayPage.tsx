@@ -185,13 +185,13 @@ export default function TodayPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto px-1 sm:px-0">
         {/* Hero Panel */}
-        <Card className="p-6 sm:p-8 rounded-2xl bg-[hsl(var(--mint)/0.15)] border-[hsl(var(--accent)/0.2)]">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+        <Card className="p-4 sm:p-8 rounded-2xl bg-[hsl(var(--mint)/0.15)] border-[hsl(var(--accent)/0.2)]">
+          <h1 className="text-xl sm:text-3xl font-display font-bold text-foreground">
             {heroContent.greeting}
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-2">
             {heroContent.subtitle}
           </p>
           {heroContent.ctaAction && (
@@ -250,17 +250,17 @@ export default function TodayPage() {
                 className="w-2 flex-shrink-0"
                 style={{ backgroundColor: nextMoveProject?.line_color ?? 'hsl(var(--accent))' }}
               />
-              <div className="p-5 sm:p-6 flex-1">
-                <p className="text-[10px] font-display font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
+              <div className="p-4 sm:p-6 flex-1">
+                <p className="text-[10px] font-display font-bold uppercase tracking-[0.15em] text-muted-foreground mb-2 sm:mb-3">
                   Your Next Move
                 </p>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5 sm:gap-3">
                   <span
-                    className="w-4 h-4 rounded-full flex-shrink-0 mt-0.5"
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex-shrink-0 mt-0.5"
                     style={{ backgroundColor: nextMoveProject?.line_color ?? 'hsl(var(--accent))' }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-display font-bold text-foreground leading-snug">
+                    <p className="text-base sm:text-lg font-display font-bold text-foreground leading-snug">
                       {nextMoveTask.title}
                     </p>
                     {nextMoveProject && (
@@ -268,10 +268,10 @@ export default function TodayPage() {
                     )}
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-3 sm:mt-4">
                   <Button
                     size="sm"
-                    className="rounded-xl font-display bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className="rounded-xl font-display bg-accent hover:bg-accent/90 text-accent-foreground min-h-[44px]"
                     onClick={(e) => { e.stopPropagation(); setDetailTask(nextMoveTask); }}
                   >
                     Start This <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -353,7 +353,7 @@ export default function TodayPage() {
                       {taskProject?.line_color && (
                         <div className="w-1 flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />
                       )}
-                      <div className="flex items-center gap-3 p-4 flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-4 flex-1 min-w-0">
                         {/* ●/◉/○ indicator */}
                         <div className="relative flex-shrink-0">
                           {isCurrentTask ? (
@@ -389,7 +389,7 @@ export default function TodayPage() {
 
                         <Button
                           variant="ghost" size="sm"
-                          className="h-8 w-8 p-0 shrink-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
+                          className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
                           onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
                         >
                           <CheckCircle2 className="h-4 w-4" />
@@ -405,7 +405,7 @@ export default function TodayPage() {
 
         {/* All-done celebration */}
         {allDone && (
-          <Card className="p-6 rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
+          <Card className="p-4 sm:p-6 rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
             <Trophy className="h-8 w-8 text-accent mx-auto mb-3" />
             <p className="font-display font-bold text-lg">🎉 Route Complete</p>
             <p className="text-sm text-muted-foreground mt-1">
@@ -425,7 +425,7 @@ export default function TodayPage() {
 
         {/* AI Helper Button */}
         {!allDone && todayMoves.length > 0 && (
-          <Button variant="outline" onClick={() => setAiPanelOpen(true)} className="w-full rounded-xl text-sm font-display" size="sm">
+          <Button variant="outline" onClick={() => setAiPanelOpen(true)} className="w-full rounded-xl text-sm font-display min-h-[44px]" size="sm">
             <MessageSquare className="h-3.5 w-3.5 mr-2" />
             Talk to your AI about today
           </Button>

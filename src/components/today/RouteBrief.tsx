@@ -92,12 +92,12 @@ function SortableStop({
           {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </Badge>
       )}
-      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
         {onMarkDone && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-accent"
+            className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full text-muted-foreground hover:text-accent"
             title="Mark done"
             onClick={(e) => { e.stopPropagation(); onMarkDone(task.id); }}
           >
@@ -108,7 +108,7 @@ function SortableStop({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 sm:h-6 sm:w-6 p-0 rounded-full text-muted-foreground hover:text-destructive"
             title="Move to Backlog"
             onClick={(e) => { e.stopPropagation(); onDemoteTask(task.id); }}
           >
