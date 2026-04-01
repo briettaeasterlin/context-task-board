@@ -184,11 +184,17 @@ export default function PlanPage() {
 
   const [step, setStep] = useState<PlanStep>(existingPlan.length > 0 ? 'confirmed' : 'suggest');
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const [confirmedOrder, setConfirmedOrder] = useState<Task[] | null>(null);
   const [adjustMode, setAdjustMode] = useState(false);
   const [search, setSearch] = useState('');
   const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
 
   const suggestedTasks = useMemo(() => {
     const result: Task[] = [];
