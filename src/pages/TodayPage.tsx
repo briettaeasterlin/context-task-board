@@ -39,6 +39,7 @@ export default function TodayPage() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [celebration, setCelebration] = useState<{ task: Task; doneToday: number; totalToday: number } | null>(null);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const timeOfDay = getTimeOfDay();
