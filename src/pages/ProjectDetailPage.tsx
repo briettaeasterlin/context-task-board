@@ -484,49 +484,55 @@ export default function ProjectDetailPage() {
         {/* Colored line bar */}
         <div className="h-2 rounded-full -mx-1" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <Button variant="ghost" size="sm" className="h-7 px-2 hover:translate-x-px transition-all duration-150" onClick={() => navigate('/review')}>
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
-              <h2 className="font-mono text-sm font-semibold">{project.name}</h2>
+              <h2 className="font-mono text-sm font-semibold truncate">{project.name}</h2>
               <AreaBadge area={project.area} />
             </div>
-            {project.summary && <p className="text-xs text-muted-foreground mt-0.5 ml-5">{project.summary}</p>}
+            {project.summary && <p className="text-xs text-muted-foreground mt-0.5 ml-5 line-clamp-2">{project.summary}</p>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <LineColorPicker
               value={project.line_color}
               onChange={(color) => updateProject.mutate({ id: project.id, line_color: color } as any)}
             />
-            <div className="text-right mr-2">
+            <div className="text-right mr-2 hidden sm:block">
               <div className="text-[10px] text-muted-foreground">{progress}% complete</div>
               <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: project.line_color || TUBE_LINES[0].hex }} />
               </div>
             </div>
-            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={copySnapshot}>
+            <Button variant="outline" size="sm" className="text-xs h-7" onClick={copySnapshot}>
               <Copy className="h-3 w-3 mr-1" /> Copy
             </Button>
-            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={exportSnapshot}>
+            <Button variant="outline" size="sm" className="text-xs h-7 hidden sm:flex" onClick={exportSnapshot}>
               <FileText className="h-3 w-3 mr-1" /> Export
             </Button>
-            <Button variant="outline" size="sm" className="text-xs h-7 hover:translate-x-px transition-all duration-150" onClick={() => setPasteOpen(true)}>
-              <ClipboardPaste className="h-3 w-3 mr-1" /> Paste Update
+            <Button variant="outline" size="sm" className="text-xs h-7 hidden sm:flex" onClick={() => setPasteOpen(true)}>
+              <ClipboardPaste className="h-3 w-3 mr-1" /> Paste
             </Button>
 
             {/* Route Controls Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 w-7 p-0 hover:translate-x-px transition-all duration-150">
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0">
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenameOpen(true); }}>
                   <Pencil className="h-3.5 w-3.5 mr-2" /> Rename project
+                </DropdownMenuItem>
+                <DropdownMenuItem className="sm:hidden" onClick={exportSnapshot}>
+                  <FileText className="h-3.5 w-3.5 mr-2" /> Export snapshot
+                </DropdownMenuItem>
+                <DropdownMenuItem className="sm:hidden" onClick={() => setPasteOpen(true)}>
+                  <ClipboardPaste className="h-3.5 w-3.5 mr-2" /> Paste update
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setMergeTargetId(''); setMergeOpen(true); }}>
                   <Merge className="h-3.5 w-3.5 mr-2" /> Merge with another project
