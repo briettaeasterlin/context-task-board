@@ -69,6 +69,7 @@ export interface Project {
   line_color: string | null;
   route_group: RouteGroup | null;
   project_state: ProjectState | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }

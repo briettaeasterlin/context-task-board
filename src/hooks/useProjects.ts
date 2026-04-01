@@ -49,7 +49,19 @@ export function useProjects() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   });
 
-  return { projects: projectsQuery.data ?? [], isLoading: projectsQuery.isLoading, createProject, updateProject, deleteProject };
+  const reorderProjects = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      const promises = updates.map(({ id, sort_order }) =>
+        supabase.from('projects').update({ sort_order } as any).eq('id', id)
+      );
+      const results = await Promise.all(promises);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  });
+
+  return { projects: projectsQuery.data ?? [], isLoading: projectsQuery.isLoading, createProject, updateProject, deleteProject, reorderProjects };
 }
 
 export function useMilestones(projectId?: string) {
