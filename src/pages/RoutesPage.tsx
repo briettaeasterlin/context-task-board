@@ -9,14 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Map, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Project } from '@/types/task';
+import { RouteColorPicker } from '@/components/project/RouteColorPicker';
 
 interface RouteLineProps {
   project: Project;
   tasks: Task[];
   onNavigate: (projectId: string) => void;
+  onColorChange: (projectId: string, color: string) => void;
 }
 
-function RouteLine({ project, tasks, onNavigate }: RouteLineProps) {
+function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps) {
   const [expanded, setExpanded] = useState(false);
   const color = project.line_color ?? '#3FAFA4';
 
@@ -37,7 +39,7 @@ function RouteLine({ project, tasks, onNavigate }: RouteLineProps) {
       >
         {/* Project label */}
         <div className="flex items-center gap-2 min-w-0 w-[120px] sm:w-[220px] flex-shrink-0">
-          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+          <RouteColorPicker currentColor={color} onColorChange={(c) => onColorChange(project.id, c)} />
           <span className="text-sm font-semibold truncate">{project.name}</span>
         </div>
 
@@ -136,8 +138,12 @@ function RouteLine({ project, tasks, onNavigate }: RouteLineProps) {
 
 export default function RoutesPage() {
   const navigate = useNavigate();
-  const { projects } = useProjects();
+  const { projects, updateProject } = useProjects();
   const { tasks, hasMoreTasks, loadMore, isLoadingMore } = useTasks();
+
+  const handleColorChange = useCallback((projectId: string, color: string) => {
+    updateProject.mutate({ id: projectId, line_color: color } as any);
+  }, [updateProject]);
 
   // Auto-load all tasks for accurate progress
   useEffect(() => {
@@ -213,6 +219,7 @@ export default function RoutesPage() {
                 project={project}
                 tasks={projectTasks}
                 onNavigate={(id) => navigate(`/projects/${id}`)}
+                onColorChange={handleColorChange}
               />
             ))}
           </Card>
