@@ -640,10 +640,7 @@ export default function RoutesPage() {
                       <Trophy className="h-4 w-4 text-[#FFD300]" /> Victories
                     </h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {focusMode
-                        ? `${grouped.victories.length} route${grouped.victories.length !== 1 ? 's' : ''}`
-                        : `Completed routes — proof of progress · ${grouped.victories.length} line${grouped.victories.length !== 1 ? 's' : ''}`
-                      }
+                      {grouped.victories.length} route{grouped.victories.length !== 1 ? 's' : ''} completed
                     </p>
                   </div>
                   {collapsedGroups.has('victories') ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
