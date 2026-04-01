@@ -559,10 +559,12 @@ export default function PlanPage() {
               <div className="space-y-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
+                   <Input
                     placeholder="Search or type a new obligation..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
                     onKeyDown={async e => {
                       if (e.key === 'Enter' && search.trim()) {
                         e.preventDefault();
