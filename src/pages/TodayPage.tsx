@@ -434,13 +434,80 @@ export default function TodayPage() {
                           </span>
                         )}
 
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
-                          onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </Button>
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          {/* Done */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-accent"
+                            title="Mark done"
+                            onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* Swap */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost" size="sm"
+                                className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                                title="Swap task"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-0 rounded-xl" align="end" onClick={e => e.stopPropagation()}>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3 py-2 border-b bg-muted/20">
+                                Swap with
+                              </p>
+                              <div className="max-h-64 overflow-y-auto divide-y divide-border/50">
+                                {getSwapCandidates(task).length === 0 ? (
+                                  <p className="text-xs text-muted-foreground p-3">No swap candidates found.</p>
+                                ) : (
+                                  getSwapCandidates(task).map(candidate => {
+                                    const cp = projectMap.get(candidate.project_id ?? '');
+                                    return (
+                                      <button
+                                        key={candidate.id}
+                                        className="w-full flex items-center gap-2.5 p-2.5 hover:bg-muted/30 transition-colors text-left"
+                                        onClick={() => handleSwapIn(task, candidate)}
+                                      >
+                                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cp?.line_color ?? 'hsl(var(--muted-foreground))' }} />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm truncate">{candidate.title}</p>
+                                          {cp && <p className="text-[10px] text-muted-foreground">{cp.name}</p>}
+                                        </div>
+                                        <Badge variant="outline" className="text-[9px] rounded-full shrink-0">{candidate.status}</Badge>
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+
+                          {/* Deprioritize */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-orange-500"
+                            title="Deprioritize to Backlog"
+                            onClick={e => { e.stopPropagation(); handleDeprioritize(task); }}
+                          >
+                            <ArrowDownToLine className="h-3.5 w-3.5" />
+                          </Button>
+
+                          {/* Delete */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-destructive"
+                            title="Delete task"
+                            onClick={e => { e.stopPropagation(); handleDelete(task.id); toast('Task deleted'); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
