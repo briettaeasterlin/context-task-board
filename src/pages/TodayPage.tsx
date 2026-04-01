@@ -312,7 +312,7 @@ export default function TodayPage() {
               {doneToday.map(task => {
                 const taskProject = projectMap.get(task.project_id ?? '');
                 return (
-                  <Card key={task.id} className="rounded-xl overflow-hidden opacity-50">
+                  <Card key={task.id} className="rounded-xl overflow-hidden opacity-50 cursor-pointer hover:opacity-70 transition-opacity" onClick={() => setDetailTask(task)}>
                     <div className="flex items-stretch">
                       {taskProject?.line_color && (
                         <div className="w-1 flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />

@@ -8,17 +8,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Map, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Task, Project } from '@/types/task';
+import type { Task, Project, TaskUpdate } from '@/types/task';
 import { RouteColorPicker } from '@/components/project/RouteColorPicker';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 
 interface RouteLineProps {
   project: Project;
   tasks: Task[];
   onNavigate: (projectId: string) => void;
   onColorChange: (projectId: string, color: string) => void;
+  onTaskClick: (task: Task) => void;
 }
 
-function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps) {
+function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick }: RouteLineProps) {
   const [expanded, setExpanded] = useState(false);
   const color = project.line_color ?? '#3FAFA4';
 
@@ -96,7 +98,7 @@ function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps
             const isDone = task.status === 'Done';
             const isYouAreHere = idx === youAreHereIdx;
             return (
-              <div key={task.id} className="flex items-center gap-2.5 py-1">
+              <div key={task.id} className="flex items-center gap-2.5 py-1 cursor-pointer hover:bg-muted/20 rounded-md px-1 -mx-1 transition-colors" onClick={() => onTaskClick(task)}>
                 {isDone ? (
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                 ) : isYouAreHere ? (
@@ -139,7 +141,8 @@ function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps
 export default function RoutesPage() {
   const navigate = useNavigate();
   const { projects, updateProject } = useProjects();
-  const { tasks, hasMoreTasks, loadMore, isLoadingMore } = useTasks();
+  const { tasks, hasMoreTasks, loadMore, isLoadingMore, updateTask, deleteTask } = useTasks();
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const handleColorChange = useCallback((projectId: string, color: string) => {
     updateProject.mutate({ id: projectId, line_color: color } as any);
@@ -220,11 +223,20 @@ export default function RoutesPage() {
                 tasks={projectTasks}
                 onNavigate={(id) => navigate(`/projects/${id}`)}
                 onColorChange={handleColorChange}
+                onTaskClick={setDetailTask}
               />
             ))}
           </Card>
         )}
       </div>
+      <TaskDetailDrawer
+        task={detailTask}
+        open={!!detailTask}
+        onClose={() => setDetailTask(null)}
+        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates } as any)}
+        onDelete={(id) => deleteTask.mutate(id)}
+        projects={projects}
+      />
     </AppShell>
   );
 }

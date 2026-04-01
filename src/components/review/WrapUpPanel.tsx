@@ -1,21 +1,24 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '@/hooks/useTasks';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useStreak } from '@/hooks/useStreak';
-import type { Task } from '@/types/task';
+import type { Task, TaskUpdate } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowRight, Flame, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { CompletionCelebration } from '@/components/task/CompletionCelebration';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 
 export function WrapUpPanel() {
   const navigate = useNavigate();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, deleteTask } = useTasks();
   const { projects } = useProjects();
+  const { milestones } = useMilestones();
   const streak = useStreak(tasks);
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
@@ -83,7 +86,7 @@ export function WrapUpPanel() {
           {completedToday.map(task => {
             const tp = projectMap.get(task.project_id ?? '');
             return (
-              <Card key={task.id} className="rounded-xl overflow-hidden">
+              <Card key={task.id} className="rounded-xl overflow-hidden cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setDetailTask(task)}>
                 <div className="flex items-stretch">
                   {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
                   <div className="flex items-center gap-3 p-4 flex-1">
@@ -100,7 +103,7 @@ export function WrapUpPanel() {
           {incompleteToday.map(task => {
             const tp = projectMap.get(task.project_id ?? '');
             return (
-              <Card key={task.id} className="rounded-xl overflow-hidden border-muted-foreground/20">
+              <Card key={task.id} className="rounded-xl overflow-hidden border-muted-foreground/20 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setDetailTask(task)}>
                 <div className="flex items-stretch">
                   {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
                   <div className="flex items-center gap-3 p-4 flex-1">
@@ -110,13 +113,13 @@ export function WrapUpPanel() {
                       {tp && <p className="text-[11px] text-muted-foreground mt-0.5">{tp.name}</p>}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-accent" onClick={() => handleDone(task)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-accent" onClick={(e) => { e.stopPropagation(); handleDone(task); }}>
                         Done
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg" onClick={() => handleTomorrow(task.id)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg" onClick={(e) => { e.stopPropagation(); handleTomorrow(task.id); }}>
                         Tomorrow
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={() => handleDrop(task.id)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs rounded-lg text-muted-foreground" onClick={(e) => { e.stopPropagation(); handleDrop(task.id); }}>
                         Drop
                       </Button>
                     </div>
@@ -177,7 +180,7 @@ export function WrapUpPanel() {
           const topProject = topId ? projectMap.get(topId) : null;
           if (!topProject) return null;
           return (
-            <Card className="p-4 rounded-xl mt-3 flex items-center gap-3">
+            <Card className="p-4 rounded-xl mt-3 flex items-center gap-3 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => navigate(`/projects/${topId}`)}>
               <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: topProject.line_color ?? undefined }} />
               <div className="flex-1">
                 <span className="text-xs text-muted-foreground">Top project</span>
@@ -199,7 +202,7 @@ export function WrapUpPanel() {
               {tomorrowPlan.map((task, idx) => {
                 const tp = projectMap.get(task.project_id ?? '');
                 return (
-                  <Card key={task.id} className="rounded-xl overflow-hidden">
+                  <Card key={task.id} className="rounded-xl overflow-hidden cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setDetailTask(task)}>
                     <div className="flex items-stretch">
                       {tp?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: tp.line_color }} />}
                       <div className="flex items-center gap-3 p-3 flex-1">
@@ -236,6 +239,17 @@ export function WrapUpPanel() {
           onDismiss={() => setCelebration(null)}
         />
       )}
+
+      <TaskDetailDrawer
+        task={detailTask}
+        open={!!detailTask}
+        onClose={() => setDetailTask(null)}
+        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates } as any)}
+        onDelete={(id) => deleteTask.mutate(id)}
+        projects={projects}
+        milestones={milestones}
+      />
     </div>
   );
 }
+
