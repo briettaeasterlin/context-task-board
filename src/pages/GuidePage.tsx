@@ -110,9 +110,9 @@ export default function GuidePage() {
         </div>
 
         {/* Rule of Thumb */}
-        <Card className="p-6 rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
-          <h3 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground mb-4">The Rule of Thumb</h3>
-          <div className="space-y-2 text-base">
+        <Card className="p-4 sm:p-6 rounded-xl sm:rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
+          <h3 className="font-display font-bold text-xs sm:text-sm uppercase tracking-wider text-muted-foreground mb-3 sm:mb-4">The Rule of Thumb</h3>
+          <div className="space-y-1.5 sm:space-y-2 text-sm sm:text-base">
             <p className="text-foreground">
               <span className="font-semibold">App</span> → for planning and reflecting
             </p>
@@ -120,7 +120,7 @@ export default function GuidePage() {
               <span className="font-semibold">AI</span> → for doing and capturing
             </p>
           </div>
-          <div className="mt-4 space-y-1 text-sm text-muted-foreground">
+          <div className="mt-3 sm:mt-4 space-y-1 text-xs sm:text-sm text-muted-foreground">
             <p>The app gives you clarity.</p>
             <p>Your AI gives you momentum.</p>
             <p>Together, they keep you moving.</p>
@@ -128,13 +128,13 @@ export default function GuidePage() {
         </Card>
 
         {/* Supported Platforms */}
-        <div className="text-center text-xs text-muted-foreground">
+        <div className="text-center text-[10px] sm:text-xs text-muted-foreground px-2">
           <p>Works with ChatGPT, Claude, or any LLM that supports custom instructions.</p>
         </div>
 
         {/* CTA */}
-        <div className="text-center">
-          <Button onClick={() => navigate('/today')} className="rounded-xl font-display" size="sm">
+        <div className="text-center pb-4">
+          <Button onClick={() => navigate('/today')} className="rounded-xl font-display min-h-[44px]" size="sm">
             Got it — show me my route <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
           </Button>
         </div>
