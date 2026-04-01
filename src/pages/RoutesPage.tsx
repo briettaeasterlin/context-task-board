@@ -152,7 +152,7 @@ function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick, isS
   );
 }
 
-const GROUP_ORDER: RouteGroup[] = ['consulting', 'products', 'career', 'life'];
+const GROUP_ORDER: RouteGroup[] = ['consulting', 'products', 'health', 'life'];
 
 export default function RoutesPage() {
   const navigate = useNavigate();
