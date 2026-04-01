@@ -164,8 +164,8 @@ export function WrapUpPanel() {
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-4 rounded-xl text-center">
             <div className="text-xs text-muted-foreground mb-1">This Week</div>
-            <div className="text-2xl font-display font-bold text-accent">{streak.weekCleared}</div>
-            <div className="text-xs text-muted-foreground">moves cleared</div>
+            <div className="text-2xl font-display font-bold text-accent">{streak.weekCleared}/{streak.weekPlanned}</div>
+            <div className="text-xs text-muted-foreground">cleared · {streak.weekCompletionRate}%</div>
           </Card>
           <Card className="p-4 rounded-xl text-center">
             <div className="text-xs text-muted-foreground mb-1">All Time</div>
@@ -175,7 +175,7 @@ export function WrapUpPanel() {
           <Card className="p-4 rounded-xl text-center">
             <div className="text-xs text-muted-foreground mb-1">Streak</div>
             <div className="text-2xl font-display font-bold flex items-center justify-center gap-1">
-              <Flame className="h-5 w-5 text-orange-500" />
+              <Flame className="h-5 w-5 text-[#FFD300]" />
               {streak.streak}
             </div>
             <div className="text-xs text-muted-foreground">days</div>
@@ -186,6 +186,28 @@ export function WrapUpPanel() {
             <div className="text-xs text-muted-foreground">most productive</div>
           </Card>
         </div>
+        {/* Top project */}
+        {(() => {
+          const projectDone: Record<string, number> = {};
+          for (const t of tasks) {
+            if (t.status === 'Done' && t.project_id) {
+              projectDone[t.project_id] = (projectDone[t.project_id] ?? 0) + 1;
+            }
+          }
+          const topId = Object.entries(projectDone).sort(([,a],[,b]) => b - a)[0]?.[0];
+          const topProject = topId ? projectMap.get(topId) : null;
+          if (!topProject) return null;
+          return (
+            <Card className="p-4 rounded-xl mt-3 flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: topProject.line_color ?? undefined }} />
+              <div className="flex-1">
+                <span className="text-xs text-muted-foreground">Top project</span>
+                <p className="text-sm font-semibold">{topProject.name}</p>
+              </div>
+              <span className="text-sm font-mono text-muted-foreground">{projectDone[topId]} moves</span>
+            </Card>
+          );
+        })()}
       </section>
 
       {/* Tomorrow Preview */}

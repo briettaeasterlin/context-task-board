@@ -17,6 +17,8 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
 import WorkloadPage from "./pages/WorkloadPage";
+import RoutesPage from "./pages/RoutesPage";
+import GuidePage from "./pages/GuidePage";
 
 const queryClient = new QueryClient();
 
@@ -66,7 +68,8 @@ const App = () => (
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/today" element={<ProtectedRoute><TodayPage /></ProtectedRoute>} />
             <Route path="/plan" element={<ProtectedRoute><PlanPage /></ProtectedRoute>} />
-            <Route path="/routes" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+            <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
+            <Route path="/guide" element={<ProtectedRoute><GuidePage /></ProtectedRoute>} />
             <Route path="/review" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
             <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />

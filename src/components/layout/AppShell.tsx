@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Navigation, Map, CalendarCheck, BarChart3, Smartphone, X, Download, Share } from 'lucide-react';
+import { LogOut, Navigation, Map, CalendarCheck, BarChart3, Smartphone, X, Download, Share, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
@@ -72,6 +72,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </nav>
               </div>
               <div className="flex items-center gap-2">
+                <Link to="/guide" className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground transition-all duration-150">
+                  <HelpCircle className="h-3.5 w-3.5" />
+                </Link>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-8 px-2.5 rounded-lg text-muted-foreground hover:text-foreground transition-all duration-150">
