@@ -35,7 +35,8 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
   });
 
   if (!res.ok) {
-    console.error("Token refresh failed:", await res.text());
+    const errBody = await res.json().catch(() => ({}));
+    console.error("Token refresh failed:", res.status, errBody.error || "unknown");
     return null;
   }
 
