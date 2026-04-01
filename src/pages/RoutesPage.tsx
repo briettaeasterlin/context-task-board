@@ -229,6 +229,14 @@ export default function RoutesPage() {
           </Card>
         )}
       </div>
+      <TaskDetailDrawer
+        task={detailTask}
+        open={!!detailTask}
+        onClose={() => setDetailTask(null)}
+        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates } as any)}
+        onDelete={(id) => deleteTask.mutate(id)}
+        projects={projects}
+      />
     </AppShell>
   );
 }
