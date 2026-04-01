@@ -98,7 +98,7 @@ function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick }: R
             const isDone = task.status === 'Done';
             const isYouAreHere = idx === youAreHereIdx;
             return (
-              <div key={task.id} className="flex items-center gap-2.5 py-1">
+              <div key={task.id} className="flex items-center gap-2.5 py-1 cursor-pointer hover:bg-muted/20 rounded-md px-1 -mx-1 transition-colors" onClick={() => onTaskClick(task)}>
                 {isDone ? (
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                 ) : isYouAreHere ? (
