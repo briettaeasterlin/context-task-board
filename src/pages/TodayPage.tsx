@@ -12,9 +12,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare, ArrowDownToLine, Trash2, RefreshCw } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare, ArrowDownToLine, Trash2, RefreshCw, CalendarArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { CompletionCelebration } from '@/components/task/CompletionCelebration';
@@ -130,11 +130,19 @@ export default function TodayPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
 
+  const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+
   const handleDeprioritize = useCallback((task: Task) => {
     updateTask.mutate({ id: task.id, status: 'Backlog', planned_date: null } as any, {
       onSuccess: () => toast('Moved to Backlog'),
     });
   }, [updateTask]);
+
+  const handleBumpTomorrow = useCallback((task: Task) => {
+    updateTask.mutate({ id: task.id, status: 'Next', planned_date: tomorrowStr } as any, {
+      onSuccess: () => toast('Moved to tomorrow'),
+    });
+  }, [updateTask, tomorrowStr]);
 
   const handleSwapIn = useCallback((oldTask: Task, newTask: Task) => {
     // Move old task back to Next, bring new task into Today
@@ -491,11 +499,21 @@ export default function TodayPage() {
                           {/* Deprioritize */}
                           <Button
                             variant="ghost" size="sm"
-                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-orange-500"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-amber-500"
                             title="Deprioritize to Backlog"
                             onClick={e => { e.stopPropagation(); handleDeprioritize(task); }}
                           >
                             <ArrowDownToLine className="h-3.5 w-3.5" />
+                          </Button>
+
+                          {/* Move to Tomorrow */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-primary"
+                            title="Move to tomorrow"
+                            onClick={e => { e.stopPropagation(); handleBumpTomorrow(task); }}
+                          >
+                            <CalendarArrowDown className="h-3.5 w-3.5" />
                           </Button>
 
                           {/* Delete */}
