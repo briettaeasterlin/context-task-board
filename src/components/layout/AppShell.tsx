@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Navigation, Map, CalendarCheck, BarChart3, Smartphone, X, Download, Share } from 'lucide-react';
+import { LogOut, Navigation, Map, CalendarCheck, BarChart3, Smartphone, X, Download, Share, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
