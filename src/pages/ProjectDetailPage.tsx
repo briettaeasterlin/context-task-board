@@ -413,6 +413,44 @@ export default function ProjectDetailPage() {
           }));
           await supabase.from('milestones').insert(msRows as any[]);
         }
+        if (d.type === 'move_tasks') {
+          // Find the target project by hint
+          let targetProjId: string | null = null;
+          if (d.projectMatchHint) {
+            const hint = d.projectMatchHint.toLowerCase();
+            // Check if we just created this project
+            targetProjId = createdProjectIds[hint] || null;
+            if (!targetProjId) {
+              const match = projects.find(p => p.name.toLowerCase().includes(hint));
+              if (match) targetProjId = match.id;
+            }
+          }
+          if (targetProjId && targetProjId !== id) {
+            // Get tasks to move: specific ones if taskMatchHints provided, else all non-Done
+            if (d.taskMatchHints.length > 0) {
+              for (const hint of d.taskMatchHints) {
+                const { data: matched } = await supabase.from('tasks').select('id')
+                  .eq('user_id', user.id).eq('project_id', id)
+                  .ilike('title', `%${hint}%`).limit(5);
+                if (matched) {
+                  for (const m of matched) {
+                    await supabase.from('tasks').update({ project_id: targetProjId } as any).eq('id', m.id);
+                  }
+                }
+              }
+            } else {
+              // Move all non-Done tasks from this project
+              const nonDoneTasks = tasks.filter(t => t.status !== 'Done');
+              for (const t of nonDoneTasks) {
+                await supabase.from('tasks').update({ project_id: targetProjId } as any).eq('id', t.id);
+              }
+            }
+          }
+        }
+        if (d.type === 'close_project') {
+          // Close out the current project
+          await supabase.from('projects').update({ project_state: 'completed' } as any).eq('id', id);
+        }
       }
 
       // Create new tasks
