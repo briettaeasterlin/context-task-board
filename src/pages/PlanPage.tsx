@@ -110,6 +110,7 @@ function parseTimeWindow(tw: string | null | undefined): number | null {
   return h * 60 + min;
 }
 
+interface SortableTaskCardProps {
   task: Task;
   taskProject?: Project;
   isSwapTarget?: boolean;
