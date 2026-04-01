@@ -6,13 +6,20 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, ChevronDown, ChevronUp, Plus, Trophy } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MapPin, ChevronDown, ChevronUp, Plus, Trophy, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Task, Project, RouteGroup, ROUTE_GROUP_META } from '@/types/task';
+import type { Task, Project, RouteGroup } from '@/types/task';
 import { RouteColorPicker } from '@/components/project/RouteColorPicker';
 import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
-import { ROUTE_GROUP_META as GROUP_META } from '@/types/task';
+import { ROUTE_GROUP_META as GROUP_META, ROUTE_GROUPS } from '@/types/task';
 import { RoutesSkeleton } from '@/components/loading/TubeSkeletons';
+import { toast } from 'sonner';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 /** Compute a context label for a project based on task data */
 function getContextLabel(project: Project, projectTasks: Task[]): { text: string; className: string } | null {
@@ -27,13 +34,11 @@ function getContextLabel(project: Project, projectTasks: Task[]): { text: string
   if (project.project_state === 'supporting') return { text: 'supporting', className: 'italic text-muted-foreground' };
   if (project.project_state === 'parked') return { text: 'parked', className: 'text-muted-foreground' };
 
-  // Check for blocked: has Waiting but no Next tasks
   if (hasWaiting && !hasNext && done < total) return { text: 'blocked', className: 'text-destructive font-medium' };
 
-  // Check staleness
   const lastUpdate = new Date(project.updated_at);
   const daysSince = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
-  if (daysSince > 14 && done < total) return { text: 'stalled', className: 'text-[#EE7C0E]' };
+  if (daysSince > 14 && done < total) return { text: 'stalled', className: 'text-[hsl(var(--accent))]' };
 
   if (done === total) return { text: 'complete ✓', className: 'text-[#00782A] font-medium' };
   if (pct > 0.75) return { text: 'closing out', className: 'text-[#00782A] font-medium' };
@@ -42,7 +47,7 @@ function getContextLabel(project: Project, projectTasks: Task[]): { text: string
   return { text: 'starting', className: 'text-muted-foreground' };
 }
 
-interface RouteLineProps {
+interface SortableRouteLineProps {
   project: Project;
   tasks: Task[];
   onNavigate: (projectId: string) => void;
@@ -51,7 +56,15 @@ interface RouteLineProps {
   isSupporting?: boolean;
 }
 
-function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick, isSupporting }: RouteLineProps) {
+function SortableRouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick, isSupporting }: SortableRouteLineProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: project.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
   const [expanded, setExpanded] = useState(false);
   const color = project.line_color ?? '#3FAFA4';
   const doneTasks = tasks.filter(t => t.status === 'Done');
@@ -61,12 +74,22 @@ function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick, isS
   const contextLabel = getContextLabel(project, tasks);
 
   return (
-    <div className={cn("group", isSupporting && "opacity-80")}>
+    <div ref={setNodeRef} style={style} className={cn("group", isSupporting && "opacity-80")}>
       <div
-        className="flex items-center gap-3 py-2.5 px-3 sm:px-4 rounded-xl cursor-pointer hover:bg-muted/30 transition-colors"
+        className="flex items-center gap-2 sm:gap-3 py-2.5 px-3 sm:px-4 rounded-xl cursor-pointer hover:bg-muted/30 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-center gap-2 min-w-0 w-[100px] sm:w-[200px] flex-shrink-0">
+        {/* Drag handle */}
+        <button
+          className="touch-none p-0.5 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+          {...attributes}
+          {...listeners}
+          onClick={e => e.stopPropagation()}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+
+        <div className="flex items-center gap-2 min-w-0 w-[90px] sm:w-[200px] flex-shrink-0">
           <RouteColorPicker currentColor={color} onColorChange={(c) => onColorChange(project.id, c)} />
           <span className={cn("text-sm font-semibold truncate", isSupporting && "text-sm font-normal")}>{project.name}</span>
         </div>
@@ -117,7 +140,7 @@ function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick, isS
       </div>
 
       {expanded && (
-        <div className="ml-6 sm:ml-10 pl-3 border-l-2 mb-2 space-y-1" style={{ borderColor: color }}>
+        <div className="ml-8 sm:ml-12 pl-3 border-l-2 mb-2 space-y-1" style={{ borderColor: color }}>
           {tasks.map((task, idx) => {
             const isDone = task.status === 'Done';
             const isYouAreHere = idx === youAreHereIdx;
@@ -152,18 +175,84 @@ function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick, isS
   );
 }
 
+/** Inline form for adding a new route to a group */
+function AddRouteInline({ groupKey, onAdd }: { groupKey: RouteGroup; onAdd: (name: string, group: RouteGroup) => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+
+  const handleSubmit = () => {
+    if (!name.trim()) return;
+    onAdd(name.trim(), groupKey);
+    setName('');
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <button
+        className="flex items-center gap-2 py-2 px-3 sm:px-4 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-xl transition-colors w-full"
+        onClick={() => setOpen(true)}
+      >
+        <Plus className="h-3 w-3" /> Add route
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-2 px-3 sm:px-4">
+      <Input
+        autoFocus
+        placeholder="New project name…"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') handleSubmit();
+          if (e.key === 'Escape') { setOpen(false); setName(''); }
+        }}
+        className="h-8 text-sm rounded-lg flex-1"
+      />
+      <Button size="sm" className="h-8 rounded-lg text-xs" onClick={handleSubmit} disabled={!name.trim()}>
+        Add
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 rounded-lg text-xs" onClick={() => { setOpen(false); setName(''); }}>
+        Cancel
+      </Button>
+    </div>
+  );
+}
+
 const GROUP_ORDER: RouteGroup[] = ['consulting', 'products', 'health', 'life'];
 
 export default function RoutesPage() {
   const navigate = useNavigate();
-  const { projects, updateProject } = useProjects();
+  const { projects, updateProject, createProject, reorderProjects, isLoading: projectsLoading } = useProjects();
   const { tasks, hasMoreTasks, loadMore, isLoadingMore, isLoading, updateTask, deleteTask } = useTasks();
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(['victories', 'parked']));
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
   const handleColorChange = useCallback((projectId: string, color: string) => {
     updateProject.mutate({ id: projectId, line_color: color } as any);
   }, [updateProject]);
+
+  const handleAddRoute = useCallback((name: string, group: RouteGroup) => {
+    createProject.mutate({
+      name,
+      area: group === 'life' ? 'Home' : group === 'consulting' ? 'Client' : 'Personal',
+      summary: null,
+      scope_notes: null,
+    } as any, {
+      onSuccess: (created) => {
+        // Set route_group and project_state after creation
+        updateProject.mutate({ id: (created as any).id, route_group: group, project_state: 'active' } as any);
+        toast.success(`Added route: ${name}`);
+      },
+    });
+  }, [createProject, updateProject]);
 
   useEffect(() => {
     if (hasMoreTasks && !isLoadingMore) loadMore();
@@ -186,7 +275,6 @@ export default function RoutesPage() {
         map.get(t.project_id)!.push(t);
       }
     }
-    // Sort tasks within each project
     for (const [, arr] of map) {
       arr.sort((a, b) => {
         if (a.status === 'Done' && b.status !== 'Done') return -1;
@@ -224,9 +312,13 @@ export default function RoutesPage() {
       }
     }
 
-    // Sort within groups by most recently updated
-    const sortFn = (a: { project: Project }, b: { project: Project }) =>
-      new Date(b.project.updated_at).getTime() - new Date(a.project.updated_at).getTime();
+    // Sort within groups by sort_order, then by most recently updated
+    const sortFn = (a: { project: Project }, b: { project: Project }) => {
+      const orderA = a.project.sort_order ?? 999;
+      const orderB = b.project.sort_order ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return new Date(b.project.updated_at).getTime() - new Date(a.project.updated_at).getTime();
+    };
     for (const g of Object.values(groups)) {
       g.active.sort(sortFn);
       g.supporting.sort(sortFn);
@@ -236,16 +328,33 @@ export default function RoutesPage() {
     return { groups, victories, parked };
   }, [projects, projectTasksMap]);
 
+  const handleDragEnd = useCallback((groupKey: string) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const group = grouped.groups[groupKey];
+    if (!group) return;
+
+    // Combine active + supporting for the full list in this group
+    const allInGroup = [...group.active, ...group.supporting];
+    const oldIndex = allInGroup.findIndex(e => e.project.id === active.id);
+    const newIndex = allInGroup.findIndex(e => e.project.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(allInGroup, oldIndex, newIndex);
+    const updates = reordered.map((e, i) => ({ id: e.project.id, sort_order: i }));
+    reorderProjects.mutate(updates);
+  }, [grouped, reorderProjects]);
+
   // Stats
   const stats = useMemo(() => {
     const activeProjects = projects.filter(p => p.project_state !== 'parked' && p.project_state !== 'completed');
     const activeGroups = new Set(activeProjects.map(p => p.route_group).filter(Boolean));
     const totalDone = tasks.filter(t => t.status === 'Done').length;
-    const totalActive = tasks.filter(t => t.status !== 'Done').length;
-    return { activeGroups: activeGroups.size, activeLines: activeProjects.length, totalDone, totalActive };
+    return { activeGroups: activeGroups.size, activeLines: activeProjects.length, totalDone };
   }, [projects, tasks]);
 
-  if (isLoading) return <AppShell><RoutesSkeleton /></AppShell>;
+  if (isLoading || projectsLoading) return <AppShell><RoutesSkeleton /></AppShell>;
 
   return (
     <AppShell>
@@ -292,6 +401,7 @@ export default function RoutesPage() {
               const groupTasks = [...group.active, ...group.supporting].flatMap(e => e.tasks);
               const groupDone = groupTasks.filter(t => t.status === 'Done').length;
               const groupTotal = groupTasks.length;
+              const allProjectIds = [...group.active, ...group.supporting].map(e => e.project.id);
 
               return (
                 <Card key={groupKey} className="rounded-2xl overflow-hidden">
@@ -312,13 +422,25 @@ export default function RoutesPage() {
                   </div>
 
                   {!isCollapsed && (
-                    <div className="divide-y divide-border/40">
-                      {group.active.map(({ project, tasks: pTasks }) => (
-                        <RouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} />
-                      ))}
-                      {group.supporting.map(({ project, tasks: pTasks }) => (
-                        <RouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} isSupporting />
-                      ))}
+                    <div>
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        modifiers={[restrictToVerticalAxis]}
+                        onDragEnd={handleDragEnd(groupKey)}
+                      >
+                        <SortableContext items={allProjectIds} strategy={verticalListSortingStrategy}>
+                          <div className="divide-y divide-border/40">
+                            {group.active.map(({ project, tasks: pTasks }) => (
+                              <SortableRouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} />
+                            ))}
+                            {group.supporting.map(({ project, tasks: pTasks }) => (
+                              <SortableRouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} isSupporting />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                      <AddRouteInline groupKey={groupKey} onAdd={handleAddRoute} />
                     </div>
                   )}
                 </Card>
@@ -345,7 +467,7 @@ export default function RoutesPage() {
                 {!collapsedGroups.has('victories') && (
                   <div className="divide-y divide-border/40 opacity-60">
                     {grouped.victories.map(({ project, tasks: pTasks }) => (
-                      <RouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} />
+                      <SortableRouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} />
                     ))}
                   </div>
                 )}
@@ -372,7 +494,7 @@ export default function RoutesPage() {
                 {!collapsedGroups.has('parked') && (
                   <div className="divide-y divide-border/40 opacity-50">
                     {grouped.parked.map(({ project, tasks: pTasks }) => (
-                      <RouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} />
+                      <SortableRouteLine key={project.id} project={project} tasks={pTasks} onNavigate={(id) => navigate(`/projects/${id}`)} onColorChange={handleColorChange} onTaskClick={setDetailTask} />
                     ))}
                   </div>
                 )}
