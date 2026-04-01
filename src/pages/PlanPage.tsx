@@ -282,7 +282,7 @@ export default function PlanPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto px-1 sm:px-0">
         {step === 'confirmed' && (
           <>
             <Card className="p-6 sm:p-8 rounded-2xl bg-accent/5 border-accent/20 text-center">
