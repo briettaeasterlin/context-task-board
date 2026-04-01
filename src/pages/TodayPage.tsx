@@ -11,7 +11,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare, ArrowDownToLine, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -128,6 +129,52 @@ export default function TodayPage() {
 
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
+
+  const handleDeprioritize = useCallback((task: Task) => {
+    updateTask.mutate({ id: task.id, status: 'Backlog', planned_date: null } as any, {
+      onSuccess: () => toast('Moved to Backlog'),
+    });
+  }, [updateTask]);
+
+  const handleSwapIn = useCallback((oldTask: Task, newTask: Task) => {
+    // Move old task back to Next, bring new task into Today
+    updateTask.mutate({ id: oldTask.id, status: 'Next', planned_date: null } as any);
+    updateTask.mutate({ id: newTask.id, status: 'Today', planned_date: format(new Date(), 'yyyy-MM-dd') } as any, {
+      onSuccess: () => toast.success(`Swapped in: ${newTask.title}`),
+    });
+  }, [updateTask]);
+
+  // Get swap candidates for a task (same project or same route_group, not already in today)
+  const getSwapCandidates = useCallback((task: Task) => {
+    const todayIds = new Set(todayMoves.map(t => t.id));
+    const taskProject = task.project_id ? projectMap.get(task.project_id) : null;
+    const routeGroup = taskProject?.route_group;
+
+    return tasks.filter(t => {
+      if (t.id === task.id || todayIds.has(t.id)) return false;
+      if (t.status === 'Done' || t.status === 'Someday' || t.status === 'Closing') return false;
+      // Same project first, or same route group
+      if (task.project_id && t.project_id === task.project_id) return true;
+      if (routeGroup && t.project_id) {
+        const tp = projectMap.get(t.project_id);
+        if (tp?.route_group === routeGroup) return true;
+      }
+      return false;
+    }).sort((a, b) => {
+      // Prefer same project
+      const aMatch = a.project_id === task.project_id ? 0 : 1;
+      const bMatch = b.project_id === task.project_id ? 0 : 1;
+      if (aMatch !== bMatch) return aMatch - bMatch;
+      // Then by status (Next first)
+      if (a.status === 'Next' && b.status !== 'Next') return -1;
+      if (b.status === 'Next' && a.status !== 'Next') return 1;
+      // Then by due date
+      if (a.due_date && !b.due_date) return -1;
+      if (!a.due_date && b.due_date) return 1;
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+      return 0;
+    }).slice(0, 8);
+  }, [tasks, todayMoves, projectMap]);
 
   const handleQuickAdd = useCallback((title: string, area: TaskArea, status: TaskStatus, projectId: string | null) => {
     createTask.mutate({ title, area, status: 'Today', context: null, notes: null, tags: [], project_id: projectId, milestone_id: null, blocked_by: null, source: null, due_date: null, target_window: null, planned_date: todayStr }, {
@@ -387,13 +434,80 @@ export default function TodayPage() {
                           </span>
                         )}
 
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0 rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-accent"
-                          onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </Button>
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          {/* Done */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-accent"
+                            title="Mark done"
+                            onClick={e => { e.stopPropagation(); handleMarkDone(task); }}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* Swap */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost" size="sm"
+                                className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                                title="Swap task"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-0 rounded-xl" align="end" onClick={e => e.stopPropagation()}>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3 py-2 border-b bg-muted/20">
+                                Swap with
+                              </p>
+                              <div className="max-h-64 overflow-y-auto divide-y divide-border/50">
+                                {getSwapCandidates(task).length === 0 ? (
+                                  <p className="text-xs text-muted-foreground p-3">No swap candidates found.</p>
+                                ) : (
+                                  getSwapCandidates(task).map(candidate => {
+                                    const cp = projectMap.get(candidate.project_id ?? '');
+                                    return (
+                                      <button
+                                        key={candidate.id}
+                                        className="w-full flex items-center gap-2.5 p-2.5 hover:bg-muted/30 transition-colors text-left"
+                                        onClick={() => handleSwapIn(task, candidate)}
+                                      >
+                                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cp?.line_color ?? 'hsl(var(--muted-foreground))' }} />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm truncate">{candidate.title}</p>
+                                          {cp && <p className="text-[10px] text-muted-foreground">{cp.name}</p>}
+                                        </div>
+                                        <Badge variant="outline" className="text-[9px] rounded-full shrink-0">{candidate.status}</Badge>
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+
+                          {/* Deprioritize */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-orange-500"
+                            title="Deprioritize to Backlog"
+                            onClick={e => { e.stopPropagation(); handleDeprioritize(task); }}
+                          >
+                            <ArrowDownToLine className="h-3.5 w-3.5" />
+                          </Button>
+
+                          {/* Delete */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-destructive"
+                            title="Delete task"
+                            onClick={e => { e.stopPropagation(); handleDelete(task.id); toast('Task deleted'); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
