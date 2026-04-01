@@ -333,7 +333,7 @@ function DailyPlanSection({ tasks, onSelect, onMarkDone }: { tasks: Task[]; onSe
                 <div key={t.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer group"
                   onClick={() => onSelect(t)}>
                   <span className="text-xs text-muted-foreground font-mono w-5">{i + 1}.</span>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-6 sm:w-6 p-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     onClick={e => { e.stopPropagation(); onMarkDone(t.id); }}>
                     <CheckCircle2 className="h-3.5 w-3.5" />
                   </Button>
