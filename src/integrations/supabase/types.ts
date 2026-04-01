@@ -618,6 +618,41 @@ export type Database = {
         }
         Relationships: []
       }
+      task_updates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          tag: Database["public"]["Enums"]["task_update_tag"] | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          tag?: Database["public"]["Enums"]["task_update_tag"] | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          tag?: Database["public"]["Enums"]["task_update_tag"] | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_updates_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           area: Database["public"]["Enums"]["task_area"]
@@ -857,6 +892,7 @@ export type Database = {
         | "Closing"
         | "Done"
         | "Someday"
+      task_update_tag: "progress" | "blocker" | "decision" | "next_step"
       update_source: "chatgpt" | "meeting" | "email" | "call" | "doc"
     }
     CompositeTypes: {
@@ -1005,6 +1041,7 @@ export const Constants = {
         "Done",
         "Someday",
       ],
+      task_update_tag: ["progress", "blocker", "decision", "next_step"],
       update_source: ["chatgpt", "meeting", "email", "call", "doc"],
     },
   },

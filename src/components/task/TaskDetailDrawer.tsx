@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AREAS, STATUSES, STRATEGIC_PHASES, STRATEGIC_PHASE_LABELS, type Task, type TaskArea, type TaskStatus, type TaskUpdate, type Project, type Milestone, type StrategicPhase } from '@/types/task';
-import { Trash2, ExternalLink } from 'lucide-react';
+import { Trash2, ExternalLink, ChevronDown } from 'lucide-react';
 import { estimateDuration, suggestImpactScore, DURATION_MINUTES } from '@/lib/task-scoring';
+import { TaskUpdatesFeed } from './TaskUpdatesFeed';
 
 interface Props {
   task: Task | null;
@@ -143,10 +145,24 @@ export function TaskDetailDrawer({ task, open, onClose, onUpdate, onDelete, proj
             <Label className="text-xs text-muted-foreground">Context</Label>
             <Textarea value={form.context} onChange={e => setForm(f => ({ ...f, context: e.target.value }))} rows={3} className="text-sm" placeholder="Clarifying details..." />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Notes</Label>
-            <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
+          {/* Chronological Updates Feed */}
+          <div className="border-t pt-3">
+            <TaskUpdatesFeed taskId={task.id} />
           </div>
+
+          {/* Notes moved to collapsible Advanced section */}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-between h-7 text-xs text-muted-foreground px-1">
+                Advanced
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1.5 pt-2">
+              <Label className="text-xs text-muted-foreground">Notes</Label>
+              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className="text-sm" />
+            </CollapsibleContent>
+          </Collapsible>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Link</Label>
             <div className="flex gap-2">
