@@ -415,31 +415,23 @@ export default function PlanPage() {
 
             <section>
               <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Tomorrow's Route</h2>
-              <div className="space-y-2">
-                {existingPlan.map(task => {
-                  const taskProject = projectMap.get(task.project_id ?? '');
-                  return (
-                    <Card key={task.id} className="rounded-xl overflow-hidden cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setDrawerTask(task)}>
-                      <div className="flex items-stretch">
-                        {taskProject?.line_color && <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: taskProject.line_color }} />}
-                        <div className="flex items-center gap-3 p-4 flex-1">
-                          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: taskProject?.line_color ?? 'hsl(var(--accent))' }} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{task.title}</p>
-                            {taskProject && <p className="text-xs text-muted-foreground mt-0.5">{taskProject.name}</p>}
-                          </div>
-                          {task.target_window && <span className="text-xs text-muted-foreground font-mono flex-shrink-0">{task.target_window}</span>}
-                          {task.estimated_minutes && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono flex-shrink-0">
-                              <Clock className="h-3 w-3" />{task.estimated_minutes}m
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
+              <p className="text-xs text-muted-foreground mb-2">Drag to reorder by priority or timing.</p>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
+                <SortableContext items={displayTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {displayTasks.map(task => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        taskProject={projectMap.get(task.project_id ?? '')}
+                        onClick={setDrawerTask}
+                        isConfirmed
+                        displayCount={displayTasks.length}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </section>
           </>
         )}
