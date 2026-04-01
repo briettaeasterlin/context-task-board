@@ -3,281 +3,264 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowRight, ArrowLeft, Check, Navigation } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { AIImportPanel } from '@/components/import/AIImportPanel';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
+import { getNextAvailableColor } from '@/lib/tube-colors';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import logoSrc from '@/assets/nextmove-logo-dark.svg';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
-  const { projects } = useProjects();
-  const { tasks, updateTask } = useTasks();
+  const { projects, createProject } = useProjects();
+  const { tasks, createTask } = useTasks();
 
-  // Step 2: active project selection
-  const [activeProjectIds, setActiveProjectIds] = useState<Set<string>>(new Set());
+  const [projectName, setProjectName] = useState('');
+  const [taskTitle, setTaskTitle] = useState('');
+  const [createdProject, setCreatedProject] = useState<{ id: string; name: string; color: string } | null>(null);
+  const [createdTask, setCreatedTask] = useState<{ title: string } | null>(null);
 
-  // Step 3: selected tasks for today's route
-  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  // When moving to step 2 after import, pre-select projects
-  const handleImportComplete = useCallback(() => {
-    setTimeout(() => {
-      queryClient.invalidateQueries();
-      setStep(2);
-    }, 500);
-  }, [queryClient]);
+  const skipToToday = useCallback(() => {
+    localStorage.setItem('nextmove_onboarded', 'true');
+    navigate('/today');
+  }, [navigate]);
 
-  // When entering step 2, auto-select all projects (up to 6)
-  const handleEnterStep2 = useCallback(() => {
-    const ids = new Set(projects.slice(0, 6).map(p => p.id));
-    setActiveProjectIds(ids);
-    setStep(2);
-  }, [projects]);
-
-  // When entering step 3, suggest tasks from active projects
-  const suggestedTasks = useMemo(() => {
-    return tasks
-      .filter(t => t.status === 'Next' || t.status === 'Today' || t.status === 'Backlog')
-      .filter(t => !t.project_id || activeProjectIds.has(t.project_id))
-      .sort((a, b) => {
-        // Prioritize Next, then Today, then Backlog
-        const statusOrder: Record<string, number> = { Next: 0, Today: 1, Backlog: 2 };
-        return (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
-      })
-      .slice(0, 8);
-  }, [tasks, activeProjectIds]);
-
-  const handleEnterStep3 = useCallback(() => {
-    const ids = new Set(suggestedTasks.slice(0, 5).map(t => t.id));
-    setSelectedTaskIds(ids);
-    setStep(3);
-  }, [suggestedTasks]);
-
-  const handleConfirmRoute = useCallback(async () => {
-    // Mark selected tasks as "Next" (today's route)
-    for (const id of selectedTaskIds) {
-      updateTask.mutate({ id, status: 'Next' });
+  const handleCreateProject = useCallback(async () => {
+    if (!projectName.trim()) return;
+    const color = getNextAvailableColor(projects.map(p => p.line_color));
+    try {
+      const result = await createProject.mutateAsync({ name: projectName.trim(), line_color: color } as any);
+      setCreatedProject({ id: result.id, name: result.name, color: result.line_color ?? color });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setStep(4);
+    } catch (e) {
+      toast.error('Failed to create project');
     }
-    toast.success('Route plotted. You\'re ready.');
-    setStep(4);
-  }, [selectedTaskIds, updateTask]);
+  }, [projectName, projects, createProject, queryClient]);
 
-  const toggleProject = (id: string) => {
-    setActiveProjectIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  const handleCreateTask = useCallback(async () => {
+    if (!taskTitle.trim() || !createdProject) return;
+    try {
+      await createTask.mutateAsync({
+        title: taskTitle.trim(),
+        area: 'Personal',
+        status: 'Next',
+        context: null,
+        notes: null,
+        tags: [],
+        project_id: createdProject.id,
+        milestone_id: null,
+        blocked_by: null,
+        source: null,
+        due_date: null,
+        target_window: null,
+        planned_date: todayStr,
+      });
+      setCreatedTask({ title: taskTitle.trim() });
+      setStep(5);
+    } catch (e) {
+      toast.error('Failed to create task');
+    }
+  }, [taskTitle, createdProject, createTask, todayStr]);
 
-  const toggleTask = (id: string) => {
-    setSelectedTaskIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  const handleFinish = useCallback(() => {
+    localStorage.setItem('nextmove_onboarded', 'true');
+    navigate('/today');
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-xl">
-        {/* Progress */}
+      <div className="w-full max-w-md">
+        {/* Progress dots */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3, 4].map(s => (
+          {[1, 2, 3, 4, 5].map(s => (
             <div key={s} className={cn(
-              "w-3 h-3 rounded-full transition-colors",
-              s <= step ? "bg-accent" : "bg-muted"
+              "w-2.5 h-2.5 rounded-full transition-all duration-300",
+              s <= step ? "bg-accent scale-110" : "bg-muted"
             )} />
           ))}
         </div>
 
-        {/* ── STEP 1: Import ── */}
+        {/* Step 1: Welcome */}
         {step === 1 && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">What are you currently working on?</h2>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Paste a task list, project ideas, or notes. Or copy this prompt into ChatGPT or Claude and paste back the result.
-              </p>
+          <div className="text-center space-y-6 animate-fade-in">
+            <img src={logoSrc} alt="NextMove" className="h-16 w-16 mx-auto" />
+            <div>
+              <h1 className="text-3xl font-display font-bold text-foreground">Welcome to NextMove.</h1>
+              <p className="text-muted-foreground mt-3 text-lg">Your AI-powered execution system.</p>
+              <p className="text-sm text-muted-foreground mt-2">Three touches a day. That's all it takes.</p>
             </div>
-
-            <AIImportPanel source="onboarding" onImportComplete={handleImportComplete} compact />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground"
-              onClick={() => setStep(2)}
-            >
-              Skip — I'll add things manually
+            <Button onClick={() => setStep(2)} className="rounded-xl font-display px-8" size="lg" style={{ backgroundColor: '#3FAFA4' }}>
+              Let's go <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
+            <div>
+              <button onClick={skipToToday} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Skip setup →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* ── STEP 2: Identify Active Projects ── */}
+        {/* Step 2: The Loop */}
         {step === 2 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">Which initiatives are currently active?</h2>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Select the projects you're actively working on. Unselected projects move to the background.
-              </p>
+              <h2 className="text-2xl font-display font-bold">The Daily Loop</h2>
+              <p className="text-sm text-muted-foreground mt-2">Three simple touches keep everything moving.</p>
             </div>
 
-            {projects.length === 0 ? (
-              <Card className="p-6 rounded-2xl shadow-card text-center">
-                <p className="text-sm text-muted-foreground">No projects imported yet. Continue to set up your first route.</p>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {projects.map(p => (
-                  <Card
-                    key={p.id}
-                    className={cn(
-                      "p-4 rounded-xl cursor-pointer transition-all duration-150 hover:translate-x-px",
-                      activeProjectIds.has(p.id)
-                        ? "border-accent/40 bg-mint/10 shadow-card"
-                        : "shadow-card"
-                    )}
-                    onClick={() => toggleProject(p.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={activeProjectIds.has(p.id)}
-                        onCheckedChange={() => toggleProject(p.id)}
-                        className="shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{p.name}</p>
-                        {p.summary && <p className="text-xs text-muted-foreground truncate mt-0.5">{p.summary}</p>}
-                      </div>
-                      <Badge variant="outline" className="text-[10px] rounded-full">{p.area}</Badge>
-                    </div>
-                  </Card>
-                ))}
+            <div className="relative ml-8">
+              {/* Vertical tube line */}
+              <div className="absolute left-[7px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-[#0098D4] via-[#E32017] to-[#003688]" />
+              
+              <div className="space-y-8">
+                <div className="flex items-start gap-4 relative">
+                  <span className="w-4 h-4 rounded-full flex-shrink-0 z-10 mt-0.5" style={{ backgroundColor: '#0098D4' }} />
+                  <div>
+                    <p className="font-display font-bold text-sm">Morning Route</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Open the app, see your plan</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 relative">
+                  <span className="w-4 h-4 rounded-full flex-shrink-0 z-10 mt-0.5" style={{ backgroundColor: '#E32017' }} />
+                  <div>
+                    <p className="font-display font-bold text-sm">AI Conversation</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Talk to your LLM all day</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 relative">
+                  <span className="w-4 h-4 rounded-full flex-shrink-0 z-10 mt-0.5" style={{ backgroundColor: '#003688' }} />
+                  <div>
+                    <p className="font-display font-bold text-sm">Evening Review</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Close out, plan tomorrow</p>
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            <p className="text-sm text-muted-foreground text-center">
+              The app plans and reviews. Your AI executes and captures.<br />Together, they keep you moving.
+            </p>
+
+            <div className="flex flex-col items-center gap-2">
+              <Button onClick={() => setStep(3)} className="rounded-xl font-display px-8" size="sm">
+                Next <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
-              <Button onClick={handleEnterStep3} className="flex-1 rounded-xl font-display">
-                Continue <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
+              <button onClick={skipToToday} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Skip setup →
+              </button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: Plot Today's Route ── */}
+        {/* Step 3: Create first project */}
         {step === 3 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">Here's your first route.</h2>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                NextMove suggests these tasks to start with. Confirm, edit, or remove.
-              </p>
+              <h2 className="text-2xl font-display font-bold">Create your first line.</h2>
+              <p className="text-sm text-muted-foreground mt-2">What are you working on?</p>
             </div>
 
-            {suggestedTasks.length === 0 ? (
-              <Card className="p-6 rounded-2xl shadow-card text-center">
-                <p className="text-sm text-muted-foreground">No tasks to suggest yet. You can add them after setup.</p>
-              </Card>
-            ) : (
-              <Card className="p-5 rounded-2xl shadow-card">
-                <div className="flex items-center gap-2 mb-4">
-                  <Navigation className="h-4 w-4 text-accent" />
-                  <span className="font-display text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Today's Route</span>
-                </div>
-                <div className="relative ml-2">
-                  <div className="absolute left-[3px] top-1 bottom-1 w-px bg-mint" />
-                  <div className="space-y-2.5">
-                    {suggestedTasks.map((task, idx) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center gap-3 relative cursor-pointer"
-                        onClick={() => toggleTask(task.id)}
-                      >
-                        <span className={cn(
-                          'relative z-10 w-[7px] h-[7px] rounded-full border-2 flex-shrink-0',
-                          selectedTaskIds.has(task.id)
-                            ? 'border-accent bg-accent'
-                            : 'border-primary/40 bg-background'
-                        )} />
-                        <span className={cn(
-                          "text-sm flex-1 truncate",
-                          selectedTaskIds.has(task.id) ? 'text-foreground' : 'text-muted-foreground'
-                        )}>{task.title}</span>
-                        <Checkbox
-                          checked={selectedTaskIds.has(task.id)}
-                          onCheckedChange={() => toggleTask(task.id)}
-                          className="shrink-0"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            )}
+            <div className="space-y-3">
+              <Input
+                placeholder='e.g., "Job Search", "Product Launch", "Side Project"'
+                value={projectName}
+                onChange={e => setProjectName(e.target.value)}
+                className="rounded-xl text-sm"
+                onKeyDown={e => e.key === 'Enter' && handleCreateProject()}
+                autoFocus
+              />
+              <Button
+                onClick={handleCreateProject}
+                disabled={!projectName.trim() || createProject.isPending}
+                className="w-full rounded-xl font-display"
+                size="sm"
+              >
+                Create Line <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+            </div>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(2)} className="rounded-xl">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
-              </Button>
-              <Button onClick={handleConfirmRoute} className="flex-1 rounded-xl font-display">
-                Confirm route <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
+            <div className="text-center">
+              <button onClick={skipToToday} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Skip setup →
+              </button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 4: Start Moving ── */}
-        {step === 4 && (
+        {/* Step 4: Add first task */}
+        {step === 4 && createdProject && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-display text-2xl font-bold">Your route is ready.</h2>
-              <p className="text-sm text-muted-foreground mt-2">
-                NextMove has organized your work. Here's where to go.
-              </p>
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: createdProject.color }} />
+                <span className="font-display font-bold text-sm">{createdProject.name}</span>
+              </div>
+              <h2 className="text-2xl font-display font-bold">Nice — {createdProject.name} is on the map.</h2>
+              <p className="text-sm text-muted-foreground mt-2">What's one thing you need to do for it?</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card
-                className="p-6 rounded-2xl shadow-card hover:shadow-elevated hover:-translate-y-0.5 transition-all cursor-pointer text-center"
-                onClick={() => navigate('/today')}
+            <div className="space-y-3">
+              <Input
+                placeholder='e.g., "Update my resume", "Set up landing page"'
+                value={taskTitle}
+                onChange={e => setTaskTitle(e.target.value)}
+                className="rounded-xl text-sm"
+                onKeyDown={e => e.key === 'Enter' && handleCreateTask()}
+                autoFocus
+              />
+              <Button
+                onClick={handleCreateTask}
+                disabled={!taskTitle.trim() || createTask.isPending}
+                className="w-full rounded-xl font-display"
+                size="sm"
               >
-                <span className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-accent bg-accent/10 mx-auto mb-3">
-                  <Navigation className="h-5 w-5 text-accent" />
-                </span>
-                <h3 className="font-display font-semibold mb-1">Start your route</h3>
-                <p className="text-xs text-muted-foreground mb-3">See today's stops and begin moving.</p>
-                <Button size="sm" className="rounded-xl font-display text-xs">
-                  Go to Today <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Card>
-
-              <Card
-                className="p-6 rounded-2xl shadow-card hover:shadow-elevated hover:-translate-y-0.5 transition-all cursor-pointer text-center"
-                onClick={() => navigate('/projects')}
-              >
-                <span className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-primary/30 bg-muted mx-auto mb-3">
-                  <Check className="h-5 w-5 text-primary" />
-                </span>
-                <h3 className="font-display font-semibold mb-1">Explore NextMove</h3>
-                <p className="text-xs text-muted-foreground mb-3">Browse your projects and plan ahead.</p>
-                <Button variant="outline" size="sm" className="rounded-xl font-display text-xs">
-                  View Projects <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Card>
+                Add to Route <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
             </div>
+
+            <div className="text-center">
+              <button onClick={skipToToday} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Skip setup →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Your first move */}
+        {step === 5 && createdProject && createdTask && (
+          <div className="space-y-6 animate-fade-in text-center">
+            <div>
+              <h2 className="text-2xl font-display font-bold">Your route is set.</h2>
+            </div>
+
+            <Card className="rounded-xl overflow-hidden mx-auto max-w-sm">
+              <div className="flex items-stretch">
+                <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: createdProject.color }} />
+                <div className="flex items-center gap-3 p-4 flex-1">
+                  <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: createdProject.color }} />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium">{createdTask.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{createdProject.name}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <p className="text-sm text-muted-foreground">
+              This is your first move. When you finish it,<br />mark it done — and feel the progress.
+            </p>
+
+            <Button onClick={handleFinish} className="rounded-xl font-display px-8" size="lg" style={{ backgroundColor: '#3FAFA4' }}>
+              Start My Day <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
           </div>
         )}
       </div>
