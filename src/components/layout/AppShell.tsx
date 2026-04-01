@@ -27,14 +27,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="border-b border-border/50 sticky top-0 z-10 bg-card/95 backdrop-blur-sm sm:rounded-t-2xl">
           <div className="px-4 sm:px-6">
             <div className="flex items-center justify-between h-14">
-              <div className="flex items-center gap-8">
-                <Link to="/today" className="flex items-center gap-2.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity">
+              <div className="flex items-center gap-3 sm:gap-8 min-w-0">
+                <Link to="/today" className="flex items-center gap-2 sm:gap-2.5 font-display text-sm font-bold tracking-tight hover:opacity-80 transition-opacity flex-shrink-0">
                   <img src={logoSrc} alt="NextMove" className="h-7 w-7" />
-                  <span>NextMove</span>
+                  <span className="hidden sm:inline">NextMove</span>
                 </Link>
 
                 {/* Wayfinding navigation — transit stop style */}
-                <nav className="flex items-center gap-0.5">
+                <nav className="flex items-center gap-0.5 overflow-x-auto no-scrollbar">
                   {NAV_ITEMS.map((item, idx) => {
                     const isActive = location.pathname === item.path || (item.path === '/routes' && location.pathname.startsWith('/projects'));
                     const Icon = item.icon;
