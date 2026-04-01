@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare, ArrowDownToLine, Trash2, RefreshCw, CalendarArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { QuickAdd } from '@/components/task/QuickAdd';
 import { CompletionCelebration } from '@/components/task/CompletionCelebration';
