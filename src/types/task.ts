@@ -45,16 +45,16 @@ export interface Task {
   updated_at: string;
 }
 
-export const ROUTE_GROUPS = ['consulting', 'products', 'career', 'life', 'parked'] as const;
+export const ROUTE_GROUPS = ['consulting', 'products', 'health', 'life', 'parked'] as const;
 export type RouteGroup = typeof ROUTE_GROUPS[number];
 
 export const PROJECT_STATES = ['active', 'supporting', 'completed', 'parked'] as const;
 export type ProjectState = typeof PROJECT_STATES[number];
 
 export const ROUTE_GROUP_META: Record<RouteGroup, { label: string; emoji: string; description: string }> = {
-  consulting: { label: 'Consulting Business', emoji: '💼', description: 'Revenue + client growth engine' },
+  consulting: { label: 'Business & Career', emoji: '💼', description: 'Revenue, clients, skills, and growth' },
   products: { label: 'Build & Launch', emoji: '🚀', description: 'Products, experiments, learning by building' },
-  career: { label: 'Career Development', emoji: '📈', description: 'Skills, credentials, opportunity' },
+  health: { label: 'Health & Wellness', emoji: '🏃', description: 'Physical, mental, medical' },
   life: { label: 'Home & Family', emoji: '🏠', description: 'Time-bound, non-negotiable' },
   parked: { label: 'Parked', emoji: '📦', description: 'Revisit later' },
 };
