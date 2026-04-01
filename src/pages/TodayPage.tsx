@@ -425,7 +425,7 @@ export default function TodayPage() {
 
         {/* AI Helper Button */}
         {!allDone && todayMoves.length > 0 && (
-          <Button variant="outline" onClick={() => setAiPanelOpen(true)} className="w-full rounded-xl text-sm font-display" size="sm">
+          <Button variant="outline" onClick={() => setAiPanelOpen(true)} className="w-full rounded-xl text-sm font-display min-h-[44px]" size="sm">
             <MessageSquare className="h-3.5 w-3.5 mr-2" />
             Talk to your AI about today
           </Button>
