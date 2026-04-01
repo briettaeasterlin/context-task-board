@@ -237,10 +237,31 @@ export default function PlanPage() {
   }, [tasks, tomorrowStr, todayStr]);
 
   const displayTasks = useMemo(() => {
-    if (step === 'confirmed') return existingPlan;
+    if (step === 'confirmed') return confirmedOrder ?? existingPlan;
     if (selectedTasks.length > 0) return selectedTasks;
     return suggestedTasks;
-  }, [step, selectedTasks, suggestedTasks, existingPlan]);
+  }, [step, selectedTasks, suggestedTasks, existingPlan, confirmedOrder]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentList = step === 'confirmed' ? (confirmedOrder ?? existingPlan) : (selectedTasks.length > 0 ? selectedTasks : [...suggestedTasks]);
+    const oldIndex = currentList.findIndex(t => t.id === active.id);
+    const newIndex = currentList.findIndex(t => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(currentList, oldIndex, newIndex);
+
+    if (step === 'confirmed') {
+      setConfirmedOrder(reordered);
+      // Persist sort_order to DB
+      const updates = reordered.map((t, i) => ({ id: t.id, sort_order: i }));
+      reorderTasks.mutate(updates);
+    } else {
+      setSelectedTasks(reordered);
+    }
+  }, [step, confirmedOrder, existingPlan, selectedTasks, suggestedTasks, reorderTasks]);
 
   const normalizedSearch = useMemo(() => normalizeText(search), [search]);
 
