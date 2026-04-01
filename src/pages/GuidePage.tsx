@@ -58,7 +58,7 @@ export default function GuidePage() {
         {/* Three stops */}
         <div className="relative">
           {/* Vertical connecting line */}
-          <div className="absolute left-[19px] top-8 bottom-8 w-[3px] rounded-full" style={{
+          <div className="absolute left-[17px] sm:left-[19px] top-8 bottom-8 w-[3px] rounded-full" style={{
             background: `linear-gradient(180deg, #0098D4, #E32017, #003688)`,
           }} />
 
