@@ -328,7 +328,10 @@ export default function PlanPage() {
     setSearch('');
   }, [suggestedTasks, swapTargetId]);
 
+  const [isCreating, setIsCreating] = useState(false);
+
   const handleCreateFromSearch = useCallback(async () => {
+    if (isCreating) return;
     const raw = search.trim();
     if (!raw) return;
 
@@ -348,26 +351,31 @@ export default function PlanPage() {
       return;
     }
 
-    const routedProject = inferProjectForText(raw, projects);
-    const createdTask = await createTask.mutateAsync({
-      title,
-      area: routedProject?.area ?? 'Personal',
-      status: 'Next',
-      context: null,
-      notes: targetWindow ? `Planned window: ${targetWindow}` : null,
-      tags: [],
-      project_id: routedProject?.id ?? null,
-      milestone_id: null,
-      blocked_by: null,
-      source: 'plan',
-      due_date: null,
-      target_window: targetWindow,
-      planned_date: null,
-    } as any);
+    setIsCreating(true);
+    try {
+      const routedProject = inferProjectForText(raw, projects);
+      const createdTask = await createTask.mutateAsync({
+        title,
+        area: routedProject?.area ?? 'Personal',
+        status: 'Next',
+        context: null,
+        notes: targetWindow ? `Planned window: ${targetWindow}` : null,
+        tags: [],
+        project_id: routedProject?.id ?? null,
+        milestone_id: null,
+        blocked_by: null,
+        source: 'plan',
+        due_date: null,
+        target_window: targetWindow,
+        planned_date: null,
+      } as any);
 
-    handleAddTask(createdTask);
-    toast.success(routedProject ? `Added to tomorrow • routed to ${routedProject.name}` : 'Added to tomorrow');
-  }, [search, exactSearchMatch, displayTasks.length, swapTargetId, projects, createTask, handleAddTask]);
+      handleAddTask(createdTask);
+      toast.success(routedProject ? `Added to tomorrow • routed to ${routedProject.name}` : 'Added to tomorrow');
+    } finally {
+      setIsCreating(false);
+    }
+  }, [isCreating, search, exactSearchMatch, displayTasks.length, swapTargetId, projects, createTask, handleAddTask]);
 
   const handleRemoveTask = useCallback((taskId: string) => {
     setSelectedTasks(prev => {
@@ -501,11 +509,7 @@ export default function PlanPage() {
                     onKeyDown={async e => {
                       if (e.key === 'Enter' && search.trim()) {
                         e.preventDefault();
-                        if (exactSearchMatch) {
-                          handleAddTask(exactSearchMatch);
-                        } else {
-                          await handleCreateFromSearch();
-                        }
+                        await handleCreateFromSearch();
                       }
                     }}
                     className="pl-9 rounded-xl text-sm"
