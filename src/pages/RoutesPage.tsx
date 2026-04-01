@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, ChevronDown, ChevronUp, Plus, Trophy, GripVertical, Focus, AlertTriangle } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Plus, Trophy, GripVertical, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Project, RouteGroup } from '@/types/task';
 import { RouteColorPicker } from '@/components/project/RouteColorPicker';
@@ -298,30 +298,18 @@ function AddRouteInline({ groupKey, onAdd }: { groupKey: RouteGroup; onAdd: (nam
 
 const GROUP_ORDER: RouteGroup[] = ['consulting', 'products', 'health', 'life'];
 
-const FOCUS_MODE_KEY = 'nextmove-focus-mode';
-
 export default function RoutesPage() {
   const navigate = useNavigate();
   const { projects, updateProject, createProject, reorderProjects, isLoading: projectsLoading } = useProjects();
   const { tasks, hasMoreTasks, loadMore, isLoadingMore, isLoading, updateTask, deleteTask } = useTasks();
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(['victories', 'parked']));
-  const [focusMode, setFocusMode] = useState(() => {
-    try { return localStorage.getItem(FOCUS_MODE_KEY) !== 'off'; } catch { return true; }
-  });
+  const [showAll, setShowAll] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
-
-  const toggleFocusMode = useCallback(() => {
-    setFocusMode(prev => {
-      const next = !prev;
-      try { localStorage.setItem(FOCUS_MODE_KEY, next ? 'on' : 'off'); } catch {}
-      return next;
-    });
-  }, []);
 
   const handleColorChange = useCallback((projectId: string, color: string) => {
     updateProject.mutate({ id: projectId, line_color: color } as any);
@@ -441,9 +429,9 @@ export default function RoutesPage() {
     return candidates.slice(0, 3);
   }, [projects, projectTasksMap]);
 
-  // Focus Mode: filter supporting projects and compute hidden overdue
+  // Smart filtering: always applied unless showAll is true
   const { filteredGroups, overdueHiddenCount } = useMemo(() => {
-    if (!focusMode) return { filteredGroups: grouped.groups, overdueHiddenCount: 0 };
+    if (showAll) return { filteredGroups: grouped.groups, overdueHiddenCount: 0 };
 
     const today = startOfDay(new Date());
     const weekFromNow = addDays(today, 7);
@@ -462,7 +450,6 @@ export default function RoutesPage() {
           return false;
         });
         if (!hasUpcoming) {
-          // Check if hidden project has overdue tasks
           const hasOverdue = entry.tasks.some(t =>
             t.due_date && t.status !== 'Done' && isBefore(new Date(t.due_date), today)
           );
@@ -474,7 +461,7 @@ export default function RoutesPage() {
     }
 
     return { filteredGroups: filtered, overdueHiddenCount: overdueCount };
-  }, [focusMode, grouped.groups]);
+  }, [showAll, grouped.groups]);
 
   const handleDragEnd = useCallback((groupKey: string) => (event: DragEndEvent) => {
     const { active, over } = event;
@@ -518,18 +505,6 @@ export default function RoutesPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant={focusMode ? 'default' : 'outline'}
-              className={cn(
-                "text-xs h-8 gap-1.5 rounded-full min-h-[44px] sm:min-h-0 transition-colors",
-                focusMode && "bg-primary text-primary-foreground"
-              )}
-              onClick={toggleFocusMode}
-            >
-              <Focus className="h-3.5 w-3.5" />
-              Focus {focusMode ? 'ON' : 'OFF'}
-            </Button>
             <Button size="sm" className="text-xs h-8 gap-1 rounded-xl min-h-[44px] sm:min-h-0" onClick={() => navigate('/projects')}>
               <Plus className="h-3.5 w-3.5" /> New Line
             </Button>
@@ -537,7 +512,7 @@ export default function RoutesPage() {
         </div>
 
         {/* Overdue safeguard alert */}
-        {focusMode && overdueHiddenCount > 0 && (
+        {!showAll && overdueHiddenCount > 0 && (
           <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[hsl(var(--accent))]/10 border border-[hsl(var(--accent))]/20">
             <div className="flex items-center gap-2 text-sm">
               <AlertTriangle className="h-3.5 w-3.5 text-[hsl(var(--accent))]" />
@@ -545,7 +520,7 @@ export default function RoutesPage() {
                 {overdueHiddenCount} hidden project{overdueHiddenCount !== 1 ? 's have' : ' has'} overdue tasks
               </span>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs h-7 rounded-lg" onClick={toggleFocusMode}>
+            <Button variant="ghost" size="sm" className="text-xs h-7 rounded-lg" onClick={() => setShowAll(true)}>
               Show all →
             </Button>
           </div>
@@ -665,10 +640,7 @@ export default function RoutesPage() {
                       <Trophy className="h-4 w-4 text-[#FFD300]" /> Victories
                     </h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {focusMode
-                        ? `${grouped.victories.length} route${grouped.victories.length !== 1 ? 's' : ''}`
-                        : `Completed routes — proof of progress · ${grouped.victories.length} line${grouped.victories.length !== 1 ? 's' : ''}`
-                      }
+                      {grouped.victories.length} route{grouped.victories.length !== 1 ? 's' : ''} completed
                     </p>
                   </div>
                   {collapsedGroups.has('victories') ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
