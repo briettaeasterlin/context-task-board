@@ -509,11 +509,7 @@ export default function PlanPage() {
                     onKeyDown={async e => {
                       if (e.key === 'Enter' && search.trim()) {
                         e.preventDefault();
-                        if (exactSearchMatch) {
-                          handleAddTask(exactSearchMatch);
-                        } else {
-                          await handleCreateFromSearch();
-                        }
+                        await handleCreateFromSearch();
                       }
                     }}
                     className="pl-9 rounded-xl text-sm"
