@@ -250,4 +250,5 @@ export function WrapUpPanel() {
         milestones={milestones}
       />
     </div>
-  );
+}
+
