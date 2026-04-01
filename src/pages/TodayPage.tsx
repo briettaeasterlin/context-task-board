@@ -323,7 +323,7 @@ export default function TodayPage() {
                     )}
                   </div>
                 </div>
-                <div className="mt-3 sm:mt-4">
+                <div className="mt-3 sm:mt-4 flex items-center gap-1">
                   <Button
                     size="sm"
                     className="rounded-xl font-display bg-accent hover:bg-accent/90 text-accent-foreground min-h-[44px]"
@@ -331,6 +331,80 @@ export default function TodayPage() {
                   >
                     Start This <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </Button>
+                  <div className="flex items-center gap-0.5 ml-2">
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-accent"
+                      title="Mark done"
+                      onClick={e => { e.stopPropagation(); handleMarkDone(nextMoveTask); }}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-foreground"
+                          title="Swap task"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-0 rounded-xl" align="start" onClick={e => e.stopPropagation()}>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3 py-2 border-b bg-muted/20">
+                          Swap with
+                        </p>
+                        <div className="max-h-64 overflow-y-auto divide-y divide-border/50">
+                          {getSwapCandidates(nextMoveTask).length === 0 ? (
+                            <p className="text-xs text-muted-foreground p-3">No swap candidates found.</p>
+                          ) : (
+                            getSwapCandidates(nextMoveTask).map(candidate => {
+                              const cp = projectMap.get(candidate.project_id ?? '');
+                              return (
+                                <button
+                                  key={candidate.id}
+                                  className="w-full flex items-center gap-2.5 p-2.5 hover:bg-muted/30 transition-colors text-left"
+                                  onClick={() => handleSwapIn(nextMoveTask, candidate)}
+                                >
+                                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cp?.line_color ?? 'hsl(var(--muted-foreground))' }} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm truncate">{candidate.title}</p>
+                                    {cp && <p className="text-[10px] text-muted-foreground">{cp.name}</p>}
+                                  </div>
+                                  <Badge variant="outline" className="text-[9px] rounded-full shrink-0">{candidate.status}</Badge>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-amber-500"
+                      title="Deprioritize to Backlog"
+                      onClick={e => { e.stopPropagation(); handleDeprioritize(nextMoveTask); }}
+                    >
+                      <ArrowDownToLine className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-primary"
+                      title="Move to tomorrow"
+                      onClick={e => { e.stopPropagation(); handleBumpTomorrow(nextMoveTask); }}
+                    >
+                      <CalendarArrowDown className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-destructive"
+                      title="Delete task"
+                      onClick={e => { e.stopPropagation(); handleDelete(nextMoveTask.id); toast('Task deleted'); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
