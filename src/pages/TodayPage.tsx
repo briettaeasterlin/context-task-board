@@ -11,7 +11,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Flame, Clock, Navigation, Trophy, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
