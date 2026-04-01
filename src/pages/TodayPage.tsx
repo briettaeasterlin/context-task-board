@@ -405,7 +405,7 @@ export default function TodayPage() {
 
         {/* All-done celebration */}
         {allDone && (
-          <Card className="p-6 rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
+          <Card className="p-4 sm:p-6 rounded-2xl text-center bg-[hsl(var(--mint)/0.1)] border-accent/20">
             <Trophy className="h-8 w-8 text-accent mx-auto mb-3" />
             <p className="font-display font-bold text-lg">🎉 Route Complete</p>
             <p className="text-sm text-muted-foreground mt-1">
