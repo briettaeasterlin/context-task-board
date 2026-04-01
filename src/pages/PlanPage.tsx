@@ -216,6 +216,7 @@ export default function PlanPage() {
   const [adjustMode, setAdjustMode] = useState(false);
   const [search, setSearch] = useState('');
   const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const projectMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
