@@ -1,15 +1,16 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTasks } from '@/hooks/useTasks';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useMilestones } from '@/hooks/useProjects';
 import { useStreak } from '@/hooks/useStreak';
-import type { Task } from '@/types/task';
+import type { Task, TaskUpdate } from '@/types/task';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowRight, Flame, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 import { CompletionCelebration } from '@/components/task/CompletionCelebration';
+import { TaskDetailDrawer } from '@/components/task/TaskDetailDrawer';
 
 export function WrapUpPanel() {
   const navigate = useNavigate();
