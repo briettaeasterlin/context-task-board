@@ -35,7 +35,8 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
   });
 
   if (!res.ok) {
-    console.error("Token refresh failed:", await res.text());
+    const errBody = await res.json().catch(() => ({}));
+    console.error("Token refresh failed:", res.status, errBody.error || "unknown");
     return null;
   }
 
@@ -137,8 +138,8 @@ Deno.serve(async (req) => {
     });
 
     if (!calRes.ok) {
-      const errText = await calRes.text();
-      console.error("Google Calendar API error:", calRes.status, errText);
+      const errData = await calRes.json().catch(() => ({}));
+      console.error("Google Calendar API error:", calRes.status, errData.error?.message || "unknown");
       if (calRes.status === 401) {
         await adminClient.from("user_planner_settings").update({ gcal_connected: false }).eq("user_id", userId);
         return new Response(JSON.stringify({ error: "Calendar access revoked. Please reconnect." }), {
