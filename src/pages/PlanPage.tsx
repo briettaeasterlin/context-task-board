@@ -302,6 +302,37 @@ export default function PlanPage() {
       .slice(0, 10);
   }, [tasks, search, displayTasks, normalizedSearch]);
 
+  // Top priority picks shown when search box is focused but empty
+  const topPicks = useMemo(() => {
+    if (search.trim()) return [];
+    const selectedIds = new Set(displayTasks.map(t => t.id));
+    const today = new Date();
+    const candidates = tasks.filter(t =>
+      t.status !== 'Done' && t.status !== 'Someday' && t.status !== 'Closing' &&
+      !selectedIds.has(t.id) && !t.deleted_at
+    );
+    const scored = candidates.map(t => {
+      let score = 0;
+      // Due date urgency
+      if (t.due_date) {
+        const days = Math.ceil((new Date(t.due_date).getTime() - today.getTime()) / 86400000);
+        if (days < 0) score += 100;
+        else if (days <= 3) score += 60;
+        else if (days <= 7) score += 40;
+      }
+      // Status weight
+      if (t.status === 'Today') score += 50;
+      else if (t.status === 'Next') score += 30;
+      // Impact
+      score += (t.impact_score ?? 0) * 5;
+      // Prefer tasks with time windows (appointments)
+      if (t.target_window) score += 15;
+      return { task: t, score };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 5).map(s => s.task);
+  }, [tasks, search, displayTasks]);
+
   const exactSearchMatch = useMemo(() => {
     return backlogTasks.find(task => normalizeText(task.title) === normalizedSearch) ?? null;
   }, [backlogTasks, normalizedSearch]);
