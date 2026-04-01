@@ -121,7 +121,10 @@ export default function PlanPage() {
     setSelectedTasks(prev => {
       const existing = prev.length > 0 ? prev : [...suggestedTasks];
       if (existing.find(t => t.id === task.id)) return existing;
-      if (existing.length >= 5) return existing;
+      if (existing.length >= 7) {
+        toast.error('Max 7 moves per day');
+        return existing;
+      }
       return [...existing, task];
     });
     setSearch('');
