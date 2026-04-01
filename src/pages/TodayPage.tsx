@@ -499,11 +499,21 @@ export default function TodayPage() {
                           {/* Deprioritize */}
                           <Button
                             variant="ghost" size="sm"
-                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-orange-500"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-amber-500"
                             title="Deprioritize to Backlog"
                             onClick={e => { e.stopPropagation(); handleDeprioritize(task); }}
                           >
                             <ArrowDownToLine className="h-3.5 w-3.5" />
+                          </Button>
+
+                          {/* Move to Tomorrow */}
+                          <Button
+                            variant="ghost" size="sm"
+                            className="h-8 w-8 p-0 rounded-full text-muted-foreground hover:text-primary"
+                            title="Move to tomorrow"
+                            onClick={e => { e.stopPropagation(); handleBumpTomorrow(task); }}
+                          >
+                            <CalendarArrowDown className="h-3.5 w-3.5" />
                           </Button>
 
                           {/* Delete */}
