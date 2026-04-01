@@ -141,7 +141,8 @@ function RouteLine({ project, tasks, onNavigate, onColorChange, onTaskClick }: R
 export default function RoutesPage() {
   const navigate = useNavigate();
   const { projects, updateProject } = useProjects();
-  const { tasks, hasMoreTasks, loadMore, isLoadingMore } = useTasks();
+  const { tasks, hasMoreTasks, loadMore, isLoadingMore, updateTask, deleteTask } = useTasks();
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
 
   const handleColorChange = useCallback((projectId: string, color: string) => {
     updateProject.mutate({ id: projectId, line_color: color } as any);
