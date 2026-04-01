@@ -138,8 +138,12 @@ function RouteLine({ project, tasks, onNavigate, onColorChange }: RouteLineProps
 
 export default function RoutesPage() {
   const navigate = useNavigate();
-  const { projects } = useProjects();
+  const { projects, updateProject } = useProjects();
   const { tasks, hasMoreTasks, loadMore, isLoadingMore } = useTasks();
+
+  const handleColorChange = useCallback((projectId: string, color: string) => {
+    updateProject.mutate({ id: projectId, line_color: color } as any);
+  }, [updateProject]);
 
   // Auto-load all tasks for accurate progress
   useEffect(() => {
