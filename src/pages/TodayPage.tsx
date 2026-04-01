@@ -130,11 +130,19 @@ export default function TodayPage() {
   const handleUpdate = useCallback((id: string, updates: TaskUpdate) => { updateTask.mutate({ id, ...updates }); }, [updateTask]);
   const handleDelete = useCallback((id: string) => { deleteTask.mutate(id); }, [deleteTask]);
 
+  const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+
   const handleDeprioritize = useCallback((task: Task) => {
     updateTask.mutate({ id: task.id, status: 'Backlog', planned_date: null } as any, {
       onSuccess: () => toast('Moved to Backlog'),
     });
   }, [updateTask]);
+
+  const handleBumpTomorrow = useCallback((task: Task) => {
+    updateTask.mutate({ id: task.id, status: 'Next', planned_date: tomorrowStr } as any, {
+      onSuccess: () => toast('Moved to tomorrow'),
+    });
+  }, [updateTask, tomorrowStr]);
 
   const handleSwapIn = useCallback((oldTask: Task, newTask: Task) => {
     // Move old task back to Next, bring new task into Today
