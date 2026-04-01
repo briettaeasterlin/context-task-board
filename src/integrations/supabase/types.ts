@@ -436,6 +436,8 @@ export type Database = {
           id: string
           line_color: string | null
           name: string
+          project_state: string | null
+          route_group: string | null
           scope_notes: string | null
           strategic_phase: Database["public"]["Enums"]["strategic_phase"] | null
           summary: string | null
@@ -449,6 +451,8 @@ export type Database = {
           id?: string
           line_color?: string | null
           name: string
+          project_state?: string | null
+          route_group?: string | null
           scope_notes?: string | null
           strategic_phase?:
             | Database["public"]["Enums"]["strategic_phase"]
@@ -464,6 +468,8 @@ export type Database = {
           id?: string
           line_color?: string | null
           name?: string
+          project_state?: string | null
+          route_group?: string | null
           scope_notes?: string | null
           strategic_phase?:
             | Database["public"]["Enums"]["strategic_phase"]
