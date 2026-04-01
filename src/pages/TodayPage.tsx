@@ -268,10 +268,10 @@ export default function TodayPage() {
                     )}
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-3 sm:mt-4">
                   <Button
                     size="sm"
-                    className="rounded-xl font-display bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className="rounded-xl font-display bg-accent hover:bg-accent/90 text-accent-foreground min-h-[44px]"
                     onClick={(e) => { e.stopPropagation(); setDetailTask(nextMoveTask); }}
                   >
                     Start This <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
