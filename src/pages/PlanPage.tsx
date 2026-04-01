@@ -309,23 +309,19 @@ export default function PlanPage() {
     const today = new Date();
     const candidates = tasks.filter(t =>
       t.status !== 'Done' && t.status !== 'Someday' && t.status !== 'Closing' &&
-      !selectedIds.has(t.id) && !t.deleted_at
+      !selectedIds.has(t.id)
     );
     const scored = candidates.map(t => {
       let score = 0;
-      // Due date urgency
       if (t.due_date) {
         const days = Math.ceil((new Date(t.due_date).getTime() - today.getTime()) / 86400000);
         if (days < 0) score += 100;
         else if (days <= 3) score += 60;
         else if (days <= 7) score += 40;
       }
-      // Status weight
       if (t.status === 'Today') score += 50;
       else if (t.status === 'Next') score += 30;
-      // Impact
-      score += (t.impact_score ?? 0) * 5;
-      // Prefer tasks with time windows (appointments)
+      score += ((t as any).impact_score ?? 0) * 5;
       if (t.target_window) score += 15;
       return { task: t, score };
     });
