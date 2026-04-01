@@ -141,14 +141,14 @@ export default function FocusPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-3xl mx-auto">
+      <div className="space-y-5 sm:space-y-6 max-w-3xl mx-auto px-1 sm:px-0">
         {/* Greeting */}
         <div className="pt-2">
-          <h1 className="text-2xl font-sans font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-sans font-bold flex items-center gap-2">
             <span>{greeting.emoji}</span>
             {greeting.text}, Brietta
           </h1>
-          <p className="text-sm text-muted-foreground mt-1 italic">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 italic">
             {getRitualMessage()}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
