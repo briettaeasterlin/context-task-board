@@ -45,14 +45,14 @@ export default function ReviewPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto px-1 sm:px-0">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-display font-bold flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-accent" />
             Review
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
         </div>
 
         {/* Weekly Summary Card */}
