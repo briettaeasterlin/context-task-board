@@ -612,8 +612,15 @@ export default function PlanPage() {
         task={drawerTask}
         open={!!drawerTask}
         onClose={() => setDrawerTask(null)}
-        onUpdate={(id, updates) => updateTask.mutate({ id, ...updates } as any)}
-        onDelete={(id) => deleteTask.mutate(id)}
+        onUpdate={(id, updates) => {
+          updateTask.mutate({ id, ...updates } as any);
+          // Clear stale confirmedOrder so displayTasks falls back to fresh existingPlan
+          setConfirmedOrder(null);
+        }}
+        onDelete={(id) => {
+          deleteTask.mutate(id);
+          setConfirmedOrder(null);
+        }}
         projects={projects}
       />
     </AppShell>
