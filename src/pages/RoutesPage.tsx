@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Map, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Project } from '@/types/task';
+import { RouteColorPicker } from '@/components/project/RouteColorPicker';
 
 interface RouteLineProps {
   project: Project;
