@@ -23,9 +23,21 @@ export default function AuthPage() {
     setError('');
     setLoading(true);
     if (isSignUp) {
-      const { error } = await signUp(email, password);
-      if (error) setError(error.message);
-      else setSignUpSuccess(true);
+      const { error: signUpError } = await signUp(email, password);
+      if (signUpError) {
+        // If user already registered, silently try to sign them in
+        if (signUpError.message?.toLowerCase().includes('already registered') ||
+            signUpError.message?.toLowerCase().includes('already been registered') ||
+            signUpError.message?.toLowerCase().includes('user already')) {
+          const { error: signInError } = await signIn(email, password);
+          if (signInError) setError(signInError.message);
+          setLoading(false);
+          return;
+        }
+        setError(signUpError.message);
+      } else {
+        setSignUpSuccess(true);
+      }
     } else {
       const { error } = await signIn(email, password);
       if (error) setError(error.message);
