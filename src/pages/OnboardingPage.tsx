@@ -124,22 +124,22 @@ export default function OnboardingPage() {
                 <div className="flex items-start gap-4 relative">
                   <span className="w-4 h-4 rounded-full flex-shrink-0 z-10 mt-0.5" style={{ backgroundColor: '#0098D4' }} />
                   <div>
-                    <p className="font-display font-bold text-sm">Morning Route</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Open the app, see your plan</p>
+                    <p className="font-display font-bold text-sm">Today</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">See your plan, do your work</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 relative">
                   <span className="w-4 h-4 rounded-full flex-shrink-0 z-10 mt-0.5" style={{ backgroundColor: '#E32017' }} />
                   <div>
-                    <p className="font-display font-bold text-sm">AI Conversation</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Talk to your LLM all day</p>
+                    <p className="font-display font-bold text-sm">Plan</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Set tomorrow's moves</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 relative">
                   <span className="w-4 h-4 rounded-full flex-shrink-0 z-10 mt-0.5" style={{ backgroundColor: '#003688' }} />
                   <div>
-                    <p className="font-display font-bold text-sm">Evening Review</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Close out, plan tomorrow</p>
+                    <p className="font-display font-bold text-sm">Review</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Reflect & improve</p>
                   </div>
                 </div>
               </div>

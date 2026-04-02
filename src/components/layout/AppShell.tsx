@@ -52,18 +52,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                               : 'text-muted-foreground hover:text-foreground hover:translate-x-px hover:bg-secondary'
                           )}
                         >
-                          {/* Transit node indicator */}
-                          <span className={cn(
-                            'flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-150',
-                            isActive
-                              ? 'border-primary bg-accent'
-                              : 'border-muted-foreground/30 bg-transparent'
-                          )}>
-                            <Icon className={cn(
-                              'h-2.5 w-2.5',
-                              isActive ? 'text-accent-foreground' : 'text-muted-foreground/50'
-                            )} />
-                          </span>
+                          <Icon className={cn(
+                            'h-4 w-4',
+                            isActive ? 'text-primary' : 'text-muted-foreground/60'
+                          )} />
                           <span className="hidden sm:inline">{item.label}</span>
                         </Link>
                       </div>
