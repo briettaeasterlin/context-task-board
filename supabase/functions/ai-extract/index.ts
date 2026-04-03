@@ -18,7 +18,7 @@ function getCorsHeaders(req: Request) {
 }
 
 const VALID_AREAS = ['Client', 'Business', 'Home', 'Family', 'Personal'];
-const VALID_STATUSES = ['Backlog', 'Next', 'Waiting', 'Done', 'Someday'];
+const VALID_STATUSES = ['Today', 'Backlog', 'Next', 'Waiting', 'Closing', 'Done', 'Someday'];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function sanitizeString(s: string, maxLen: number): string {
