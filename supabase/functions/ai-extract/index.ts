@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
+  'https://getnextmove.io',
+  'https://getnextmove.lovable.app',
   'https://context-task-board.lovable.app',
   'https://id-preview--6cb26484-5f83-41ed-b635-41425bad5c23.lovable.app',
   'https://6cb26484-5f83-41ed-b635-41425bad5c23.lovableproject.com',
